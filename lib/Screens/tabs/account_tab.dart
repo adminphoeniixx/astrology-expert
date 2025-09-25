@@ -1,11 +1,15 @@
-import 'package:astro_partner_app/auth/edit_profile_screen.dart';
+import 'package:astro_partner_app/Screens/auth/edit_profile_screen.dart';
+import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/controllers/user_controller.dart';
+import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,7 +20,7 @@ class AccountTab extends StatefulWidget {
 }
 
 class _AccountTabState extends State<AccountTab> {
-  // UserController _userController = Get.put(UserController());
+  final UserController _userController = Get.put(UserController());
 
   List<String> drowerItems = [
     'Profile',
@@ -55,7 +59,7 @@ class _AccountTabState extends State<AccountTab> {
                         onTap: () async {
                           switch (index) {
                             case 0:
-                               changeScreen(context, const EditProfile());
+                              changeScreen(context, const EditProfile());
                               break;
                             // case 1:
                             //   changeScreen(context, const PaymentPage());
@@ -349,9 +353,9 @@ class _AccountTabState extends State<AccountTab> {
               ),
               onPressed: () {
                 // Proceed with logout
-                // BasePrefs.clearPrefs().then((value) {
-                //   Get.offAll(const SpleshScreen());
-                // });
+                BasePrefs.clearPrefs().then((value) {
+                  Get.offAll(const SpleshScreen());
+                });
               },
               child: text(
                 "Logout",

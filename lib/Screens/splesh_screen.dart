@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:astro_partner_app/auth/login_screen.dart';
+import 'package:astro_partner_app/Screens/auth/login_screen.dart';
+import 'package:astro_partner_app/Screens/home_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
@@ -20,7 +21,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
   void initState() {
     super.initState();
 
-    Timer(const Duration(seconds: 3), () async {
+    Timer(const Duration(seconds: 2), () async {
       // Hide keyboard (if visible)
       SystemChannels.textInput.invokeMethod('TextInput.hide');
 
@@ -37,7 +38,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
       if (value == null) {
         changeScreenReplacement(context, const LoginScreen());
       } else {
-       // changeScreenReplacement(context, const MyHomePage());
+        changeScreenReplacement(context, const MyHomePage());
       }
     });
   }
@@ -48,11 +49,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              loadingImage,
-              scale: 0.5,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(loadingImage, scale: 0.5, fit: BoxFit.cover),
           ),
         ],
       ),

@@ -2,7 +2,7 @@
 import 'package:astro_partner_app/constants/images_const.dart';
 
 enum TabItem {
-  homeTab(label: "Home", icon:  homeIcon),
+  // homeTab(label: "Home", icon:  homeIcon),
   sessionsTab(label: "Sessions", icon: sessionIcon),
   earnigTab(label: "Earning", icon: erningIcon),
   profileTab(label: "Profile", icon: profileIcon);

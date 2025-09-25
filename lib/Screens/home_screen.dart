@@ -4,10 +4,11 @@ import 'dart:async';
 import 'package:astro_partner_app/Screens/tabs/account_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/earning_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/session_tab.dart';
-import 'package:astro_partner_app/auth/edit_profile_screen.dart';
+import 'package:astro_partner_app/Screens/auth/edit_profile_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/controllers/user_controller.dart';
 
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/tab_item.dart';
@@ -16,11 +17,10 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 class MyHomePage extends StatefulWidget {
   final TabItem tabItem;
-  const MyHomePage({super.key, this.tabItem = TabItem.homeTab});
+  const MyHomePage({super.key, this.tabItem = TabItem.sessionsTab});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -29,17 +29,20 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   StreamSubscription? _sub;
   GlobalKey bottomNavigationKey = GlobalKey();
+  final UserController _userController = Get.put(UserController());
 
   final _navigatorKeys = {
-    TabItem.homeTab: GlobalKey<NavigatorState>(),
+    // TabItem.homeTab: GlobalKey<NavigatorState>(),
     TabItem.sessionsTab: GlobalKey<NavigatorState>(),
     TabItem.earnigTab: GlobalKey<NavigatorState>(),
     TabItem.profileTab: GlobalKey<NavigatorState>(),
   };
-  TabItem selectedIndex = TabItem.homeTab;
+  TabItem selectedIndex = TabItem.sessionsTab;
   dynamic userIdValue;
   @override
   void initState() {
+    _userController.getUserProfile();
+
     setState(() {
       selectedIndex = widget.tabItem;
     });
@@ -70,8 +73,8 @@ class _MyHomePageState extends State<MyHomePage> {
             .currentState!
             .maybePop();
         if (isFirstRouteInCurrentTab) {
-          if (selectedIndex != TabItem.homeTab) {
-            _selectTab(TabItem.homeTab);
+          if (selectedIndex != TabItem.sessionsTab) {
+            _selectTab(TabItem.sessionsTab);
             return false;
           }
         }
@@ -128,8 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<dynamic> _buildSelectedTabScreen() async {
     switch (selectedIndex) {
-      case TabItem.homeTab:
-        return const Scaffold(extendBodyBehindAppBar: true, body: SizedBox());
+      // case TabItem.homeTab:
+      //   return  Scaffold(extendBodyBehindAppBar: true, body: SizedBox(child: Center(child: text("Home"),),));
       case TabItem.sessionsTab:
         return Scaffold(
           appBar: secondryTabAppBar(title: "Sessions"),
@@ -299,13 +302,11 @@ class _MyHomePageState extends State<MyHomePage> {
       shadowColor: const Color(0xFF221d25),
       elevation: 0,
       titleSpacing: 0.0,
-      title:
-          // Obx(() {
-          // if (_userController.isVerifyOtpLoding.value) {
-          //   return const SizedBox();
-          // } else {
-          //   return
-          Padding(
+      title: Obx(() {
+        if (_userController.isGetProfileModelLoding.value) {
+          return const SizedBox();
+        } else {
+          return Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -321,21 +322,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     text(
-                      "Aman Thakur",
+                      _userController.getprofile!.data!.name ?? "",
                       fontSize: 16.0,
                       fontFamily: productSans,
                       fontWeight: FontWeight.w500,
                       textColor: white,
                     ),
                     text(
-                      "amanthakur@gmail.com",
+                      _userController.getprofile!.data!.email ?? "",
                       fontSize: 12.0,
                       fontWeight: FontWeight.w400,
                       textColor: white,
                       fontFamily: productSans,
                     ),
                     text(
-                      "9876543210",
+                      _userController.getprofile!.data!.mobile ?? "",
                       fontSize: 12.0,
                       fontWeight: FontWeight.w500,
                       fontFamily: productSans,
@@ -352,9 +353,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-          ),
-      // }
-      //  }),
+          );
+        }
+      }),
     );
   }
 }

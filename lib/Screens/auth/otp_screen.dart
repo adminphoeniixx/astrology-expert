@@ -4,10 +4,16 @@ import 'package:astro_partner_app/Screens/home_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/constants/string_const.dart';
+import 'package:astro_partner_app/controllers/user_controller.dart';
+import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
+import 'package:astro_partner_app/model/auth/sinup_model.dart';
+import 'package:astro_partner_app/utils/loading.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
 
 class OTPVerifyScreen extends StatefulWidget {
@@ -26,7 +32,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
   final TextEditingController textEditingController = TextEditingController();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  // final UserController _userController = Get.put(UserController());
+  final UserController _userController = Get.put(UserController());
 
   String pinCode = "";
 
@@ -59,65 +65,47 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.dispose();
   }
 
-  // void onSubmit() async {
-  //   if (pinCode.isEmpty) {
-  //     showToast(context, msg: ENTER_OTP);
-  //     return;
-  //   }
+  void onSubmit() async {
+    if (pinCode.isEmpty) {
+      showToast(context, msg: ENTER_OTP);
+      return;
+    }
 
-  //   try {
-  //     final value = await _userController.fetchVerifyOtp(
-  //         context: context, otp: pinCode, mobile: widget.phoneNumber);
+    try {
+      final value = await _userController.fetchVerifyOtp(
+        context: context,
+        otp: pinCode,
+        mobile: widget.phoneNumber,
+      );
 
-  //     if (value.status!) {
-  //       if (value.newRegistration) {
-  //         await _userController.getUserProfile();
-  //         changeScreenReplacement(context,
-  //             RegisterScreen(phoneNumber: widget.phoneNumber, otp: pinCode));
-  //       } else {
-  //         Map<String, String> authHeader = {
-  //           "Accept": "application/json",
-  //           'is_india': "true",
-  //           HttpHeaders.authorizationHeader: "Bearer ${value.accessToken}"
-  //         };
+      if (value.status!) {
+        goToHomePage(value, const MyHomePage());
+      } else {
+        showToast(context, msg: value.message!);
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
+      showToast(context, msg: "Something went wrong. Please try again.");
+    }
+  }
 
-  //         HomeController homeController = Get.put(HomeController());
+  void onResendOTP() async {
+    await _userController.resendOtp(mobile: widget.phoneNumber);
+    setState(() {
+      enableResend = false;
+      secondsRemaining = 180;
+    });
+    startTimer();
+  }
 
-  //         final onValue = await homeController.getHomeDataForCheck(authHeader);
-
-  //         if (onValue.profileStatus == 'incomplete') {
-  //           changeScreenReplacement(context,
-  //               RegisterScreen(phoneNumber: widget.phoneNumber, otp: pinCode));
-  //         } else {
-  //           goToHomePage(value, const MyHomePage());
-  //         }
-  //       }
-  //     } else {
-  //       showToast(context, msg: value.message!);
-  //     }
-  //   } catch (e) {
-  //     debugPrint("Error: $e");
-  //     showToast(context, msg: "Something went wrong. Please try again.");
-  //   }
-  // }
-
-  // void onResendOTP() async {
-  //   await _userController.resendOtp(mobile: widget.phoneNumber);
-  //   setState(() {
-  //     enableResend = false;
-  //     secondsRemaining = 180;
-  //   });
-  //   startTimer();
-  // }
-
-  // void goToHomePage(SignUpModel value, Widget widget) {
-  //   showToast(context, msg: value.message!);
-  //   if (value.user != null || value.status!) {
-  //     BasePrefs.saveData(userId, value.user!.id!);
-  //     BasePrefs.saveData(accessToken, value.accessToken);
-  //     changeToNewScreen(context, widget, "/main");
-  //   }
-  // }
+  void goToHomePage(SignUpModel value, Widget widget) {
+    showToast(context, msg: value.message!);
+    if (value.expert!.id != null || value.status!) {
+      BasePrefs.saveData(userId, value.expert!.id!);
+      BasePrefs.saveData(accessToken, value.accessToken);
+      changeToNewScreen(context, widget, "/main");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -244,42 +232,29 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
-
-                      SizedBox(
-                        width: 270,
-                        child: appBotton(
-                          txtColor: black,
-                          txt: "Submit Now",
-                          onPressed: () {
-                          changeScreenReplacement(context, const MyHomePage());
-                          },
-                          //  onPressed: onSubmit,
-                        ),
-                      ),
-                      // enableResend
-                      //     ?
-                      // appBotton(
-                      //   width: 200,
-                      //   height: 48,
-                      //   txtColor: primaryColor,
-                      //   buttonColor: primaryColor.withOpacity(0.2),
-                      //   txt: "Resend OTP",
-                      //   //onPressed: onResendOTP,
-                      // ),
-                      // : Obx(() {
-                      //     if (_userController.isVerifyOtpLoding.value) {
-                      //       return circularProgress();
-                      //     } else {
-                      //       return SizedBox(
-                      //         width: 270,
-                      //         child: appBotton(
-                      //           txtColor: black,
-                      //           txt: "Submit Now",
-                      //           onPressed: onSubmit,
-                      //         ),
-                      //       );
-                      //     }
-                      //   }),
+                      enableResend
+                          ? appBotton(
+                              width: 200,
+                              height: 48,
+                              txtColor: primaryColor,
+                              buttonColor: primaryColor.withOpacity(0.2),
+                              txt: "Resend OTP",
+                              onPressed: onResendOTP,
+                            )
+                          : Obx(() {
+                              if (_userController.isVerifyOtpLoding.value) {
+                                return circularProgress();
+                              } else {
+                                return SizedBox(
+                                  width: 270,
+                                  child: appBotton(
+                                    txtColor: black,
+                                    txt: "Submit Now",
+                                    onPressed: onSubmit,
+                                  ),
+                                );
+                              }
+                            }),
                       const SizedBox(height: 80),
                     ],
                   ),

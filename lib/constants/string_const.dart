@@ -56,8 +56,8 @@ const int https_code_404 = 404;
 const int https_code_401 = 401;
 const int https_code_500 = 500;
 
-String homeStoragePath = "";
+// String homeStoragePath = "";
 
-String setStoragePath({required String imagePath}) {
-  return homeStoragePath + imagePath;
-}
+// String setStoragePath({required String imagePath}) {
+//   return homeStoragePath + imagePath;
+// }

@@ -10,6 +10,7 @@ class EarningTab extends StatefulWidget {
 }
 
 class _EarningTabState extends State<EarningTab> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
