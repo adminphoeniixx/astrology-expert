@@ -5,6 +5,7 @@ import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
+import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -38,7 +39,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
       if (value == null) {
         changeScreenReplacement(context, const LoginScreen());
       } else {
-        changeScreenReplacement(context, const MyHomePage());
+        changeScreenReplacement(context, const MyHomePage( ));
       }
     });
   }

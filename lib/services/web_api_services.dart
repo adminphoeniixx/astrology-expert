@@ -7,7 +7,11 @@ import 'package:astro_partner_app/firebase/firebase_event.dart';
 import 'package:astro_partner_app/model/api_response.dart';
 import 'package:astro_partner_app/model/auth/getprofile_model.dart';
 import 'package:astro_partner_app/model/auth/sinup_model.dart';
+import 'package:astro_partner_app/model/earning_details_model.dart';
+import 'package:astro_partner_app/model/earning_list_model.dart';
+import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
+import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
 import 'package:astro_partner_app/utils/enum.dart';
@@ -73,42 +77,13 @@ class WebApiServices {
   ApiResponse _freeChatEmail = ApiResponse();
   ApiResponse _supportChatEmail = ApiResponse();
   GetProfileModel _userProfile = GetProfileModel();
-
+  EarningDetailsModel _earningDetailsModel = EarningDetailsModel();
   // ProductCartModel _removeStoreCoupon = ProductCartModel();
 
   // ProductOrderModel _productOrderModel = ProductOrderModel();
-
+  SessionDetailsModel _sessionDetailsModel = SessionDetailsModel();
   ApiResponse _apiResponseOrderPaymentConform = ApiResponse();
-  // SavedVideoModel _savedVideoModel = SavedVideoModel();
-  // WalletLedgerModel _ledgerModel = WalletLedgerModel();
-  // UpdateMentenceModel _updateMentenceModel = UpdateMentenceModel();
-  // ProductCategoryModel _productCategoryModel = ProductCategoryModel();
-  // SearchProductListModel _searchProductListModel = SearchProductListModel();
-  // AddressListModel _addressListModel = AddressListModel();
-  // SupportChatModel _supportChatModel = SupportChatModel();
-  // AstroWalletBalanceModel _astroWalletBalanceModel = AstroWalletBalanceModel();
-  // CommentVideoModel _commentVideoModel = CommentVideoModel();
-  // ProductsOrderDetailsModel _productsOrderDetailsModel =
-  //     ProductsOrderDetailsModel();
-  // PopUpModel _popUpModel = PopUpModel();
-  // AllBannerModel _allBannerModel = AllBannerModel();
-  // ServicesOrderDetailsModel _servicesOrderDetailsModel =
-  //     ServicesOrderDetailsModel();
-  // Future<StateListModel> getStateList() async {
-  //   try {
-  //     String url = GetBaseUrl + GetDomainUrl + GET_STATE;
-  //     //dio.interceptors.add(performanceInterceptor);
-  //     var response = await http.get(
-  //       Uri.parse(url),
-  //     );
-  //     _stateListModel = StateListModel.fromJson(jsonDecode(response.body));
-  //     return _stateListModel;
-  //   } on Error catch (e) {
-  //     _stateListModel.message = NETWORK_ERROR + e.toString();
-  //     return _stateListModel;
-  //   }
-  // }
-
+  EarningListModel _earningListModel = EarningListModel();
   Future<ApiResponse> getResendOtp({required String mobile}) async {
     // Fetch FCM token
     // final fcmToken = await _fetchFcmToken();
@@ -361,6 +336,265 @@ class WebApiServices {
 
     return _sessionsModel;
   }
+
+  Future<SessionDetailsModel> getSessionDetailsModel({
+    required String sessionId,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl2}service-details/$sessionId";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: await authHeader(),
+      );
+
+      print("########_sessionDetailsModel#############");
+      print(url);
+      print(await authHeader());
+      print(response.body);
+      print("#########_sessionDetailsModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _sessionDetailsModel = SessionDetailsModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _sessionDetailsModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _sessionDetailsModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _sessionDetailsModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_sessionDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_sessionDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_sessionDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_sessionDetailsModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _sessionDetailsModel;
+  }
+
+  Future<EarningListModel> getEarningListModel({
+    required String pageUrl,
+  }) async {
+    try {
+      // Prepare headers
+      Map<String, String> headers = await authHeader();
+      headers['Content-Type'] = 'application/json';
+
+      http.Response response = await http.get(
+        Uri.parse(pageUrl),
+        headers: headers,
+      );
+      print(headers);
+      // Log response
+      debugPrint("Response Status: ${response.statusCode}");
+      debugPrint("Response Body: ${response.body}");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _earningListModel = EarningListModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _earningListModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _earningListModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _earningListModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_earningListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure("No Internet connection. Please check your network.");
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_earningListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure("Invalid server response format.");
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_earningListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure("HTTP Error: ${e.message}");
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "getSessionsModel",
+        code: "unknown",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure("An unexpected error occurred.");
+    }
+
+    return _earningListModel;
+  }
+
+  Future<EarningDetailsModel> getEarningDetailsModel({
+    required String earningId,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl2}expert-earnings/$earningId";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: await authHeader(),
+      );
+
+      print("########EarningDetailsModel#############");
+      print(url);
+      print(await authHeader());
+      print(response.body);
+      print("#########EarningDetailsModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _earningDetailsModel = EarningDetailsModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _earningDetailsModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _earningDetailsModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _earningDetailsModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "EarningDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "EarningDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "EarningDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "EarningDetailsModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _earningDetailsModel;
+  }
+
+UpdateNoteModel _updateNoteModel = UpdateNoteModel();
+
+Future<UpdateNoteModel> getUpdateNoteModel({
+  required String sessionId,
+  required String notes,
+}) async {
+  try {
+    String url = "${GetBaseUrl + GetDomainUrl2}service-sessions/notes";
+
+    final bodyData = {
+      "id": int.tryParse(sessionId) ?? sessionId, 
+      "notes": notes,
+    };
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        ...(await authHeader()),
+        "Content-Type": "application/json",
+      },
+      body: json.encode(bodyData),
+    );
+
+    print("########UpdateNoteModel#############");
+    print(url);
+    print("Headers: ${await authHeader()}");
+    print("Body Sent: ${json.encode(bodyData)}");
+    print("Response: ${response.body}");
+    print("#########UpdateNoteModel############");
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      _updateNoteModel = UpdateNoteModel.fromJson(jsonDecode(response.body));
+      _updateNoteModel.requestStatus = RequestStatus.loaded;
+    } else if (response.statusCode == 401 || response.statusCode == 404) {
+      _updateNoteModel.requestStatus = RequestStatus.unauthorized;
+    } else if (response.statusCode == 500) {
+      _updateNoteModel.requestStatus = RequestStatus.server;
+    } else {
+      throw HttpException("Unexpected response: ${response.statusCode}");
+    }
+  } on SocketException catch (e) {
+    _firebaseService.firebaseSocketException(
+      apiCall: "_updateNoteModel",
+      userId: userId,
+      message: e.message,
+    );
+    throw Failure(e.message);
+  } on FormatException catch (e) {
+    _firebaseService.firebaseFormatException(
+      apiCall: "_updateNoteModel",
+      userId: userId,
+      message: e.message,
+    );
+    throw Failure(e.message);
+  } on HttpException catch (e) {
+    _firebaseService.firebaseHttpException(
+      apiCall: "_updateNoteModel",
+      userId: userId,
+      message: e.message,
+    );
+    throw Failure(e.message);
+  } catch (e) {
+    _firebaseService.firebaseDioError(
+      apiCall: "_updateNoteModel",
+      code: "401|404",
+      userId: userId,
+      message: e.toString(),
+    );
+  }
+
+  return _updateNoteModel;
+}
 
   // Future<HomeModel> getHomeDataForCheck(Map<String, String> authHeader) async {
   //   final fcmToken = await _fetchFcmToken();
@@ -1595,9 +1829,7 @@ class WebApiServices {
       print(jsonDecode(responseData));
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
-        _userProfile = GetProfileModel.fromJson(
-          jsonDecode(responseData),
-        );
+        _userProfile = GetProfileModel.fromJson(jsonDecode(responseData));
         print("#############USER#############");
         _userProfile.requestStatus = RequestStatus.loaded;
       } else if (response.statusCode == httpsCode_404 ||

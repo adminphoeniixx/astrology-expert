@@ -9,6 +9,8 @@ const courseImage = "assets/images/course_image.png";
 const astroHomeBanner = "assets/images/astro_home_banner.png";
 const appNameImg = "assets/images/app_name_img.png";
 const pandImg = "assets/images/pand_img.png";
+const launchImage = "assets/images/lunch_icon.png";
+
 const startButtonIcon = "assets/icons/start_button_icon.svg";
 const appLogoIcon = "assets/icons/app_logo.svg";
 const phoneIcon = "assets/icons/phone_icon.svg";

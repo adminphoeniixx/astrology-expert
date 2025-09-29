@@ -1,4 +1,4 @@
-package com.example.astro_partner_app
+package vedam.roots.expert.app
 
 import io.flutter.embedding.android.FlutterActivity
 

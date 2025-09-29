@@ -3,9 +3,14 @@ import 'dart:io';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
+import 'package:astro_partner_app/helper/local_storage.dart';
+import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
+import 'package:astro_partner_app/widgets/agora_video_calling/calling.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
+import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -157,642 +162,674 @@ class _SessionTabState extends State<SessionTab> {
                               } else {
                                 return GestureDetector(
                                   onTap: () async {
+                                    Get.to(
+                                      CallingPage(
+                                        callType: 0,
+                                        // joinSessionModel:
+                                        //     joinSessionsOnValue,
+                                        userId: 1,
+                                      ),
+                                    );
+                                    // Get.to(
+                                    //     const  FirebaseChatScreen(
+                                    //         // chatSessionModel:
+                                    //         //     joinChatSessionsValue,
+                                    //         // senderId: 2,
+                                    //         // subCollection: 'messages',
+                                    //       ),
+                                    //     );
                                     // await _homeController.getSessionCheckData(
                                     //     sessionId: _homeController
                                     //         .commingSessionListData[index].id!);
-                                    // if (_homeController.mSessionCheck!.status ==
-                                    //     false) {
-                                    //   showDialog(
-                                    //     // ignore: use_build_context_synchronously
-                                    //     context: context,
-                                    //     builder: (BuildContext dialogContext) {
-                                    //       // Use a separate context for the dialog
-                                    //       return AlertDialog(
-                                    //         title: const Text(
-                                    //           "Session",
-                                    //           style: TextStyle(
-                                    //               fontFamily: productSans),
+                                    // if (true == false) {
+                                    //   // showDialog(
+                                    //   //   // ignore: use_build_context_synchronously
+                                    //   //   context: context,
+                                    //   //   builder: (BuildContext dialogContext) {
+                                    //   //     // Use a separate context for the dialog
+                                    //   //     return AlertDialog(
+                                    //   //       title: const Text(
+                                    //   //         "Session",
+                                    //   //         style: TextStyle(
+                                    //   //             fontFamily: productSans),
+                                    //   //       ),
+                                    //   //       content: const Text(
+                                    //   //         "Oops! You're early. ⏰ Your session hasn’t started yet. Please join at the scheduled time. We’ll be ready for you!",
+                                    //   //         style: TextStyle(
+                                    //   //             fontFamily: productSans),
+                                    //   //       ),
+                                    //   //       actions: [
+                                    //   //         TextButton(
+                                    //   //           child: const Text(
+                                    //   //             "OK",
+                                    //   //             style: TextStyle(
+                                    //   //                 fontFamily: productSans,
+                                    //   //                 color: black),
+                                    //   //           ),
+                                    //   //           onPressed: () {
+                                    //   //             Navigator.pop(
+                                    //   //                 dialogContext); // Use the dialog-specific context
+                                    //   //           },
+                                    //   //         ),
+                                    //   //       ],
+                                    //   //     );
+                                    //   //   },
+                                    //   // );
+                                    //   // } else {
+                                    //   switch (1) {
+                                    //     case 1:
+                                    //       Get.to(
+                                    //       const  FirebaseChatScreen(
+                                    //           // chatSessionModel:
+                                    //           //     joinChatSessionsValue,
+                                    //           // senderId: 2,
+                                    //           // subCollection: 'messages',
                                     //         ),
-                                    //         content: const Text(
-                                    //           "Oops! You're early. ⏰ Your session hasn’t started yet. Please join at the scheduled time. We’ll be ready for you!",
-                                    //           style: TextStyle(
-                                    //               fontFamily: productSans),
-                                    //         ),
-                                    //         actions: [
-                                    //           TextButton(
-                                    //             child: const Text(
-                                    //               "OK",
-                                    //               style: TextStyle(
-                                    //                   fontFamily: productSans,
-                                    //                   color: black),
-                                    //             ),
-                                    //             onPressed: () {
-                                    //               Navigator.pop(
-                                    //                   dialogContext); // Use the dialog-specific context
-                                    //             },
-                                    //           ),
-                                    //         ],
                                     //       );
-                                    //     },
-                                    //   );
-                                    // } else {
-                                    // switch (int.parse(_homeController
-                                    //     .commingSessionListData[index]
-                                    //     .serviceType
-                                    //     .toString())) {
-                                    //   case 1:
-                                    //     _homeController
-                                    //         .joinChatSessions(
-                                    //             sessionId: _homeController
-                                    //                 .commingSessionListData[
-                                    //                     index]
-                                    //                 .id
-                                    //                 .toString())
-                                    //         .then(
-                                    //             (joinChatSessionsValue) async {
-                                    //       print(
-                                    //           "!!!!!!!!!joinChatSessionsValue!!!!!!!!!");
-                                    //       print(joinChatSessionsValue
-                                    //           .joinStatus);
-                                    //       BasePrefs.readData(userId)
-                                    //           .then((mUserId) {
-                                    //         //_homeController.commingSessionListData[index].status
-                                    //         if (joinChatSessionsValue
-                                    //                 .joinStatus ==
-                                    //             'Completed') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Completed",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been completed successfully.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinChatSessionsValue
-                                    //                 .joinStatus ==
-                                    //             'Cancelled') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinChatSessionsValue
-                                    //                 .joinStatus ==
-                                    //             'Customer Not Available') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled due to your unavailability. ",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else {
-                                    //           Get.to(
-                                    //             FirebaseChatScreen(
-                                    //               chatSessionModel:
-                                    //                   joinChatSessionsValue,
-                                    //               senderId: int.parse(
-                                    //                   mUserId.toString()),
-                                    //               subCollection: 'messages',
-                                    //             ),
-                                    //           );
-                                    //         }
-                                    //       });
-                                    //     });
-                                    //     break;
-                                    //   case 2:
-                                    //     _homeController
-                                    //         .joinAudioSessions(
-                                    //             sessionId: _homeController
-                                    //                 .commingSessionListData[
-                                    //                     index]
-                                    //                 .id
-                                    //                 .toString())
-                                    //         .then((joinAudioSessions) {
-                                    //       if (joinAudioSessions.joinStatus ==
-                                    //           'Completed') {
-                                    //         showDialog(
-                                    //           // ignore: use_build_context_synchronously
-                                    //           context: context,
-                                    //           builder: (BuildContext
-                                    //               dialogContext) {
-                                    //             return AlertDialog(
-                                    //               title: const Text(
-                                    //                 "Session Completed",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               content: const Text(
-                                    //                 "Your session has been completed successfully.",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               actions: [
-                                    //                 TextButton(
-                                    //                   child: const Text(
-                                    //                     "OK",
-                                    //                     style: TextStyle(
-                                    //                         fontFamily:
-                                    //                             productSans,
-                                    //                         color: black),
-                                    //                   ),
-                                    //                   onPressed: () {
-                                    //                     Navigator.pop(
-                                    //                         dialogContext);
-                                    //                   },
-                                    //                 ),
-                                    //               ],
-                                    //             );
-                                    //           },
-                                    //         );
-                                    //       } else if (joinAudioSessions
-                                    //               .joinStatus ==
-                                    //           'Cancelled') {
-                                    //         showDialog(
-                                    //           // ignore: use_build_context_synchronously
-                                    //           context: context,
-                                    //           builder: (BuildContext
-                                    //               dialogContext) {
-                                    //             return AlertDialog(
-                                    //               title: const Text(
-                                    //                 "Session Cancelled",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               content: const Text(
-                                    //                 "Your session has been cancelled.",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               actions: [
-                                    //                 TextButton(
-                                    //                   child: const Text(
-                                    //                     "OK",
-                                    //                     style: TextStyle(
-                                    //                         fontFamily:
-                                    //                             productSans,
-                                    //                         color: black),
-                                    //                   ),
-                                    //                   onPressed: () {
-                                    //                     Navigator.pop(
-                                    //                         dialogContext);
-                                    //                   },
-                                    //                 ),
-                                    //               ],
-                                    //             );
-                                    //           },
-                                    //         );
-                                    //       } else if (joinAudioSessions
-                                    //               .joinStatus ==
-                                    //           'Customer Not Available') {
-                                    //         showDialog(
-                                    //           // ignore: use_build_context_synchronously
-                                    //           context: context,
-                                    //           builder: (BuildContext
-                                    //               dialogContext) {
-                                    //             return AlertDialog(
-                                    //               title: const Text(
-                                    //                 "Session Cancelled",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               content: const Text(
-                                    //                 "Your session has been cancelled due to your unavailability. ",
-                                    //                 style: TextStyle(
-                                    //                     fontFamily:
-                                    //                         productSans),
-                                    //               ),
-                                    //               actions: [
-                                    //                 TextButton(
-                                    //                   child: const Text(
-                                    //                     "OK",
-                                    //                     style: TextStyle(
-                                    //                         fontFamily:
-                                    //                             productSans,
-                                    //                         color: black),
-                                    //                   ),
-                                    //                   onPressed: () {
-                                    //                     Navigator.pop(
-                                    //                         dialogContext);
-                                    //                   },
-                                    //                 ),
-                                    //               ],
-                                    //             );
-                                    //           },
-                                    //         );
-                                    //       } else {
-                                    //         if (joinAudioSessions
-                                    //             .isFileUploaded!) {
-                                    //           showAudioDialog(context,
-                                    //               joinAudioSessions.file!);
-                                    //         } else {
-                                    //           Get.snackbar(
-                                    //               "Audio",
-                                    //               joinAudioSessions.message ??
-                                    //                   "");
-                                    //         }
-                                    //       }
-                                    //     });
-                                    //     break;
-                                    //   case 3:
-                                    //     final userIdValue =
-                                    //         await BasePrefs.readData(userId);
-                                    //     _homeController
-                                    //         .joinSessions(
-                                    //             sessionId: _homeController
-                                    //                 .commingSessionListData[
-                                    //                     index]
-                                    //                 .id!
-                                    //                 .toString())
-                                    //         .then((joinSessionsOnValue) {
-                                    //       var re = RegExp(
-                                    //           "\\w{4}\\-\\w{4}\\-\\w{4}");
-                                    //       if (joinSessionsOnValue.session!
-                                    //               .roomId!.isNotEmpty &&
-                                    //           re.hasMatch(joinSessionsOnValue
-                                    //               .session!.roomId!) &&
-                                    //           joinSessionsOnValue.token !=
-                                    //               null) {
-                                    //         //_homeController.commingSessionListData[index].status
-                                    //         if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Completed') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Completed",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been completed successfully.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Cancelled') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Customer Not Available') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled due to your unavailability.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else {
-                                    //           Get.to(CallingPage(
-                                    //             callType: 0,
-                                    //             joinSessionModel:
-                                    //                 joinSessionsOnValue,
-                                    //             userId: int.parse(
-                                    //                 userIdValue.toString()),
-                                    //           ));
-                                    //         }
-                                    //       } else {
-                                    //         Get.snackbar("Calling",
-                                    //             "Please enter valid meeting id");
-                                    //       }
-                                    //     });
 
-                                    //     break;
-                                    //   case 4:
-                                    //     final userIdValue =
-                                    //         await BasePrefs.readData(userId);
-                                    //     _homeController
-                                    //         .joinSessions(
-                                    //             sessionId: _homeController
-                                    //                 .commingSessionListData[
-                                    //                     index]
-                                    //                 .id!
-                                    //                 .toString())
-                                    //         .then((joinSessionsOnValue) {
-                                    //       // var re =
-                                    //       //     RegExp("\\w{4}\\-\\w{4}\\-\\w{4}");
-                                    //       if (joinSessionsOnValue
-                                    //           .session!.roomId!.isNotEmpty) {
-                                    //         // _homeController.commingSessionListData[index].status
-                                    //         if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Completed') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Completed",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been completed successfully.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Cancelled') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else if (joinSessionsOnValue
-                                    //                 .joinStatus ==
-                                    //             'Customer Not Available') {
-                                    //           showDialog(
-                                    //             // ignore: use_build_context_synchronously
-                                    //             context: context,
-                                    //             builder: (BuildContext
-                                    //                 dialogContext) {
-                                    //               return AlertDialog(
-                                    //                 title: const Text(
-                                    //                   "Session Cancelled",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 content: const Text(
-                                    //                   "Your session has been cancelled due to your unavailability.",
-                                    //                   style: TextStyle(
-                                    //                       fontFamily:
-                                    //                           productSans),
-                                    //                 ),
-                                    //                 actions: [
-                                    //                   TextButton(
-                                    //                     child: const Text(
-                                    //                       "OK",
-                                    //                       style: TextStyle(
-                                    //                           fontFamily:
-                                    //                               productSans,
-                                    //                           color: black),
-                                    //                     ),
-                                    //                     onPressed: () {
-                                    //                       Navigator.pop(
-                                    //                           dialogContext);
-                                    //                     },
-                                    //                   ),
-                                    //                 ],
-                                    //               );
-                                    //             },
-                                    //           );
-                                    //         } else {
-                                    //           // Get.to(CallingPage(
-                                    //           //   callType: int.parse(
-                                    //           //       joinSessionsOnValue
-                                    //           //           .session!
-                                    //           //           .serviceType!),
-                                    //           //   joinSessionModel:
-                                    //           //       joinSessionsOnValue,
-                                    //           //   userId: int.parse(
-                                    //           //       userIdValue.toString()),
-                                    //           // ));
-                                    //         }
-                                    //       } else {
-                                    //         Get.snackbar("Calling",
-                                    //             "Please enter valid meeting id");
-                                    //       }
-                                    //     });
-                                    //     break;
-                                    //   default:
-                                    // }
+                                    //       // _homeController
+                                    //       //     .joinChatSessions(
+                                    //       //         sessionId: _homeController
+                                    //       //             .commingSessionListData[
+                                    //       //                 index]
+                                    //       //             .id
+                                    //       //             .toString())
+                                    //       //     .then(
+                                    //       //         (joinChatSessionsValue) async {
+                                    //       //   print(
+                                    //       //       "!!!!!!!!!joinChatSessionsValue!!!!!!!!!");
+                                    //       //   print(joinChatSessionsValue
+                                    //       //       .joinStatus);
+                                    //       //   BasePrefs.readData(userId)
+                                    //       //       .then((mUserId) {
+                                    //       //     //_homeController.commingSessionListData[index].status
+                                    //       //     if (joinChatSessionsValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Completed') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Completed",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been completed successfully.",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else if (joinChatSessionsValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Cancelled') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Cancelled",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been cancelled.",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else if (joinChatSessionsValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Customer Not Available') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Cancelled",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been cancelled due to your unavailability. ",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else {
+                                    //       //       Get.to(
+                                    //       //         FirebaseChatScreen(
+                                    //       //           chatSessionModel:
+                                    //       //               joinChatSessionsValue,
+                                    //       //           senderId: int.parse(
+                                    //       //               mUserId.toString()),
+                                    //       //           subCollection: 'messages',
+                                    //       //         ),
+                                    //       //       );
+                                    //       //     }
+                                    //       //   });
+                                    //       // });
+                                    //       break;
+                                    //     // case 2:
+                                    //     //   _homeController
+                                    //     //       .joinAudioSessions(
+                                    //     //           sessionId: _homeController
+                                    //     //               .commingSessionListData[
+                                    //     //                   index]
+                                    //     //               .id
+                                    //     //               .toString())
+                                    //     //       .then((joinAudioSessions) {
+                                    //     //     if (joinAudioSessions.joinStatus ==
+                                    //     //         'Completed') {
+                                    //     //       showDialog(
+                                    //     //         // ignore: use_build_context_synchronously
+                                    //     //         context: context,
+                                    //     //         builder: (BuildContext
+                                    //     //             dialogContext) {
+                                    //     //           return AlertDialog(
+                                    //     //             title: const Text(
+                                    //     //               "Session Completed",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             content: const Text(
+                                    //     //               "Your session has been completed successfully.",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             actions: [
+                                    //     //               TextButton(
+                                    //     //                 child: const Text(
+                                    //     //                   "OK",
+                                    //     //                   style: TextStyle(
+                                    //     //                       fontFamily:
+                                    //     //                           productSans,
+                                    //     //                       color: black),
+                                    //     //                 ),
+                                    //     //                 onPressed: () {
+                                    //     //                   Navigator.pop(
+                                    //     //                       dialogContext);
+                                    //     //                 },
+                                    //     //               ),
+                                    //     //             ],
+                                    //     //           );
+                                    //     //         },
+                                    //     //       );
+                                    //     //     } else if (joinAudioSessions
+                                    //     //             .joinStatus ==
+                                    //     //         'Cancelled') {
+                                    //     //       showDialog(
+                                    //     //         // ignore: use_build_context_synchronously
+                                    //     //         context: context,
+                                    //     //         builder: (BuildContext
+                                    //     //             dialogContext) {
+                                    //     //           return AlertDialog(
+                                    //     //             title: const Text(
+                                    //     //               "Session Cancelled",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             content: const Text(
+                                    //     //               "Your session has been cancelled.",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             actions: [
+                                    //     //               TextButton(
+                                    //     //                 child: const Text(
+                                    //     //                   "OK",
+                                    //     //                   style: TextStyle(
+                                    //     //                       fontFamily:
+                                    //     //                           productSans,
+                                    //     //                       color: black),
+                                    //     //                 ),
+                                    //     //                 onPressed: () {
+                                    //     //                   Navigator.pop(
+                                    //     //                       dialogContext);
+                                    //     //                 },
+                                    //     //               ),
+                                    //     //             ],
+                                    //     //           );
+                                    //     //         },
+                                    //     //       );
+                                    //     //     } else if (joinAudioSessions
+                                    //     //             .joinStatus ==
+                                    //     //         'Customer Not Available') {
+                                    //     //       showDialog(
+                                    //     //         // ignore: use_build_context_synchronously
+                                    //     //         context: context,
+                                    //     //         builder: (BuildContext
+                                    //     //             dialogContext) {
+                                    //     //           return AlertDialog(
+                                    //     //             title: const Text(
+                                    //     //               "Session Cancelled",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             content: const Text(
+                                    //     //               "Your session has been cancelled due to your unavailability. ",
+                                    //     //               style: TextStyle(
+                                    //     //                   fontFamily:
+                                    //     //                       productSans),
+                                    //     //             ),
+                                    //     //             actions: [
+                                    //     //               TextButton(
+                                    //     //                 child: const Text(
+                                    //     //                   "OK",
+                                    //     //                   style: TextStyle(
+                                    //     //                       fontFamily:
+                                    //     //                           productSans,
+                                    //     //                       color: black),
+                                    //     //                 ),
+                                    //     //                 onPressed: () {
+                                    //     //                   Navigator.pop(
+                                    //     //                       dialogContext);
+                                    //     //                 },
+                                    //     //               ),
+                                    //     //             ],
+                                    //     //           );
+                                    //     //         },
+                                    //     //       );
+                                    //     //     } else {
+                                    //     //       if (joinAudioSessions
+                                    //     //           .isFileUploaded!) {
+                                    //     //         showAudioDialog(context,
+                                    //     //             joinAudioSessions.file!);
+                                    //     //       } else {
+                                    //     //         Get.snackbar(
+                                    //     //             "Audio",
+                                    //     //             joinAudioSessions.message ??
+                                    //     //                 "");
+                                    //     //       }
+                                    //     //     }
+                                    //     //   });
+                                    //     //   break;
+                                    //     case 3:
+                                    //       final userIdValue =
+                                    //           await BasePrefs.readData(userId);
+                                    //       Get.to(
+                                    //         CallingPage(
+                                    //           callType: 0,
+                                    //           // joinSessionModel:
+                                    //           //     joinSessionsOnValue,
+                                    //           userId: int.parse(
+                                    //             userIdValue.toString(),
+                                    //           ),
+                                    //         ),
+                                    //       );
+
+                                    //       // _homeController
+                                    //       //     .joinSessions(
+                                    //       //         sessionId: _homeController
+                                    //       //             .commingSessionListData[
+                                    //       //                 index]
+                                    //       //             .id!
+                                    //       //             .toString())
+                                    //       //     .then((joinSessionsOnValue) {
+                                    //       //   var re = RegExp(
+                                    //       //       "\\w{4}\\-\\w{4}\\-\\w{4}");
+                                    //       //   if (joinSessionsOnValue.session!
+                                    //       //           .roomId!.isNotEmpty &&
+                                    //       //       re.hasMatch(joinSessionsOnValue
+                                    //       //           .session!.roomId!) &&
+                                    //       //       joinSessionsOnValue.token !=
+                                    //       //           null) {
+                                    //       //     //_homeController.commingSessionListData[index].status
+                                    //       //     if (joinSessionsOnValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Completed') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Completed",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been completed successfully.",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else if (joinSessionsOnValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Cancelled') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Cancelled",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been cancelled.",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else if (joinSessionsOnValue
+                                    //       //             .joinStatus ==
+                                    //       //         'Customer Not Available') {
+                                    //       //       showDialog(
+                                    //       //         // ignore: use_build_context_synchronously
+                                    //       //         context: context,
+                                    //       //         builder: (BuildContext
+                                    //       //             dialogContext) {
+                                    //       //           return AlertDialog(
+                                    //       //             title: const Text(
+                                    //       //               "Session Cancelled",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             content: const Text(
+                                    //       //               "Your session has been cancelled due to your unavailability.",
+                                    //       //               style: TextStyle(
+                                    //       //                   fontFamily:
+                                    //       //                       productSans),
+                                    //       //             ),
+                                    //       //             actions: [
+                                    //       //               TextButton(
+                                    //       //                 child: const Text(
+                                    //       //                   "OK",
+                                    //       //                   style: TextStyle(
+                                    //       //                       fontFamily:
+                                    //       //                           productSans,
+                                    //       //                       color: black),
+                                    //       //                 ),
+                                    //       //                 onPressed: () {
+                                    //       //                   Navigator.pop(
+                                    //       //                       dialogContext);
+                                    //       //                 },
+                                    //       //               ),
+                                    //       //             ],
+                                    //       //           );
+                                    //       //         },
+                                    //       //       );
+                                    //       //     } else {
+                                    //       //       Get.to(CallingPage(
+                                    //       //         callType: 0,
+                                    //       //         // joinSessionModel:
+                                    //       //         //     joinSessionsOnValue,
+                                    //       //         userId: int.parse(
+                                    //       //             userIdValue.toString()),
+                                    //       //       ));
+                                    //       //     }
+                                    //       //   } else {
+                                    //       //     Get.snackbar("Calling",
+                                    //       //         "Please enter valid meeting id");
+                                    //       //   }
+                                    //       // });
+
+                                    //       break;
+                                    //     // case 4:
+                                    //     //   final userIdValue =
+                                    //     //       await BasePrefs.readData(userId);
+                                    //     //   _homeController
+                                    //     //       .joinSessions(
+                                    //     //           sessionId: _homeController
+                                    //     //               .commingSessionListData[
+                                    //     //                   index]
+                                    //     //               .id!
+                                    //     //               .toString())
+                                    //     //       .then((joinSessionsOnValue) {
+                                    //     //     // var re =
+                                    //     //     //     RegExp("\\w{4}\\-\\w{4}\\-\\w{4}");
+                                    //     //     if (joinSessionsOnValue
+                                    //     //         .session!.roomId!.isNotEmpty) {
+                                    //     //       // _homeController.commingSessionListData[index].status
+                                    //     //       if (joinSessionsOnValue
+                                    //     //               .joinStatus ==
+                                    //     //           'Completed') {
+                                    //     //         showDialog(
+                                    //     //           // ignore: use_build_context_synchronously
+                                    //     //           context: context,
+                                    //     //           builder: (BuildContext
+                                    //     //               dialogContext) {
+                                    //     //             return AlertDialog(
+                                    //     //               title: const Text(
+                                    //     //                 "Session Completed",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               content: const Text(
+                                    //     //                 "Your session has been completed successfully.",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               actions: [
+                                    //     //                 TextButton(
+                                    //     //                   child: const Text(
+                                    //     //                     "OK",
+                                    //     //                     style: TextStyle(
+                                    //     //                         fontFamily:
+                                    //     //                             productSans,
+                                    //     //                         color: black),
+                                    //     //                   ),
+                                    //     //                   onPressed: () {
+                                    //     //                     Navigator.pop(
+                                    //     //                         dialogContext);
+                                    //     //                   },
+                                    //     //                 ),
+                                    //     //               ],
+                                    //     //             );
+                                    //     //           },
+                                    //     //         );
+                                    //     //       } else if (joinSessionsOnValue
+                                    //     //               .joinStatus ==
+                                    //     //           'Cancelled') {
+                                    //     //         showDialog(
+                                    //     //           // ignore: use_build_context_synchronously
+                                    //     //           context: context,
+                                    //     //           builder: (BuildContext
+                                    //     //               dialogContext) {
+                                    //     //             return AlertDialog(
+                                    //     //               title: const Text(
+                                    //     //                 "Session Cancelled",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               content: const Text(
+                                    //     //                 "Your session has been cancelled.",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               actions: [
+                                    //     //                 TextButton(
+                                    //     //                   child: const Text(
+                                    //     //                     "OK",
+                                    //     //                     style: TextStyle(
+                                    //     //                         fontFamily:
+                                    //     //                             productSans,
+                                    //     //                         color: black),
+                                    //     //                   ),
+                                    //     //                   onPressed: () {
+                                    //     //                     Navigator.pop(
+                                    //     //                         dialogContext);
+                                    //     //                   },
+                                    //     //                 ),
+                                    //     //               ],
+                                    //     //             );
+                                    //     //           },
+                                    //     //         );
+                                    //     //       } else if (joinSessionsOnValue
+                                    //     //               .joinStatus ==
+                                    //     //           'Customer Not Available') {
+                                    //     //         showDialog(
+                                    //     //           // ignore: use_build_context_synchronously
+                                    //     //           context: context,
+                                    //     //           builder: (BuildContext
+                                    //     //               dialogContext) {
+                                    //     //             return AlertDialog(
+                                    //     //               title: const Text(
+                                    //     //                 "Session Cancelled",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               content: const Text(
+                                    //     //                 "Your session has been cancelled due to your unavailability.",
+                                    //     //                 style: TextStyle(
+                                    //     //                     fontFamily:
+                                    //     //                         productSans),
+                                    //     //               ),
+                                    //     //               actions: [
+                                    //     //                 TextButton(
+                                    //     //                   child: const Text(
+                                    //     //                     "OK",
+                                    //     //                     style: TextStyle(
+                                    //     //                         fontFamily:
+                                    //     //                             productSans,
+                                    //     //                         color: black),
+                                    //     //                   ),
+                                    //     //                   onPressed: () {
+                                    //     //                     Navigator.pop(
+                                    //     //                         dialogContext);
+                                    //     //                   },
+                                    //     //                 ),
+                                    //     //               ],
+                                    //     //             );
+                                    //     //           },
+                                    //     //         );
+                                    //     //       } else {
+                                    //     //         Get.to(CallingPage(
+                                    //     //           callType: int.parse(
+                                    //     //               joinSessionsOnValue
+                                    //     //                   .session!
+                                    //     //                   .serviceType!),
+                                    //     //           joinSessionModel:
+                                    //     //               joinSessionsOnValue,
+                                    //     //           userId: int.parse(
+                                    //     //               userIdValue.toString()),
+                                    //     //         ));
+                                    //     //       }
+                                    //     //     } else {
+                                    //     //       Get.snackbar("Calling",
+                                    //     //           "Please enter valid meeting id");
+                                    //     //     }
+                                    //     //   });
+                                    //     //   break;
+                                    //     default:
+                                    //   }
                                     // }
                                   },
                                   child: sessionItemsWidget(index),
@@ -1111,15 +1148,6 @@ class _SessionTabState extends State<SessionTab> {
               GestureDetector(
                 onTap: () {
                   showRecommendedProductSheet(context);
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => StoreTab(
-                  //       onPush: widget.onPush,
-                  //       isFromOther: true,
-                  //     ),
-                  //   ),
-                  // );
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -1143,6 +1171,264 @@ class _SessionTabState extends State<SessionTab> {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  await _homeController
+                      .fetchSessionDetailsData(
+                        sessionId: sessionData.orderId.toString(),
+                      )
+                      .then((value) {
+                        showSessionDetailSheet(context, value.data!.details!);
+                      });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    //  border: Border.all(color: const Color(0xFF221d25)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Center(
+                      child: Text(
+                        "Seassion Details",
+                        style: TextStyle(
+                          fontFamily: productSans,
+                          fontSize: 12,
+                          color: black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _showUpdateNoteDialog(context, sessionData.id.toString());
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    //  border: Border.all(color: const Color(0xFF221d25)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Center(
+                      child: Text(
+                        "Upate Note",
+                        style: TextStyle(
+                          fontFamily: productSans,
+                          fontSize: 12,
+                          color: black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpdateNoteDialog(BuildContext context, String sessionId) {
+    final TextEditingController noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            "Update Note",
+            style: TextStyle(
+              fontFamily: productSans,
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: TextField(
+            controller: noteController,
+            maxLines: 5,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: "Enter your note here...",
+              hintStyle: const TextStyle(
+                color: Colors.white54,
+                fontFamily: productSans,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              filled: true,
+              fillColor: const Color(0xFF2c2732),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.red, fontFamily: productSans),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                String note = noteController.text.trim();
+                if (note.isNotEmpty) {
+                  final result = await _homeController.fetchUpdateNoteData(
+                    sessionId: sessionId,
+                    notes: note,
+                  );
+
+                  Navigator.pop(context);
+
+                  // yaha assume kar rahe hain ki API response me `status` field aata hai
+                  if (result.success == true) {
+                    Get.snackbar(
+                      "Success",
+                      result.message ?? "Note updated successfully!",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
+                  } else {
+                    Get.snackbar(
+                      "Failed",
+                      result.message ?? "Something went wrong!",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                }
+              },
+
+              child: const Text(
+                "Update",
+                style: TextStyle(color: black, fontFamily: productSans),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) return "-";
+    return DateFormat("yyyy-MM-dd").format(date);
+  }
+
+  void showSessionDetailSheet(BuildContext context, SessionDetails details) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF221d25),
+            border: Border(top: BorderSide(color: Color(0xFF221d25))),
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(10),
+              topLeft: Radius.circular(10),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Center(
+                  child: Text(
+                    "Session Details",
+                    style: TextStyle(
+                      fontFamily: productSans,
+                      fontSize: 18,
+                      color: white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Order info
+                _detailRow("Order ID:", details.orderId?.toString() ?? ""),
+                _detailRow("Order Date:", formatDate(details.date)),
+                _detailRow("Session Time:", details.consultationTime ?? "NA"),
+
+                const Divider(color: Colors.white30, height: 30),
+
+                // Customer info
+                _detailRow("Customer Name:", details.fullName ?? ""),
+                _detailRow("Customer Gender:", ""),
+                _detailRow("Date Of Birth:", formatDate(details.dateOfBirth)),
+                _detailRow("Birth Time:", details.birthTime ?? ""),
+                _detailRow(
+                  "Birth Date Accuracy:",
+                  details.birthTimeAccuracy ?? "",
+                ),
+                _detailRow("Place Of Birth:", details.placeOfBirth ?? ""),
+                const SizedBox(height: 50),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Reusable widget: one detail per line
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: productSans,
+              fontSize: 14,
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontFamily: productSans,
+                fontSize: 14,
+                color: white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1157,7 +1443,8 @@ class _SessionTabState extends State<SessionTab> {
       builder: (BuildContext context) {
         return Container(
           decoration: const BoxDecoration(
-            color: white,
+            color: black,
+            border: Border(top: BorderSide(color: primaryColor)),
             borderRadius: BorderRadius.only(
               topRight: Radius.circular(10),
               topLeft: Radius.circular(10),
@@ -1172,6 +1459,7 @@ class _SessionTabState extends State<SessionTab> {
                 style: TextStyle(
                   fontFamily: productSans,
                   fontSize: 16,
+                  color: white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1185,8 +1473,8 @@ class _SessionTabState extends State<SessionTab> {
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: white,
-                        border: Border.all(color: black),
+                        color: const Color(0xFF221d25),
+                        // border: Border.all(color: primaryColor),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(10.0),
@@ -1217,22 +1505,23 @@ class _SessionTabState extends State<SessionTab> {
                                       "Unknown Product",
                                       fontSize: 14.0,
                                       fontFamily: productSans,
+                                      textColor: white,
                                       fontWeight: FontWeight.w600,
                                     ),
 
-                                    // const SizedBox(height: 6),
-                                    // text(
-                                    //   "₹${product.price ?? "0.00"}",
-                                    //   textColor: black,
-                                    //   fontSize: 12.0,
-                                    //   fontFamily: productSans,
-                                    //   fontWeight: FontWeight.w500,
-                                    // ),
+                                    const SizedBox(height: 6),
+                                    text(
+                                      "₹0.00",
+                                      textColor: white,
+                                      fontSize: 12.0,
+                                      fontFamily: productSans,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                     Row(
                                       children: [
                                         text(
                                           "01",
-                                          textColor: black,
+                                          textColor: white,
                                           fontSize: 12.0,
                                           fontFamily: productSans,
                                           fontWeight: FontWeight.w500,
@@ -1267,7 +1556,7 @@ class _SessionTabState extends State<SessionTab> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: black,
+                                  color: primaryColor,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: text(
@@ -1275,7 +1564,7 @@ class _SessionTabState extends State<SessionTab> {
                                   fontSize: 12.0,
                                   fontFamily: productSans,
                                   fontWeight: FontWeight.w500,
-                                  textColor: Colors.white,
+                                  textColor: black,
                                 ),
                               ),
                             ),

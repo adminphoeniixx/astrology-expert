@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "876265852052",
+    "project_id": "karmik-24969",
+    "storage_bucket": "karmik-24969.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876265852052:android:b2a91f58fcc3ea85ae7881",
+        "android_client_info": {
+          "package_name": "moooon.app.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqzIApNHcDOwmZMWsF0e31GTvuSDexVGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876265852052:android:74f0dfdb345df527ae7881",
+        "android_client_info": {
+          "package_name": "vedam.app.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqzIApNHcDOwmZMWsF0e31GTvuSDexVGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876265852052:android:6a2aaae649be7264ae7881",
+        "android_client_info": {
+          "package_name": "vedam.roots.expert.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqzIApNHcDOwmZMWsF0e31GTvuSDexVGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
