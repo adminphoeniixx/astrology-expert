@@ -523,78 +523,137 @@ class WebApiServices {
     return _earningDetailsModel;
   }
 
-UpdateNoteModel _updateNoteModel = UpdateNoteModel();
+  UpdateNoteModel _updateNoteModel = UpdateNoteModel();
 
-Future<UpdateNoteModel> getUpdateNoteModel({
-  required String sessionId,
-  required String notes,
-}) async {
-  try {
-    String url = "${GetBaseUrl + GetDomainUrl2}service-sessions/notes";
+  Future<UpdateNoteModel> getUpdateNoteModel({
+    required String sessionId,
+    required String notes,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl2}service-sessions/notes";
 
-    final bodyData = {
-      "id": int.tryParse(sessionId) ?? sessionId, 
-      "notes": notes,
-    };
+      final bodyData = {
+        "id": int.tryParse(sessionId) ?? sessionId,
+        "notes": notes,
+      };
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        ...(await authHeader()),
-        "Content-Type": "application/json",
-      },
-      body: json.encode(bodyData),
-    );
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...(await authHeader()), "Content-Type": "application/json"},
+        body: json.encode(bodyData),
+      );
 
-    print("########UpdateNoteModel#############");
-    print(url);
-    print("Headers: ${await authHeader()}");
-    print("Body Sent: ${json.encode(bodyData)}");
-    print("Response: ${response.body}");
-    print("#########UpdateNoteModel############");
+      print("########UpdateNoteModel#############");
+      print(url);
+      print("Headers: ${await authHeader()}");
+      print("Body Sent: ${json.encode(bodyData)}");
+      print("Response: ${response.body}");
+      print("#########UpdateNoteModel############");
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      _updateNoteModel = UpdateNoteModel.fromJson(jsonDecode(response.body));
-      _updateNoteModel.requestStatus = RequestStatus.loaded;
-    } else if (response.statusCode == 401 || response.statusCode == 404) {
-      _updateNoteModel.requestStatus = RequestStatus.unauthorized;
-    } else if (response.statusCode == 500) {
-      _updateNoteModel.requestStatus = RequestStatus.server;
-    } else {
-      throw HttpException("Unexpected response: ${response.statusCode}");
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _updateNoteModel = UpdateNoteModel.fromJson(jsonDecode(response.body));
+        _updateNoteModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _updateNoteModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _updateNoteModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_updateNoteModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_updateNoteModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_updateNoteModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_updateNoteModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
     }
-  } on SocketException catch (e) {
-    _firebaseService.firebaseSocketException(
-      apiCall: "_updateNoteModel",
-      userId: userId,
-      message: e.message,
-    );
-    throw Failure(e.message);
-  } on FormatException catch (e) {
-    _firebaseService.firebaseFormatException(
-      apiCall: "_updateNoteModel",
-      userId: userId,
-      message: e.message,
-    );
-    throw Failure(e.message);
-  } on HttpException catch (e) {
-    _firebaseService.firebaseHttpException(
-      apiCall: "_updateNoteModel",
-      userId: userId,
-      message: e.message,
-    );
-    throw Failure(e.message);
-  } catch (e) {
-    _firebaseService.firebaseDioError(
-      apiCall: "_updateNoteModel",
-      code: "401|404",
-      userId: userId,
-      message: e.toString(),
-    );
+
+    return _updateNoteModel;
   }
 
-  return _updateNoteModel;
-}
+  Future<UpdateNoteModel> getNotesModel({required String sessionId}) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl2}service-sessions/show-notes";
+
+      final bodyData = {"id": int.tryParse(sessionId) ?? sessionId};
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...(await authHeader()), "Content-Type": "application/json"},
+        body: json.encode(bodyData),
+      );
+
+      print("########getNotesModel#############");
+      print(url);
+      print("Headers: ${await authHeader()}");
+      print("Body Sent: ${json.encode(bodyData)}");
+      print("Response: ${response.body}");
+      print("#########getNotesModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _updateNoteModel = UpdateNoteModel.fromJson(jsonDecode(response.body));
+        _updateNoteModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _updateNoteModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _updateNoteModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "getNotesModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "getNotesModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "getNotesModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "getNotesModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _updateNoteModel;
+  }
 
   // Future<HomeModel> getHomeDataForCheck(Map<String, String> authHeader) async {
   //   final fcmToken = await _fetchFcmToken();

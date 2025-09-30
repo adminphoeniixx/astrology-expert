@@ -167,6 +167,21 @@ class HomeController extends GetxController {
     return _updateNoteModel!;
   }
 
+  UpdateNoteModel? getNoteModel;
+  var isGetNoteModelLoading = false.obs;
+
+  Future<UpdateNoteModel> fetchGetNoteData({required String sessionId}) async {
+    try {
+      isGetNoteModelLoading(true);
+      getNoteModel = await _webApiServices!.getNotesModel(sessionId: sessionId);
+    } on Failure catch (e) {
+      isGetNoteModelLoading(false);
+      _setFailure(e);
+    }
+    isGetNoteModelLoading(false);
+    return getNoteModel!;
+  }
+
   // Future<HomeModel> getHomeDataForCheck(Map<String, String> authHeader) async {
   //   try {
   //     isHomeLoding(true);

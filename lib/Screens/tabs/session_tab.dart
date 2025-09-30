@@ -1240,10 +1240,17 @@ class _SessionTabState extends State<SessionTab> {
     );
   }
 
-  void _showUpdateNoteDialog(BuildContext context, String sessionId) {
+  void _showUpdateNoteDialog(BuildContext context, String sessionId) async {
     final TextEditingController noteController = TextEditingController();
 
+    final noteResult = await _homeController.fetchGetNoteData(
+      sessionId: sessionId,
+    );
+
+    noteController.text = noteResult.data!.notes ?? "";
+
     showDialog(
+      // ignore: use_build_context_synchronously
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -1302,9 +1309,9 @@ class _SessionTabState extends State<SessionTab> {
                     notes: note,
                   );
 
+                  // ignore: use_build_context_synchronously
                   Navigator.pop(context);
 
-                  // yaha assume kar rahe hain ki API response me `status` field aata hai
                   if (result.success == true) {
                     Get.snackbar(
                       "Success",
@@ -1324,7 +1331,6 @@ class _SessionTabState extends State<SessionTab> {
                   }
                 }
               },
-
               child: const Text(
                 "Update",
                 style: TextStyle(color: black, fontFamily: productSans),
