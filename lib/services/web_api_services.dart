@@ -9,6 +9,7 @@ import 'package:astro_partner_app/model/auth/getprofile_model.dart';
 import 'package:astro_partner_app/model/auth/sinup_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
+import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
@@ -653,6 +654,143 @@ class WebApiServices {
     }
 
     return _updateNoteModel;
+  }
+
+  ProductListModel _productListModel = ProductListModel();
+
+  Future<ProductListModel> getProductListModel({
+    required String sessionId,
+  }) async {
+    try {
+      String url =
+          "${GetBaseUrl + GetDomainUrl2}recommended-products/${int.tryParse(sessionId) ?? sessionId}";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {...(await authHeader()), "Content-Type": "application/json"},
+      );
+
+      print("########_productListModel#############");
+      print(url);
+      print("Headers: ${await authHeader()}");
+      print("Response: ${response.body}");
+      print("#########_productListModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _productListModel = ProductListModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _productListModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _productListModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _productListModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_productListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_productListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_productListModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_productListModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _productListModel;
+  }
+
+  ProductListModel _recommendProductModel = ProductListModel();
+
+  Future<ProductListModel> getRecommendProductModel({
+    required String sessionId,  required List<int> productIds,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl2}reschedule-product-assign";
+
+      final bodyData = {
+        "session_id": int.tryParse(sessionId) ?? sessionId,
+        "productIds": productIds,
+      };
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...(await authHeader()), "Content-Type": "application/json"},
+        body: json.encode(bodyData),
+      );
+
+      print("########_recommendProductModel#############");
+      print(url);
+      print("Headers: ${await authHeader()}");
+      print("Body Sent: ${json.encode(bodyData)}");
+
+      print("Response: ${response.body}");
+      print("#########_recommendProductModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _recommendProductModel = ProductListModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _recommendProductModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _recommendProductModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _recommendProductModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_recommendProductModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_recommendProductModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_recommendProductModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_recommendProductModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _recommendProductModel;
   }
 
   // Future<HomeModel> getHomeDataForCheck(Map<String, String> authHeader) async {

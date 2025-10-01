@@ -3,21 +3,22 @@ import 'dart:io';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
-import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
-import 'package:astro_partner_app/helper/local_storage.dart';
+import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/widgets/agora_video_calling/calling.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
-import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SessionTab extends StatefulWidget {
   const SessionTab({super.key});
@@ -57,6 +58,10 @@ class _SessionTabState extends State<SessionTab> {
     "Call Consultation": "3",
     "Video Consultation": "4",
   };
+  Future<bool> requestPermission() async {
+    var status = await Permission.storage.request();
+    return status.isGranted;
+  }
 
   Widget _buildFilterChip(String label, bool isSelected) {
     return GestureDetector(
@@ -1088,66 +1093,83 @@ class _SessionTabState extends State<SessionTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: () async {
-                  // bool hasPermission = await requestPermission();
-                  // if (hasPermission) {
-                  //   if (context.mounted) {
-                  //     // await showDownloadDialog(
-                  //     //     context, sessionData.audioFile, sessionData.id);
-                  //     showAudioDialog(context, sessionData.audioFile);
-                  //   }
-                  // } else {
-                  //   if (context.mounted) {
-                  //     ScaffoldMessenger.of(context).showSnackBar(
-                  //       const SnackBar(
-                  //           content: Text("Storage permission denied.")),
-                  //     );
-                  //   }
-                  // }
-                  // showAudioDialog(context, sessionData.audioFile);
+              sessionData.serviceType!.name != "Audio Recording"
+                  ? const SizedBox()
+                  : GestureDetector(
+                      onTap: () async {
+                        var granted = await requestStoragePermission(context);
+                        if (!granted) return; // Exit agar permission nahi mili
 
-                  // _homeController
-                  //     .joinAudioSessions(
-                  //         sessionId: _homeController
-                  //             .commingSessionListData[index].id
-                  //             .toString())
-                  //     .then((onValue) {
-                  //   if (onValue.isFileUploaded!) {
-                  //     // (FileViewer(
-                  //     //   fileType: "audio",
-                  //     //   fileUrl: onValue.file!,
-                  //     // ));
-                  //   //  showAudioDialog(context, onValue.file!);
-                  //   } else {
-                  //     Get.snackbar("Audio", onValue.message ?? "");
-                  //   }
-                  // });
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF221d25),
-                    border: Border.all(color: const Color(0xFF221d25)),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Center(
-                      child: Text(
-                        "Play Recording",
-                        style: TextStyle(
-                          fontFamily: productSans,
-                          fontSize: 12,
-                          color: white,
+                        FilePickerResult? result = await FilePicker.platform
+                            .pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: ["mp3", "wav", "m4a"],
+                            );
+
+                        if (result == null) {
+                          return; // user ne cancel kar diya
+                        }
+
+                        File file = File(result.files.single.path!);
+
+                        // var response = await _homeController.joinAudioSessions(
+                        //   sessionId: sessionData.id.toString(),
+                        //   file: file,
+                        // );
+
+                        // if (response.isFileUploaded == true) {
+                        //   if (context.mounted) {
+                        //     showAudioDialog(
+                        //       context,
+                        //       response.file!, // uploaded audio ka URL
+                        //     );
+                        //   }
+                        // } else {
+                        //   if (context.mounted) {
+                        //     Get.snackbar(
+                        //       "Audio",
+                        //       response.message ?? "Upload failed",
+                        //     );
+                        //   }
+                        // }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF221d25),
+                          border: Border.all(color: const Color(0xFF221d25)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 8,
+                          ),
+                          child: Center(
+                            child: Text(
+                              "Upload Recording",
+                              style: TextStyle(
+                                fontFamily: productSans,
+                                fontSize: 12,
+                                color: white,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
               GestureDetector(
-                onTap: () {
-                  showRecommendedProductSheet(context);
+                onTap: () async {
+                  await _homeController
+                      .fetchProductListModeData(
+                        sessionId: sessionData.orderId.toString(),
+                      )
+                      .then((value) {
+                        showRecommendedProductSheet(
+                          context,
+                          value.data!.products!,
+                          sessionData.orderId.toString(),
+                        );
+                      });
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -1238,6 +1260,172 @@ class _SessionTabState extends State<SessionTab> {
         ],
       ),
     );
+  }
+
+  Future<bool> requestStoragePermission(BuildContext context) async {
+    if (await Permission.storage.isGranted) {
+      return true;
+    }
+
+    // For Android 11+ (Scoped Storage)
+    if (await Permission.manageExternalStorage.request().isGranted) {
+      return true;
+    }
+
+    // Agar phir bhi deny hua
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Storage permission denied. Please allow in settings."),
+        ),
+      );
+    }
+
+    return false;
+  }
+
+  Future<void> showAudioDialog(BuildContext context, String audioUrl) async {
+    final player = AudioPlayer();
+
+    try {
+      await player.setSourceUrl(audioUrl); // ✅ audioplayers API
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load audio: $e')));
+      return;
+    }
+
+    Duration total = Duration.zero;
+    Duration position = Duration.zero;
+
+    final durationSub = player.onDurationChanged.listen((d) => total = d);
+    final positionSub = player.onPositionChanged.listen((p) => position = p);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setState) {
+            final posStream = player.onPositionChanged.listen((p) {
+              position = p;
+              setState(() {});
+            });
+            final durStream = player.onDurationChanged.listen((d) {
+              total = d;
+              setState(() {});
+            });
+            final stateStream = player.onPlayerStateChanged.listen((_) {
+              setState(() {});
+            });
+
+            void cleanupInner() {
+              posStream.cancel();
+              durStream.cancel();
+              stateStream.cancel();
+            }
+
+            // dispose inner listeners when the sheet is popped
+            Future.microtask(() {
+              if (!sheetCtx.mounted) cleanupInner();
+            });
+
+            final isPlaying = player.state == PlayerState.playing;
+
+            String fmt(Duration d) {
+              String two(int n) => n.toString().padLeft(2, '0');
+              final h = d.inHours,
+                  m = d.inMinutes.remainder(60),
+                  s = d.inSeconds.remainder(60);
+              return h > 0
+                  ? '${two(h)}:${two(m)}:${two(s)}'
+                  : '${two(m)}:${two(s)}';
+            }
+
+            final maxMs = (total.inMilliseconds <= 0)
+                ? 1.0
+                : total.inMilliseconds.toDouble();
+            final valMs = position.inMilliseconds
+                .clamp(0, total.inMilliseconds > 0 ? total.inMilliseconds : 1)
+                .toDouble();
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Audio Preview',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Text(fmt(position)),
+                        Expanded(
+                          child: Slider(
+                            value: valMs,
+                            min: 0,
+                            max: maxMs,
+                            onChanged: (v) =>
+                                player.seek(Duration(milliseconds: v.toInt())),
+                          ),
+                        ),
+                        Text(fmt(total)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () async {
+                            await player.seek(Duration.zero);
+                            await player.pause();
+                          },
+                          icon: const Icon(Icons.stop),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            if (isPlaying) {
+                              await player.pause();
+                            } else {
+                              await player.resume();
+                            }
+                            setState(() {});
+                          },
+                          icon: Icon(
+                            isPlaying ? Icons.pause : Icons.play_arrow,
+                          ),
+                          label: Text(isPlaying ? 'Pause' : 'Play'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Cleanup after the sheet closes
+    await player.stop();
+    await player.release();
+    await player.dispose();
+    await durationSub.cancel();
+    await positionSub.cancel();
   }
 
   void _showUpdateNoteDialog(BuildContext context, String sessionId) async {
@@ -1440,149 +1628,192 @@ class _SessionTabState extends State<SessionTab> {
     );
   }
 
-  void showRecommendedProductSheet(BuildContext context) {
+  void showRecommendedProductSheet(
+    BuildContext context,
+    List<Product> products,
+    String sessionId,
+  ) {
+    // ✅ Start me hi recommended products ko select kar lo
+    Set<int> selectedIndexes = {
+      for (int i = 0; i < products.length; i++)
+        if (products[i].isSelected == true) i,
+    };
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
       ),
       builder: (BuildContext context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: black,
-            border: Border(top: BorderSide(color: primaryColor)),
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(10),
-              topLeft: Radius.circular(10),
-            ),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Recommended Products",
-                style: TextStyle(
-                  fontFamily: productSans,
-                  fontSize: 16,
-                  color: white,
-                  fontWeight: FontWeight.bold,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: black,
+                border: Border(top: BorderSide(color: primaryColor)),
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(10),
+                  topLeft: Radius.circular(10),
                 ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 400, // Define a height for the list
-                child: ListView.builder(
-                  itemCount: 4,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: const Color(0xFF221d25),
-                        // border: Border.all(color: primaryColor),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                // Image Section
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    height: 50,
-                                    width: 50,
-                                    color: Colors.grey[200],
-                                    child: const Icon(
-                                      Icons.image_not_supported,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    text(
-                                      "Unknown Product",
-                                      fontSize: 14.0,
-                                      fontFamily: productSans,
-                                      textColor: white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Recommended Products",
+                    style: TextStyle(
+                      fontFamily: productSans,
+                      fontSize: 16,
+                      color: white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-                                    const SizedBox(height: 6),
-                                    text(
-                                      "₹0.00",
-                                      textColor: white,
+                  // Product list
+                  SizedBox(
+                    height: 400,
+                    child: ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        final isSelected = selectedIndexes.contains(index);
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (isSelected) {
+                                selectedIndexes.remove(index);
+                              } else {
+                                selectedIndexes.add(index);
+                              }
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: const Color(0xFF221d25),
+                              border: Border.all(
+                                color: isSelected
+                                    ? primaryColor
+                                    : const Color(0xFF221d25),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      text(
+                                        product.name ?? "",
+                                        fontSize: 14.0,
+                                        fontFamily: productSans,
+                                        textColor: white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      text(
+                                        "₹${product.sellingPrice ?? ""}",
+                                        textColor: white,
+                                        fontSize: 12.0,
+                                        fontFamily: productSans,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      text(
+                                        "₹${product.price ?? ""}",
+                                        textColor: Colors.grey,
+                                        lineThrough: true,
+                                        fontSize: 12.0,
+                                        fontFamily: productSans,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? primaryColor
+                                          : Colors.grey,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: text(
+                                      isSelected
+                                          ? "Recommended"
+                                          : "Not Recommended",
                                       fontSize: 12.0,
                                       fontFamily: productSans,
                                       fontWeight: FontWeight.w500,
+                                      textColor: black,
                                     ),
-                                    Row(
-                                      children: [
-                                        text(
-                                          "01",
-                                          textColor: white,
-                                          fontSize: 12.0,
-                                          fontFamily: productSans,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        const SizedBox(width: 5),
-                                        text(
-                                          "00",
-                                          textColor: Colors.grey,
-                                          lineThrough: true,
-                                          fontSize: 12.0,
-                                          fontFamily: productSans,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                // changeScreen(
-                                //   context,
-                                //   ProductDetailsScreen(
-                                //     productData: product,
-                                //   ),
-                                // );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: text(
-                                  "Buy",
-                                  fontSize: 12.0,
-                                  fontFamily: productSans,
-                                  fontWeight: FontWeight.w500,
-                                  textColor: black,
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Recommend button
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    );
-                  },
-                ),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: selectedIndexes.isEmpty
+                        ? null
+                        : () async {
+                            final selectedIds = selectedIndexes
+                                .map((i) => products[i].id!)
+                                .toList();
+
+                            bool success = await _homeController
+                                .fetchRecommendProductModelData(
+                                  sessionId: sessionId,
+                                  productIds: selectedIds,
+                                );
+
+                            if (success) {
+                              setState(() {
+                                for (var i in selectedIndexes) {
+                                  products[i].isSelected = true;
+                                }
+                              });
+                              Navigator.pop(context);
+                            }
+                          },
+                    child: const Text(
+                      "Recommend Selected",
+                      style: TextStyle(
+                        color: black,
+                        fontSize: 14,
+                        fontFamily: productSans,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
