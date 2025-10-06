@@ -167,14 +167,14 @@ class _SessionTabState extends State<SessionTab> {
                               } else {
                                 return GestureDetector(
                                   onTap: () async {
-                                    Get.to(
-                                      CallingPage(
-                                        callType: 0,
-                                        // joinSessionModel:
-                                        //     joinSessionsOnValue,
-                                        userId: 1,
-                                      ),
-                                    );
+                                   // Get.to(
+                                    //   CallingPage(
+                                    //     callType: 0,
+                                    //     // joinSessionModel:
+                                    //     //     joinSessionsOnValue,
+                                    //     userId: 1,
+                                    //   ),
+                                    // );
                                     // Get.to(
                                     //     const  FirebaseChatScreen(
                                     //         // chatSessionModel:

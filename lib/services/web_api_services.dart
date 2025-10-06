@@ -218,21 +218,33 @@ class WebApiServices {
       final fcmToken = await _fetchFcmToken();
 
       String url = GetBaseUrl + GetDomainUrl + VERIFY_LOGIN_WITH_OTP;
-      dynamic request = http.MultipartRequest('POST', Uri.parse(url));
+      var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      request.fields.addAll({
+      // Prepare request body
+      Map<String, String> body = {
         "mobile_number": mobile,
         "otp": otp,
-        'device_token': fcmToken,
-      });
-      print("########token#############");
-      print({"mobile_number": mobile, "otp": otp, 'device_token': fcmToken});
+        "device_token": fcmToken,
+      };
+
+      // Add to request
+      request.fields.addAll(body);
+
+      // ✅ Print request URL and body for debugging
+      print("######## REQUEST DEBUG ########");
+      print("URL: $url");
+      print("Headers: ${request.headers}");
+      print("Body: $body");
+      print("################################");
 
       http.StreamedResponse response = await request.send();
-      dynamic responseData = await response.stream.bytesToString();
-      print("########register response#############");
-      print(responseData);
-      print("#####################");
+      var responseData = await response.stream.bytesToString();
+
+      print("######## RESPONSE DEBUG ########");
+      print("Status Code: ${response.statusCode}");
+      print("Body: $responseData");
+      print("################################");
+
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
         if (jsonDecode(responseData)['status']) {
@@ -243,7 +255,6 @@ class WebApiServices {
         }
       } else if (response.statusCode == httpsCode_404 ||
           response.statusCode == httpsCode_401) {
-        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
         _signUpModel.requestStatus = RequestStatus.unauthorized;
       } else if (response.statusCode == httpsCode_500) {
         _signUpModel.requestStatus = RequestStatus.server;
@@ -277,6 +288,7 @@ class WebApiServices {
       );
       throw Failure(e.message);
     }
+
     return _signUpModel;
   }
 
@@ -724,7 +736,8 @@ class WebApiServices {
   ProductListModel _recommendProductModel = ProductListModel();
 
   Future<ProductListModel> getRecommendProductModel({
-    required String sessionId,  required List<int> productIds,
+    required String sessionId,
+    required List<int> productIds,
   }) async {
     try {
       String url = "${GetBaseUrl + GetDomainUrl2}reschedule-product-assign";

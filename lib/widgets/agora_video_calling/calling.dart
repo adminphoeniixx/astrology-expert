@@ -20,11 +20,19 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 class CallingPage extends StatefulWidget {
   // final JoinSessionModel joinSessionModel;
+  final String appId;
+  final String agoraChannel;
+  final String agoraToken;
+  final String callerName;
+
   final int userId;
   final int callType; // 0 for audio, 1 for video
   const CallingPage({
-    super.key,
+    super.key,required this.callerName,
     required this.callType,
+    required this.appId,
+    required this.agoraChannel,
+    required this.agoraToken,
     // required this.joinSessionModel,
     required this.userId,
   });
@@ -54,9 +62,7 @@ class _CallingPageState extends State<CallingPage> {
     _engine = createAgoraRtcEngine();
     await _engine.initialize(
       RtcEngineContext(
-        appId:
-            "widget.joinSessionModel.appId ?? "
-            "",
+        appId: widget.appId,
         channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
       ),
     );
@@ -145,11 +151,9 @@ class _CallingPageState extends State<CallingPage> {
     }
     await _engine.joinChannel(
       token:
-          "widget.joinSessionModel.token ?? "
-          "",
+         widget.agoraToken,
       channelId:
-          "widget.joinSessionModel.channelName ?? "
-          "",
+          widget.agoraChannel,
       uid: widget.userId,
       options: const ChannelMediaOptions(),
     );
@@ -249,13 +253,13 @@ class _CallingPageState extends State<CallingPage> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                CircleAvatar(
+                                const CircleAvatar(
                                   radius: 50,
                                   backgroundColor: Colors.transparent,
                                   child: ClipOval(
                                     child: Image(
                                       image:
-                                          const AssetImage(launchImage)
+                                          AssetImage(launchImage)
                                               as ImageProvider,
                                       fit: BoxFit.contain,
                                       width: 100,
@@ -265,9 +269,7 @@ class _CallingPageState extends State<CallingPage> {
                                 ),
                                 const SizedBox(height: 16), // Add spacing
                                 text(
-                                  // widget.joinSessionModel.session!
-                                  //         .astrologerName ??
-                                  "",
+                                  widget.callerName,
                                   fontSize: 28.0,
                                   textColor: white,
                                   fontWeight: FontWeight.w600,
@@ -460,8 +462,7 @@ class _CallingPageState extends State<CallingPage> {
           canvas: VideoCanvas(uid: _remoteUid),
           connection: RtcConnection(
             channelId:
-                " widget.joinSessionModel.channelName ?? "
-                "",
+               widget.agoraChannel,
           ),
         ),
       );
