@@ -1,210 +1,650 @@
-// import 'package:astro/constants/colors_const.dart';
-// import 'package:astro/services/streem_method.dart';
-// import 'package:astro/widget/connecting_call_widget.dart';
-// import 'package:astro_partner_app/constants/colors_const.dart';
+import 'dart:io';
+import 'package:astro_partner_app/constants/colors_const.dart';
+import 'package:astro_partner_app/widgets/app_widget.dart';
+import 'package:astro_partner_app/widgets/countdown_timer.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+
+// Example constants — replace with yours if needed
+// const appId = "3f16ac1d315140d398de76194bab349e";
+// const token =
+//     "007eJxTYPB8+PrVP26+KZUbXh5V+T6netO93MevHV9NkGYu/thUsrtQgcE4zdAsMdkwxdjQ1NDEIMXY0iIl1dzM0NIkKTHJ2MQy1f37k4yGQEaGcBZBBkYoBPFZGEpSi0sYGABRKSIN";
+// const channel = "test";
+
+class CallingFreePage extends StatefulWidget {
+  final int callType; // 0 = audio, 1 = video
+  final String userName;
+  final String? userImageUrl;
+  final int userId;
+  final String appId;
+  final String token;
+  final String channel;
+
+  const CallingFreePage({
+    super.key,
+    required this.callType,
+    required this.userName,
+    required this.userId,
+    required this.userImageUrl,
+    required this.appId,
+    required this.token,
+    required this.channel,
+  });
+
+  @override
+  State<CallingFreePage> createState() => _CallingFreePageState();
+}
+
+class _CallingFreePageState extends State<CallingFreePage> {
+  RtcEngine? _engine;
+  bool _engineInitialized = false;
+  bool _localJoined = false;
+  bool _videoEnabled = true;
+  bool _audioMuted = false;
+  int? _remoteUid;
+  File? _selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initAgora();
+  }
+
+  Future<void> _initAgora() async {
+    try {
+      await [Permission.microphone, Permission.camera].request();
+      WakelockPlus.enable();
+
+      final engine = createAgoraRtcEngine();
+      await engine.initialize(RtcEngineContext(appId: widget.appId));
+
+      engine.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+            debugPrint('✅ Joined channel ${connection.channelId}');
+            setState(() => _localJoined = true);
+          },
+          onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
+            debugPrint('👤 Remote user joined: $remoteUid');
+            setState(() => _remoteUid = remoteUid);
+          },
+          onUserOffline:
+              (
+                RtcConnection connection,
+                int remoteUid,
+                UserOfflineReasonType reason,
+              ) {
+                debugPrint('👋 Remote user left');
+                setState(() => _remoteUid = null);
+                _endCall();
+              },
+          onError: (ErrorCodeType code, String msg) {
+            debugPrint('‼️ Agora error $code: $msg');
+          },
+        ),
+      );
+
+      await engine.enableAudio();
+      if (widget.callType == 1) {
+        await engine.enableVideo();
+        await engine.startPreview();
+      } else {
+        await engine.disableVideo();
+      }
+
+      await engine.setDefaultAudioRouteToSpeakerphone(true);
+
+      await engine.joinChannel(
+        token: widget.token,
+        channelId: widget.channel,
+        uid: widget.userId,
+        options: const ChannelMediaOptions(
+          clientRoleType: ClientRoleType.clientRoleBroadcaster,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
+
+      setState(() {
+        _engine = engine;
+        _engineInitialized = true;
+      });
+    } catch (e) {
+      debugPrint('❌ initAgora failed: $e');
+    }
+  }
+
+  Future<void> _endCall() async {
+    await _engine?.leaveChannel();
+    await _engine?.release();
+    await FlutterCallkitIncoming.endAllCalls();
+
+    WakelockPlus.disable();
+    Get.back();
+  }
+
+  Future<void> _toggleVideo() async {
+    if (_engine == null) return;
+    setState(() => _videoEnabled = !_videoEnabled);
+    if (_videoEnabled) {
+      await _engine!.enableVideo();
+      await _engine!.startPreview();
+    } else {
+      await _engine!.disableVideo();
+      await _engine!.stopPreview();
+    }
+  }
+
+  Future<void> _toggleMute() async {
+    if (_engine == null) return;
+    setState(() => _audioMuted = !_audioMuted);
+    await _engine!.muteLocalAudioStream(_audioMuted);
+  }
+
+  Future<void> _switchCamera() async {
+    if (_engine == null) return;
+    await _engine!.switchCamera();
+  }
+
+  Future<void> _uploadImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _selectedImage = File(picked.path));
+      debugPrint("🖼️ Selected image: ${_selectedImage!.path}");
+      Get.snackbar("Image Selected", "Path: ${_selectedImage!.path}");
+    }
+  }
+
+  @override
+  void dispose() {
+    _engine?.leaveChannel();
+    _engine?.release();
+    WakelockPlus.disable();
+    super.dispose();
+  }
+
+  Widget _remoteVideo() {
+    if (_remoteUid != null && _engineInitialized) {
+      return AgoraVideoView(
+        controller: VideoViewController.remote(
+          rtcEngine: _engine!,
+          connection: RtcConnection(channelId: widget.channel),
+          canvas: VideoCanvas(uid: _remoteUid),
+        ),
+      );
+    } else {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _remoteUid == null
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 350),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 50, // Adjust size as needed
+                              backgroundColor:
+                                  Colors.grey[300], // Placeholder color
+                              backgroundImage: NetworkImage(
+                                widget.userImageUrl!,
+                              ), // If image is available, load from network
+                            ),
+                            const SizedBox(height: 16),
+                            text(
+                              widget.userName,
+                              fontSize: 28.0,
+                              textColor: white,
+                              fontWeight: FontWeight.w600,
+                              isCentered: true,
+                            ),
+                            text(
+                              "Ringing...",
+                              fontSize: 18.0,
+                              textColor: white,
+                              isCentered: true,
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        child: CountdownTimer(
+                          txtColor: black,
+                          minutes: 1,
+                          textFontSize: 18.0,
+                          // onTimerComplete: () =>
+                          //  _showCompletionDialog(context),
+                        ),
+                      ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _localVideo() {
+    if (_localJoined && _videoEnabled && _engineInitialized) {
+      return Align(
+        alignment: Alignment.topLeft,
+        child: Container(
+          width: 120,
+          height: 160,
+          margin: const EdgeInsets.all(12),
+          child: AgoraVideoView(
+            controller: VideoViewController(
+              rtcEngine: _engine!,
+              canvas: const VideoCanvas(uid: 0),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return const SizedBox();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: !_engineInitialized
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                Center(
+                  child: widget.callType == 1 ? _remoteVideo() : _remoteVideo(),
+                ),
+                _localVideo(),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FloatingActionButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.0),
+                          ),
+                          heroTag: "end",
+                          backgroundColor: Colors.red,
+                          onPressed: _endCall,
+                          child: const Icon(Icons.call_end),
+                        ),
+                        const SizedBox(width: 15),
+                        if (widget.callType == 1)
+                          FloatingActionButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28.0),
+                            ),
+                            heroTag: "video",
+                            backgroundColor: _videoEnabled
+                                ? Colors.white
+                                : Colors.grey,
+                            onPressed: _toggleVideo,
+                            child: Icon(
+                              _videoEnabled
+                                  ? Icons.videocam
+                                  : Icons.videocam_off,
+                              color: Colors.black,
+                            ),
+                          ),
+                        const SizedBox(width: 15),
+                        FloatingActionButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.0),
+                          ),
+                          heroTag: "mute",
+                          backgroundColor: _audioMuted
+                              ? Colors.grey
+                              : Colors.white,
+                          onPressed: _toggleMute,
+                          child: Icon(
+                            _audioMuted ? Icons.mic_off : Icons.mic,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        if (widget.callType == 1)
+                          FloatingActionButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28.0),
+                            ),
+                            heroTag: "switch",
+                            backgroundColor: Colors.white,
+                            onPressed: _switchCamera,
+                            child: const Icon(
+                              Icons.cameraswitch,
+                              color: Colors.black,
+                            ),
+                          ),
+                        const SizedBox(width: 15),
+                        FloatingActionButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.0),
+                          ),
+                          heroTag: "image",
+                          backgroundColor: Colors.white,
+                          onPressed: _uploadImage,
+                          child: const Icon(Icons.image, color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+// import 'dart:io';
 // import 'package:flutter/material.dart';
-// import 'package:stream_video_flutter/stream_video_flutter.dart' as stream_video;
+// import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+// import 'package:get/get.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:wakelock_plus/wakelock_plus.dart';
+// import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+// import 'package:cached_network_image/cached_network_image.dart';
 
-// class AudioRoomScreen extends StatefulWidget {
-//   final dynamic callId;
-//   final dynamic token;
-//   final dynamic apikey;
+// // Example constants — replace with yours if needed
+// const appId = "3f16ac1d315140d398de76194bab349e";
+// const token =
+//     "007eJxTYPB8+PrVP26+KZUbXh5V+T6netO93MevHV9NkGYu/thUsrtQgcE4zdAsMdkwxdjQ1NDEIMXY0iIl1dzM0NIkKTHJ2MQy1f37k4yGQEaGcBZBBkYoBPFZGEpSi0sYGABRKSIN";
+// const channel = "test";
 
-//   const AudioRoomScreen(
-//       {super.key, this.callId, required this.token, required this.apikey});
+// class CallingFreePage extends StatefulWidget {
+//   final int callType; // 0 = audio, 1 = video
+//   final String userName;
+//   final String? userImageUrl;
+//   final int userId;
+
+//   const CallingFreePage({
+//     super.key,
+//     required this.callType,
+//     required this.userName,
+//     required this.userId,
+//     this.userImageUrl,
+//   });
 
 //   @override
-//   State<AudioRoomScreen> createState() => _AudioRoomScreenState();
+//   State<CallingFreePage> createState() => _CallingFreePageState();
 // }
 
-// class _AudioRoomScreenState extends State<AudioRoomScreen> {
-//   late stream_video.Call _audioRoomCall;
-//   late stream_video.CallState _callState;
-//   var microphoneEnabled = true;
-//   Future<stream_video.Call?>? _callFuture;
+// class _CallingFreePageState extends State<CallingFreePage> {
+//   RtcEngine? _engine;
+//   bool _engineInitialized = false;
+//   bool _localJoined = false;
+//   bool _videoEnabled = true;
+//   bool _audioMuted = false;
+//   int? _remoteUid;
+//   File? _selectedImage;
 
 //   @override
 //   void initState() {
 //     super.initState();
-//     _callFuture = _initializeCall();
+//     _initAgora();
 //   }
 
-//   Future<stream_video.Call?> _initializeCall() async {
-//     final call = await createAudioRoom(
-//       callId: widget.callId,
-//       apiKey: widget.apikey,
-//       role: "user",
-//       userId: "87",
-//       userName: "Aman",
-//       userToken: widget.token,
-//     );
+//   Future<void> _initAgora() async {
+//     try {
+//       await [Permission.microphone, Permission.camera].request();
+//       WakelockPlus.enable();
 
-//     call!.onPermissionRequest = (permissionRequest) {
-//       call.grantPermissions(
-//         userId: permissionRequest.user.id,
-//         permissions: permissionRequest.permissions.toList(),
+//       final engine = createAgoraRtcEngine();
+//       await engine.initialize(const RtcEngineContext(appId: appId));
+
+//       engine.registerEventHandler(
+//         RtcEngineEventHandler(
+//           onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
+//             debugPrint('✅ Joined channel ${connection.channelId}');
+//             setState(() => _localJoined = true);
+//           },
+//           onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
+//             debugPrint('👤 Remote user joined: $remoteUid');
+//             setState(() => _remoteUid = remoteUid);
+//           },
+//           onUserOffline:
+//               (
+//                 RtcConnection connection,
+//                 int remoteUid,
+//                 UserOfflineReasonType reason,
+//               ) {
+//                 debugPrint('👋 Remote user left');
+//                 setState(() => _remoteUid = null);
+//                 _endCall();
+//               },
+//           onError: (ErrorCodeType code, String msg) {
+//             debugPrint('‼️ Agora error $code: $msg');
+//           },
+//         ),
 //       );
-//     };
 
-//     _callState = call.state.value;
-//     return call;
+//       await engine.enableAudio();
+//       if (widget.callType == 1) {
+//         await engine.enableVideo();
+//         await engine.startPreview();
+//       } else {
+//         await engine.disableVideo();
+//       }
+
+//       await engine.setDefaultAudioRouteToSpeakerphone(true);
+
+//       await engine.joinChannel(
+//         token: token,
+//         channelId: channel,
+//         uid: widget.userId,
+//         options: const ChannelMediaOptions(
+//           clientRoleType: ClientRoleType.clientRoleBroadcaster,
+//           channelProfile: ChannelProfileType.channelProfileCommunication,
+//         ),
+//       );
+
+//       setState(() {
+//         _engine = engine;
+//         _engineInitialized = true;
+//       });
+//     } catch (e) {
+//       debugPrint('❌ initAgora failed: $e');
+//     }
+//   }
+
+//   Future<void> _endCall() async {
+//     await _engine?.leaveChannel();
+//     await _engine?.release();
+//     WakelockPlus.disable();
+//     await FlutterCallkitIncoming.endAllCalls();
+
+//     Get.back();
+//   }
+
+//   Future<void> _toggleVideo() async {
+//     if (_engine == null) return;
+//     setState(() => _videoEnabled = !_videoEnabled);
+//     if (_videoEnabled) {
+//       await _engine!.enableVideo();
+//       await _engine!.startPreview();
+//     } else {
+//       await _engine!.disableVideo();
+//       await _engine!.stopPreview();
+//     }
+//   }
+
+//   Future<void> _toggleMute() async {
+//     if (_engine == null) return;
+//     setState(() => _audioMuted = !_audioMuted);
+//     await _engine!.muteLocalAudioStream(_audioMuted);
+//   }
+
+//   Future<void> _switchCamera() async {
+//     if (_engine == null) return;
+//     await _engine!.switchCamera();
+//   }
+
+//   Future<void> _uploadImage() async {
+//     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+//     if (picked != null) {
+//       setState(() => _selectedImage = File(picked.path));
+//       debugPrint("🖼️ Selected image: ${_selectedImage!.path}");
+//       Get.snackbar("Image Selected", "Path: ${_selectedImage!.path}");
+//     }
 //   }
 
 //   @override
 //   void dispose() {
-//     _leaveCall();
+//     _engine?.leaveChannel();
+//     _engine?.release();
+//     WakelockPlus.disable();
+
 //     super.dispose();
 //   }
 
-//   Future<void> _leaveCall() async {
-//     await _audioRoomCall.end();
-//     await _audioRoomCall.leave();
+//   Widget _remoteVideo() {
+//     if (_remoteUid != null && _engineInitialized) {
+//       return AgoraVideoView(
+//         controller: VideoViewController.remote(
+//           rtcEngine: _engine!,
+//           connection: const RtcConnection(channelId: channel),
+//           canvas: VideoCanvas(uid: _remoteUid),
+//         ),
+//       );
+//     } else {
+//       return Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           CircleAvatar(
+//             radius: 60,
+//             backgroundImage: CachedNetworkImageProvider(widget.userImageUrl!),
+//           ),
+//           const SizedBox(height: 16),
+//           Text(
+//             widget.userName,
+//             style: const TextStyle(fontSize: 24, color: Colors.white),
+//           ),
+//           const SizedBox(height: 8),
+//           const Text("Ringing...", style: TextStyle(color: Colors.white70)),
+//         ],
+//       );
+//     }
+//   }
+
+//   Widget _localVideo() {
+//     if (_localJoined && _videoEnabled && _engineInitialized) {
+//       return Align(
+//         alignment: Alignment.topLeft,
+//         child: Container(
+//           width: 120,
+//           height: 160,
+//           margin: const EdgeInsets.all(12),
+//           child: AgoraVideoView(
+//             controller: VideoViewController(
+//               rtcEngine: _engine!,
+//               canvas: const VideoCanvas(uid: 0),
+//             ),
+//           ),
+//         ),
+//       );
+//     } else {
+//       return const SizedBox();
+//     }
 //   }
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
 //       backgroundColor: Colors.black,
-//       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-//       floatingActionButton: floatingWidget(),
-//       body: FutureBuilder<stream_video.Call?>(
-//         future: _callFuture,
-//         builder: (context, snapshot) {
-//           if (snapshot.connectionState == ConnectionState.waiting) {
-//             return CallConnectingScreen(callId: widget.callId);
-//           }
-
-//           if (snapshot.hasError) {
-//             // return CallConnectingScreen(callId: widget.callId);
-//             return const Center(
-//               child: Text('Cannot fetch call state.',
-//                   style: TextStyle(color: Colors.white)),
-//             );
-//           }
-
-//           if (snapshot.hasData) {
-//             _audioRoomCall = snapshot.data!;
-
-//             return StreamBuilder<stream_video.CallState>(
-//               initialData: _callState,
-//               stream: _audioRoomCall.state.valueStream,
-//               builder: (context, callSnapshot) {
-//                 if (callSnapshot.hasError) {
-//                   return const Center(
-//                     child: Text('Cannot fetch call state.'),
-//                   );
-//                 }
-
-//                 if (callSnapshot.hasData) {
-//                   var callState = callSnapshot.data!;
-
-//                   return SafeArea(
-//                     child: GridView.builder(
-//                       padding: const EdgeInsets.all(20),
-//                       itemCount: callState.callParticipants.length,
-//                       gridDelegate:
-//                           const SliverGridDelegateWithFixedCrossAxisCount(
-//                         crossAxisCount: 2,
-//                       ),
-//                       itemBuilder: (context, index) {
-//                         return Align(
-//                           widthFactor: 0.8,
-//                           child: stream_video.StreamCallParticipant(
-//                             call: _audioRoomCall,
-//                             backgroundColor: Colors.transparent,
-//                             participant: callState.callParticipants[index],
-//                             showParticipantLabel: false,
-//                             audioLevelIndicatorColor: primaryColor,
-//                             showConnectionQualityIndicator: false,
-//                             userAvatarTheme:
-//                                 const stream_video.StreamUserAvatarThemeData(
-//                               initialsBackground: primaryColor,
-//                               constraints: BoxConstraints.expand(
-//                                 height: 100,
-//                                 width: 100,
-//                               ),
+//       body: !_engineInitialized
+//           ? const Center(child: CircularProgressIndicator())
+//           : Stack(
+//               children: [
+//                 Center(
+//                   child: widget.callType == 1 ? _remoteVideo() : _remoteVideo(),
+//                 ),
+//                 _localVideo(),
+//                 Align(
+//                   alignment: Alignment.bottomCenter,
+//                   child: Padding(
+//                     padding: const EdgeInsets.only(bottom: 24),
+//                     child: Row(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         FloatingActionButton(
+//                           heroTag: "end",
+//                           backgroundColor: Colors.red,
+//                           onPressed: _endCall,
+//                           child: const Icon(Icons.call_end),
+//                         ),
+//                         const SizedBox(width: 15),
+//                         if (widget.callType == 1)
+//                           FloatingActionButton(
+//                             heroTag: "video",
+//                             backgroundColor: _videoEnabled
+//                                 ? Colors.white
+//                                 : Colors.grey,
+//                             onPressed: _toggleVideo,
+//                             child: Icon(
+//                               _videoEnabled
+//                                   ? Icons.videocam
+//                                   : Icons.videocam_off,
+//                               color: Colors.black,
 //                             ),
 //                           ),
-//                         );
-//                       },
+//                         const SizedBox(width: 15),
+//                         FloatingActionButton(
+//                           heroTag: "mute",
+//                           backgroundColor: _audioMuted
+//                               ? Colors.grey
+//                               : Colors.white,
+//                           onPressed: _toggleMute,
+//                           child: Icon(
+//                             _audioMuted ? Icons.mic_off : Icons.mic,
+//                             color: Colors.black,
+//                           ),
+//                         ),
+//                         const SizedBox(width: 15),
+//                         if (widget.callType == 1)
+//                           FloatingActionButton(
+//                             heroTag: "switch",
+//                             backgroundColor: Colors.white,
+//                             onPressed: _switchCamera,
+//                             child: const Icon(
+//                               Icons.cameraswitch,
+//                               color: Colors.black,
+//                             ),
+//                           ),
+//                         const SizedBox(width: 15),
+//                         FloatingActionButton(
+//                           heroTag: "image",
+//                           backgroundColor: Colors.white,
+//                           onPressed: _uploadImage,
+//                           child: const Icon(Icons.image, color: Colors.black),
+//                         ),
+//                       ],
 //                     ),
-//                   );
-//                 }
-//                 return const Center(
-//                   child: CircularProgressIndicator(),
-//                 );
-//               },
-//             );
-//           }
-
-//           return const Center(
-//             child: Text('Failed to initialize the call.'),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   FutureBuilder<stream_video.Call?> floatingWidget() {
-//     return FutureBuilder<stream_video.Call?>(
-//       future: _callFuture,
-//       builder: (context, snapshot) {
-//         if (snapshot.connectionState == ConnectionState.waiting) {
-//           return const SizedBox();
-//         }
-
-//         if (snapshot.hasError || !snapshot.hasData) {
-//           return const SizedBox.shrink();
-//         }
-
-//         _audioRoomCall = snapshot.data!;
-
-//         return Row(
-//           mainAxisSize: MainAxisSize.min,
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             FloatingActionButton(
-//               backgroundColor: primaryColor,
-//               heroTag: 'mic_button',
-//               child: microphoneEnabled
-//                   ? const Icon(Icons.mic)
-//                   : const Icon(Icons.mic_off),
-//               onPressed: () {
-//                 if (microphoneEnabled) {
-//                   _audioRoomCall.setMicrophoneEnabled(enabled: false);
-//                   setState(() {
-//                     microphoneEnabled = false;
-//                   });
-//                 } else {
-//                   if (!_audioRoomCall
-//                       .hasPermission(stream_video.CallPermission.sendAudio)) {
-//                     _audioRoomCall.requestPermissions([
-//                       stream_video.CallPermission.sendAudio,
-//                     ]);
-//                   }
-//                   _audioRoomCall.setMicrophoneEnabled(enabled: true);
-//                   setState(() {
-//                     microphoneEnabled = true;
-//                   });
-//                 }
-//               },
+//                   ),
+//                 ),
+//               ],
 //             ),
-//             const SizedBox(width: 16),
-//             FloatingActionButton(
-//               heroTag: 'cut_button',
-//               backgroundColor: Colors.red,
-//               child: const Icon(Icons.call_end),
-//               onPressed: () async {
-//                 if (_audioRoomCall != null) {
-//                   await _audioRoomCall.leave();
-//                 }
-//                 // ignore: use_build_context_synchronously
-//                 Navigator.of(context).pop();
-//               },
-//             ),
-//           ],
-//         );
-//       },
 //     );
 //   }
 // }

@@ -1,39 +1,34 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
-import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-// const appId = "3f16ac1d315140d398de76194bab349e";
-// const appCertificate = 'e43862d6dd454a6eab8f25b8f1a55140';
-// const token =
-//     "007eJxTYNha/+T+xD2+073P/XX4sJhzvphMw/PXM3NeVtutbV705aqzAoNxmqFZYrJhirGhqaGJQYqxpUVKqrmZoaVJUmKSsYll6uEXLOkNgYwML8NVmRgZIBDE52IoSS0uycxLjzc0YmAAACeYJH8=";
-// const channel = "testing_12";
-
 class CallingPage extends StatefulWidget {
-  // final JoinSessionModel joinSessionModel;
+  final String callerName;
+  final String? callerImage;
+
+  final int callType; // 0 = audio, 1 = video
   final String appId;
   final String agoraChannel;
   final String agoraToken;
-  final String callerName;
-
   final int userId;
-  final int callType; // 0 for audio, 1 for video
+
   const CallingPage({
-    super.key,required this.callerName,
+    super.key,
+    required this.callerImage,
+    required this.callerName,
     required this.callType,
     required this.appId,
     required this.agoraChannel,
     required this.agoraToken,
-    // required this.joinSessionModel,
     required this.userId,
   });
 
@@ -47,10 +42,18 @@ class _CallingPageState extends State<CallingPage> {
   bool _videoEnabled = true;
   bool _audioMuted = false;
   late RtcEngine _engine;
-  // final HomeController _homeController = Get.put(HomeController());
+  // ignore: unused_field
+  File? _selectedImage;
 
   @override
   void initState() {
+    print("!!!!!!!!!!!!!!!!!!CallingPage!!!!!!!!!!!!!!!!!!!!");
+    print(widget.agoraChannel);
+    print(widget.agoraToken);
+    print(widget.appId);
+    print(widget.userId);
+    print("!!!!!!!!!!!!!!!!!!CallingPage!!!!!!!!!!!!!!!!!!!!");
+
     super.initState();
     initAgora();
   }
@@ -63,44 +66,38 @@ class _CallingPageState extends State<CallingPage> {
     await _engine.initialize(
       RtcEngineContext(
         appId: widget.appId,
-        channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
+        channelProfile: ChannelProfileType.channelProfileCommunication, // ✅ FIX
       ),
     );
+    // await _engine.setParameters('{"rtc.local_region":"global"}');
+    // await _engine.setParameters('{"rtc.enable_proxy": true}');
+    // await _engine.setParameters('{"rtc.proxy_server":"global"}');
+    // await _engine.setParameters('{"rtc.enable_bitrate_adaptation": true}');
+    // await _engine.enableDualStreamMode(enabled: true);
+
+    // await _engine.setVideoEncoderConfiguration(
+    //   const VideoEncoderConfiguration(
+    //     dimensions: VideoDimensions(width: 360, height: 640),
+    //     frameRate: 15,
+    //     bitrate: 600,
+    //   ),
+    // );
+    // await _engine.setParameters('{"rtc.enable_bitrate_adaptation": true}');
+
+    await _engine.enableAudio(); // ✅ enable audio before joining
+    await _engine.setClientRole(
+      role: ClientRoleType.clientRoleBroadcaster,
+    ); // ✅ FIX
 
     _engine.registerEventHandler(
       RtcEngineEventHandler(
-        onAudioVolumeIndication:
-            (
-              RtcConnection connection,
-              List<AudioVolumeInfo> speakers,
-              int totalVolume,
-              int vad,
-            ) {
-              if (speakers.isNotEmpty) {
-                for (var speaker in speakers) {
-                  if (speaker.uid == 0) {
-                    debugPrint("🎙️ Local Audio Level: ${speaker.volume}");
-                  } else {
-                    debugPrint(
-                      "📢 Remote Audio Level (User ${speaker.uid}): ${speaker.volume}",
-                    );
-                  }
-                }
-              } else {
-                debugPrint("🔇 No audio detected");
-              }
-            },
         onJoinChannelSuccess: (RtcConnection connection, int elapsed) {
-          debugPrint("Local user ${connection.localUid} joined");
-          setState(() {
-            _localUserJoined = true;
-          });
+          debugPrint("✅ Local user joined channel: ${connection.channelId}");
+          setState(() => _localUserJoined = true);
         },
         onUserJoined: (RtcConnection connection, int remoteUid, int elapsed) {
-          debugPrint("Remote user $remoteUid joined");
-          setState(() {
-            _remoteUid = remoteUid;
-          });
+          debugPrint("✅ Remote user $remoteUid joined");
+          setState(() => _remoteUid = remoteUid);
         },
         onUserOffline:
             (
@@ -108,55 +105,52 @@ class _CallingPageState extends State<CallingPage> {
               int remoteUid,
               UserOfflineReasonType reason,
             ) {
-              debugPrint("Remote user $remoteUid left channel");
-              setState(() {
-                _remoteUid = null;
-              });
-              _dispose();
+              debugPrint("❌ Remote user $remoteUid left: $reason");
+              setState(() => _remoteUid = null);
               _endCall();
             },
-        onTokenPrivilegeWillExpire: (RtcConnection connection, String token) {
-          debugPrint(
-            '[onTokenPrivilegeWillExpire] connection: ${connection.toJson()}, token: $token',
-          );
+        // onError: (ErrorCodeType error, String msg) {
+        //   debugPrint("⚠️ Agora Error $error: $msg");
+        // },
+        onError: (code, msg) {
+          debugPrint("❌ Agora Error: $code - $msg");
+        },
+        onConnectionStateChanged: (connection, state, reason) {
+          debugPrint("📡 Connection State: $state, reason: $reason");
         },
       ),
     );
-    // Ensure speakerphone setting happens after joining the channel
-    try {
-      if (widget.callType == 4) {
-        await _engine.setDefaultAudioRouteToSpeakerphone(true);
-      } else {
-        await _engine.setDefaultAudioRouteToSpeakerphone(false);
-      }
-    } catch (e) {
-      debugPrint("Error setting speakerphone: $e");
-    }
 
-    await _engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
-
-    if (widget.callType == 4) {
+    // Enable video only for video call
+    if (widget.callType == 1) {
       _videoEnabled = true;
       await _engine.enableVideo();
       await _engine.startPreview();
-      // await _engine
-      //     .setEnableSpeakerphone(true); // Enable speaker for video calls
-      debugPrint("Video enabled");
+      await _engine.setDefaultAudioRouteToSpeakerphone(true);
+      debugPrint("🎥 Video mode enabled");
     } else {
       _videoEnabled = false;
       await _engine.disableVideo();
-      // await _engine
-      //     .setEnableSpeakerphone(false); // Disable speaker for audio calls
-      debugPrint("Video disabled");
+      await _engine.setDefaultAudioRouteToSpeakerphone(true);
+      debugPrint("🎧 Audio mode enabled");
     }
+
     await _engine.joinChannel(
-      token:
-         widget.agoraToken,
-      channelId:
-          widget.agoraChannel,
+      token: widget.agoraToken,
+      channelId: widget.agoraChannel,
       uid: widget.userId,
-      options: const ChannelMediaOptions(),
+      options: const ChannelMediaOptions(
+        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+        // publishCameraTrack: true,
+        // publishMicrophoneTrack: true,
+        // autoSubscribeAudio: true,
+        // autoSubscribeVideo: true,
+      ),
     );
+
+    final connectionState = await _engine.getConnectionState();
+    debugPrint("Agora Connection State: $connectionState");
   }
 
   @override
@@ -167,47 +161,104 @@ class _CallingPageState extends State<CallingPage> {
   }
 
   Future<void> _dispose() async {
-    await _engine.leaveChannel();
-    await _engine.release();
+    try {
+      await _engine.leaveChannel();
+      await _engine.release();
+    } catch (e) {
+      debugPrint("Dispose error: $e");
+    }
   }
 
   Future<void> _endCall() async {
-    await _engine.leaveChannel();
-    // Navigator.pop(context);
-    Get.back();
+    try {
+      await _engine.leaveChannel();
+      await FlutterCallkitIncoming.endAllCalls();
+      Get.back();
+    } catch (e) {
+      debugPrint("End call error: $e");
+    }
   }
 
   Future<void> _toggleVideo() async {
-    setState(() {
-      _videoEnabled = !_videoEnabled;
-    });
+    setState(() => _videoEnabled = !_videoEnabled);
     try {
       if (_videoEnabled) {
         await _engine.enableVideo();
         await _engine.setDefaultAudioRouteToSpeakerphone(true);
-
         await _engine.startPreview();
-        debugPrint("Video enabled");
       } else {
         await _engine.disableVideo();
         await _engine.setDefaultAudioRouteToSpeakerphone(false);
         await _engine.stopPreview();
-        debugPrint("Video disabled");
       }
     } catch (e) {
-      debugPrint("Error toggling video/speakerphone: $e");
+      debugPrint("Error toggling video: $e");
     }
   }
 
   Future<void> _toggleMute() async {
-    setState(() {
-      _audioMuted = !_audioMuted;
-    });
-    await _engine.muteRecordingSignal(_audioMuted);
+    setState(() => _audioMuted = !_audioMuted);
+    await _engine.muteLocalAudioStream(_audioMuted); // ✅ FIXED
   }
 
   Future<void> _switchCamera() async {
     await _engine.switchCamera();
+  }
+
+  Future<void> _uploadImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+      Get.snackbar("Image", "Selected: ${pickedFile.name}");
+    }
+  }
+
+  void _showCompletionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: text(
+            'Call Complete',
+            fontSize: 18.0,
+            fontWeight: FontWeight.w600,
+          ),
+          content: text(
+            'The call has been completed. If you have further information to share, please make the payment.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _endCall();
+              },
+              child: text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: text('Re-Payment'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _remoteVideo() {
+    if (_remoteUid != null) {
+      return AgoraVideoView(
+        controller: VideoViewController.remote(
+          rtcEngine: _engine,
+          canvas: VideoCanvas(uid: _remoteUid),
+          connection: RtcConnection(channelId: widget.agoraChannel),
+        ),
+      );
+    } else {
+      return const SizedBox();
+    }
   }
 
   @override
@@ -216,7 +267,7 @@ class _CallingPageState extends State<CallingPage> {
       backgroundColor: black,
       body: Stack(
         children: [
-          if (widget.callType == 4) // && _videoEnabled
+          if (widget.callType == 1 && _videoEnabled)
             Center(child: _remoteVideo()),
           Align(
             alignment: Alignment.topLeft,
@@ -244,30 +295,29 @@ class _CallingPageState extends State<CallingPage> {
                   vertical: 15,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     _remoteUid == null
                         ? Padding(
                             padding: const EdgeInsets.only(bottom: 350),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: Colors.transparent,
-                                  child: ClipOval(
-                                    child: Image(
-                                      image:
-                                          AssetImage(launchImage)
-                                              as ImageProvider,
-                                      fit: BoxFit.contain,
-                                      width: 100,
-                                      height: 100,
-                                    ),
-                                  ),
+                                CircleAvatar(
+                                  radius: 50, // Adjust size as needed
+                                  backgroundColor:
+                                      Colors.grey[300], // Placeholder color
+                                  backgroundImage: widget.callerImage == null
+                                      ? NetworkImage(widget.callerImage!)
+                                      : null, // If image is available, load from network
+                                  child: widget.callerImage == null
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ) // Fallback icon
+                                      : null,
                                 ),
-                                const SizedBox(height: 16), // Add spacing
+                                const SizedBox(height: 16),
                                 text(
                                   widget.callerName,
                                   fontSize: 28.0,
@@ -289,28 +339,21 @@ class _CallingPageState extends State<CallingPage> {
                               color: white,
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              child: CountdownTimer(
-                                txtColor: black,
-                                minutes: int.parse(
-                                  //  widget.joinSessionModel.totalTime ??
-                                  "0",
-                                ),
-                                textFontSize: 18.0,
-                                onTimerComplete: () {
-                                  _showCompletionDialog(context);
-                                },
-                              ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            child: CountdownTimer(
+                              txtColor: black,
+                              minutes: 1,
+                              textFontSize: 18.0,
+                              onTimerComplete: () =>
+                                  _showCompletionDialog(context),
                             ),
                           ),
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         FloatingActionButton(
                           shape: RoundedRectangleBorder(
@@ -322,7 +365,7 @@ class _CallingPageState extends State<CallingPage> {
                           child: const Icon(Icons.call_end),
                         ),
                         const SizedBox(width: 15),
-                        if (widget.callType == 4)
+                        if (widget.callType == 1)
                           FloatingActionButton(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
@@ -353,7 +396,7 @@ class _CallingPageState extends State<CallingPage> {
                           ),
                         ),
                         const SizedBox(width: 15),
-                        if (widget.callType == 4)
+                        if (widget.callType == 1)
                           FloatingActionButton(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
@@ -370,9 +413,7 @@ class _CallingPageState extends State<CallingPage> {
                           ),
                           heroTag: "_imageUpload",
                           backgroundColor: white,
-                          onPressed: () {
-                            _uploadImage();
-                          },
+                          onPressed: _uploadImage,
                           child: const Icon(Icons.image, color: black),
                         ),
                       ],
@@ -385,97 +426,5 @@ class _CallingPageState extends State<CallingPage> {
         ],
       ),
     );
-  }
-
-  // Function to upload an image
-  File? _selectedImage;
-
-  Future<void> _uploadImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-
-      // Call the API with the file path instead of the File object
-      // _homeController
-      //     .getCallImageUploadModelData(
-      //   imagePath: _selectedImage!.path, // Pass file path as String
-      //   roomId: widget.joinSessionModel.channelName,
-      //   sessionId: widget.joinSessionModel.session!.id.toString(),
-      // )
-      //     .then(
-      //   (value) {
-      //     if (value!.message == 'Image uploaded successfully') {
-      //       Get.snackbar("Image", "Image uploaded successfully");
-      //     } else {
-      //       Get.snackbar("Image", "Image uploaded unsuccessfully");
-      //     }
-      //   },
-      // );
-    }
-  }
-
-  void _showCompletionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          title: text(
-            'Call Complete',
-            fontSize: 18.0,
-            fontWeight: FontWeight.w600,
-          ),
-          content: text(
-            'The call has been completed. If you have any further information to share, please make the payment.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _endCall();
-              },
-              child: text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: text('Re-Payment'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _remoteVideo() {
-    if (_remoteUid != null) {
-      return AgoraVideoView(
-        controller: VideoViewController.remote(
-          rtcEngine: _engine,
-          canvas: VideoCanvas(uid: _remoteUid),
-          connection: RtcConnection(
-            channelId:
-               widget.agoraChannel,
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox();
-      // return Column(
-      //   mainAxisAlignment: MainAxisAlignment.center,
-      //   children: [
-      //     text(widget.joinSessionModel.session!.astrologerName ?? "",
-      //         fontSize: 28.0, fontWeight: FontWeight.w600, isCentered: true),
-      //     text("Ringing...", fontSize: 18.0, isCentered: true),
-      //   ],
-      // );
-    }
   }
 }

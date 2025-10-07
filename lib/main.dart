@@ -158,7 +158,7 @@ import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/firebase_options.dart';
 import 'package:astro_partner_app/model/push_notification_model.dart';
-import 'package:astro_partner_app/widgets/agora_video_calling/calling.dart';
+import 'package:astro_partner_app/widgets/agora_video_calling/audio_call_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -170,6 +170,7 @@ import 'package:flutter_callkit_incoming/entities/call_event.dart';
 import 'package:flutter_callkit_incoming/entities/notification_params.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/ios_params.dart';
+// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:upgrader/upgrader.dart';
@@ -198,7 +199,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  debugPrint('[BG] FCM data: ${message.data}');
+  debugPrint('[Notification Data] FCM data: ${message.data}');
   await _ensureCallListener();
 
   final type = message.data['type']?.toString();
@@ -238,11 +239,10 @@ Future<void> showCallkitIncoming({
       'type': 'CALL',
       'caller_id': pushNotificationModel.callerId,
       'caller_name': pushNotificationModel.callerName,
-      'caller_image': pushNotificationModel.callerImage,
-      'agora_app_id': pushNotificationModel.agoraAppId,
-      'agora_channel': pushNotificationModel.channelName,
-      'agora_token': pushNotificationModel.agoraToken,
-      'agora_user_id': pushNotificationModel.callerId,
+      'caller_image': pushNotificationModel.image,
+      'agora_app_id': pushNotificationModel.appId ?? "NA",
+      'agora_channel': pushNotificationModel.channelName ?? "NA",
+      'agora_token': pushNotificationModel.agoraToken ?? "NA",
     },
     android: const AndroidParams(
       incomingCallNotificationChannelName: 'high_importance_channel',
@@ -324,11 +324,13 @@ Future<void> checkAndNavigationCallingPage() async {
   final type = extra['type']?.toString();
 
   if (type == 'CALL') {
-    final userId = int.tryParse(extra['agora_user_id']?.toString() ?? '0') ?? 0;
+    final userId = int.tryParse(extra['caller_id']?.toString() ?? '0') ?? 0;
     final agoraAppId = extra['agora_app_id']?.toString() ?? '';
     final channel = extra['agora_channel']?.toString() ?? '';
     final agoraToken = extra['agora_token']?.toString() ?? '';
     final callerName = extra['caller_name']?.toString() ?? 'Unknown Caller';
+    final callerImage = extra['caller_image']?.toString() ?? '';
+
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     print(userId);
     print(agoraToken);
@@ -336,15 +338,19 @@ Future<void> checkAndNavigationCallingPage() async {
     print(agoraAppId);
     print(callerName);
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
+    // const String appIdtep = "3f16ac1d315140d398de76194bab349e";
+    // const String tokentep =
+    //     "007eJxTYPB8+PrVP26+KZUbXh5V+T6netO93MevHV9NkGYu/thUsrtQgcE4zdAsMdkwxdjQ1NDEIMXY0iIl1dzM0NIkKTHJ2MQy1f37k4yGQEaGcBZBBkYoBPFZGEpSi0sYGABRKSIN";
+    // const String channeltep = "test";
     Get.to(
-      () => CallingPage(
+      CallingFreePage(
+        userImageUrl: callerImage,
         callType: 0, // 0 = audio, 1 = video
-        userId: userId,
+        userId: 0,
         appId: agoraAppId,
-        agoraChannel: channel,
-        agoraToken: agoraToken,
-        callerName: callerName,
+        channel: channel,
+        token: "",
+        userName: callerName,
       ),
     );
   } else {

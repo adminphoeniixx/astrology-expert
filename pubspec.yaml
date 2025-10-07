@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  agora_rtc_engine: ^6.5.2
+  agora_rtc_engine: ^6.5.3
   audioplayers: ^6.5.1
   cached_network_image: ^3.4.1
   carousel_slider: ^5.1.1
