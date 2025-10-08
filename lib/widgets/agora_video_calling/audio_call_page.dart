@@ -21,12 +21,14 @@ class CallingFreePage extends StatefulWidget {
   final String userName;
   final String? userImageUrl;
   final int userId;
+  final int remaingTime;
   final String appId;
   final String token;
   final String channel;
 
   const CallingFreePage({
     super.key,
+    required this.remaingTime,
     required this.callType,
     required this.userName,
     required this.userId,
@@ -109,7 +111,16 @@ class _CallingFreePageState extends State<CallingFreePage> {
           channelProfile: ChannelProfileType.channelProfileCommunication,
         ),
       );
-
+      //  await engine.joinChannelWithUserAccount(
+      //         token: widget.token,
+      //         channelId: widget.channel,
+      //         userAccount: "expert_${widget.userId}",
+      //         // uid: widget.userId,
+      //         options: const ChannelMediaOptions(
+      //           clientRoleType: ClientRoleType.clientRoleBroadcaster,
+      //           channelProfile: ChannelProfileType.channelProfileCommunication,
+      //         ),
+      //       );
       setState(() {
         _engine = engine;
         _engineInitialized = true;
@@ -186,53 +197,52 @@ class _CallingFreePageState extends State<CallingFreePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _remoteUid == null
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 350),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 50, // Adjust size as needed
-                              backgroundColor:
-                                  Colors.grey[300], // Placeholder color
-                              backgroundImage: NetworkImage(
-                                widget.userImageUrl!,
-                              ), // If image is available, load from network
-                            ),
-                            const SizedBox(height: 16),
-                            text(
-                              widget.userName,
-                              fontSize: 28.0,
-                              textColor: white,
-                              fontWeight: FontWeight.w600,
-                              isCentered: true,
-                            ),
-                            text(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 350),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 50, // Adjust size as needed
+                        backgroundColor: Colors.grey[300], // Placeholder color
+                        backgroundImage: NetworkImage(
+                          widget.userImageUrl!,
+                        ), // If image is available, load from network
+                      ),
+                      const SizedBox(height: 16),
+                      text(
+                        widget.userName,
+                        fontSize: 28.0,
+                        textColor: white,
+                        fontWeight: FontWeight.w600,
+                        isCentered: true,
+                      ),
+                      _remoteUid == null
+                          ? text(
                               "Ringing...",
                               fontSize: 18.0,
                               textColor: white,
                               isCentered: true,
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                color: white,
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              child: const CountdownTimer(
+                                txtColor: black,
+                                minutes: 1,
+                                textFontSize: 18.0,
+                                // onTimerComplete: () =>
+                                //  _showCompletionDialog(context),
+                              ),
                             ),
-                          ],
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          color: white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        child: CountdownTimer(
-                          txtColor: black,
-                          minutes: 1,
-                          textFontSize: 18.0,
-                          // onTimerComplete: () =>
-                          //  _showCompletionDialog(context),
-                        ),
-                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -241,51 +251,106 @@ class _CallingFreePageState extends State<CallingFreePage> {
     }
   }
 
-  Widget _localVideo() {
-    if (_localJoined && _videoEnabled && _engineInitialized) {
-      return Align(
-        alignment: Alignment.topLeft,
-        child: Container(
-          width: 120,
-          height: 160,
-          margin: const EdgeInsets.all(12),
-          child: AgoraVideoView(
-            controller: VideoViewController(
-              rtcEngine: _engine!,
-              canvas: const VideoCanvas(uid: 0),
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: !_engineInitialized
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                Center(
-                  child: widget.callType == 1 ? _remoteVideo() : _remoteVideo(),
+      backgroundColor: black,
+      body: Stack(
+        children: [
+          if (widget.callType == 1 && _videoEnabled)
+            Center(child: _remoteVideo()),
+          Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 100,
+              height: 150,
+              child: Center(
+                child: _localJoined && _videoEnabled
+                    ? AgoraVideoView(
+                        controller: VideoViewController(
+                          rtcEngine: _engine!,
+                          canvas: const VideoCanvas(uid: 0),
+                        ),
+                      )
+                    : const SizedBox(),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 15,
                 ),
-                _localVideo(),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Row(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 350),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 50, // Adjust size as needed
+                            backgroundColor:
+                                Colors.grey[300], // Placeholder color
+                            backgroundImage: widget.userImageUrl == null
+                                ? NetworkImage(widget.userImageUrl!)
+                                : null, // If image is available, load from network
+                            child: widget.userImageUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  ) // Fallback icon
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          text(
+                            widget.userName,
+                            fontSize: 28.0,
+                            textColor: white,
+                            fontWeight: FontWeight.w600,
+                            isCentered: true,
+                          ),
+                          const SizedBox(height: 16),
+
+                          _remoteUid == null
+                              ? text(
+                                  "Ringing...",
+                                  fontSize: 18.0,
+                                  textColor: white,
+                                  isCentered: true,
+                                )
+                              : Container(
+                                  decoration: BoxDecoration(
+                                    color: white,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  child: CountdownTimer(
+                                    txtColor: black,
+                                    minutes: widget.remaingTime,
+                                    textFontSize: 18.0,
+                                    onTimerComplete: () => _endCall(),
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         FloatingActionButton(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.0),
                           ),
-                          heroTag: "end",
+                          heroTag: "end_call",
                           backgroundColor: Colors.red,
                           onPressed: _endCall,
                           child: const Icon(Icons.call_end),
@@ -296,16 +361,16 @@ class _CallingFreePageState extends State<CallingFreePage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
                             ),
-                            heroTag: "video",
+                            heroTag: "_toggleVideo",
                             backgroundColor: _videoEnabled
-                                ? Colors.white
+                                ? white
                                 : Colors.grey,
                             onPressed: _toggleVideo,
                             child: Icon(
                               _videoEnabled
                                   ? Icons.videocam
                                   : Icons.videocam_off,
-                              color: Colors.black,
+                              color: black,
                             ),
                           ),
                         const SizedBox(width: 15),
@@ -313,14 +378,12 @@ class _CallingFreePageState extends State<CallingFreePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.0),
                           ),
-                          heroTag: "mute",
-                          backgroundColor: _audioMuted
-                              ? Colors.grey
-                              : Colors.white,
+                          heroTag: "_toggleMute",
+                          backgroundColor: _audioMuted ? Colors.grey : white,
                           onPressed: _toggleMute,
                           child: Icon(
                             _audioMuted ? Icons.mic_off : Icons.mic,
-                            color: Colors.black,
+                            color: black,
                           ),
                         ),
                         const SizedBox(width: 15),
@@ -329,30 +392,30 @@ class _CallingFreePageState extends State<CallingFreePage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28.0),
                             ),
-                            heroTag: "switch",
-                            backgroundColor: Colors.white,
+                            heroTag: "_switchCamera",
+                            backgroundColor: white,
                             onPressed: _switchCamera,
-                            child: const Icon(
-                              Icons.cameraswitch,
-                              color: Colors.black,
-                            ),
+                            child: const Icon(Icons.cameraswitch, color: black),
                           ),
                         const SizedBox(width: 15),
                         FloatingActionButton(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.0),
                           ),
-                          heroTag: "image",
-                          backgroundColor: Colors.white,
+                          heroTag: "_imageUpload",
+                          backgroundColor: white,
                           onPressed: _uploadImage,
-                          child: const Icon(Icons.image, color: Colors.black),
+                          child: const Icon(Icons.image, color: black),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
+          ),
+        ],
+      ),
     );
   }
 }

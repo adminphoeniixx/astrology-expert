@@ -20,7 +20,7 @@ class AccountTab extends StatefulWidget {
 }
 
 class _AccountTabState extends State<AccountTab> {
-  final UserController _userController = Get.put(UserController());
+  // final UserController _userController = Get.put(UserController());
 
   List<String> drowerItems = [
     'Profile',

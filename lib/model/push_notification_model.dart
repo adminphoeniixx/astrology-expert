@@ -7,17 +7,18 @@ String pushNotificationModelToJson(PushNotificationModel data) =>
     json.encode(data.toJson());
 
 class PushNotificationModel {
-  final String? channelName;
-  final String? image;
-  final String? callerName;
-  final int? callerId;
-  final String? agoraToken;
-  final String? redirectScreen;
-  final int? targetId;
-  final String? body;
-  final String? type;
-  final String? title;
-  final String? appId;
+  final dynamic channelName;
+  final dynamic image;
+  final dynamic callerName;
+  final dynamic callerId;
+  final dynamic agoraToken;
+  final dynamic redirectScreen;
+  final dynamic targetId;
+  final dynamic body;
+  final dynamic type;
+  final dynamic title;
+  final dynamic remainingSeconds;
+  final dynamic appId;
 
   PushNotificationModel({
     this.channelName,
@@ -30,6 +31,7 @@ class PushNotificationModel {
     this.body,
     this.type,
     this.title,
+    this.remainingSeconds,
     this.appId,
   });
 
@@ -38,17 +40,14 @@ class PushNotificationModel {
       channelName: json['channel_name'],
       image: json['image'],
       callerName: json['caller_name'],
-      callerId: json['caller_id'] is int
-          ? json['caller_id']
-          : int.tryParse(json['caller_id']?.toString() ?? ''),
+      callerId: json['caller_id'],
       agoraToken: json['agora_token'],
       redirectScreen: json['redirect_screen'],
-      targetId: json['target_id'] is int
-          ? json['target_id']
-          : int.tryParse(json['target_id']?.toString() ?? ''),
+      targetId: json['target_id'],
       body: json['body'],
       type: json['type'],
       title: json['title'],
+      remainingSeconds: json['remaining_seconds'],
       appId: json['app_id'],
     );
   }
@@ -65,6 +64,7 @@ class PushNotificationModel {
       'body': body,
       'type': type,
       'title': title,
+      'remaining_seconds': remainingSeconds,
       'app_id': appId,
     };
   }

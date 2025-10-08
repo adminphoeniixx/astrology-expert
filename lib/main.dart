@@ -156,7 +156,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/firebase_options.dart';
+import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/model/push_notification_model.dart';
 import 'package:astro_partner_app/widgets/agora_video_calling/audio_call_page.dart';
 import 'package:flutter/material.dart';
@@ -239,10 +241,12 @@ Future<void> showCallkitIncoming({
       'type': 'CALL',
       'caller_id': pushNotificationModel.callerId,
       'caller_name': pushNotificationModel.callerName,
-      'caller_image': pushNotificationModel.image,
+      'caller_image': pushNotificationModel.image ?? "",
       'agora_app_id': pushNotificationModel.appId ?? "NA",
       'agora_channel': pushNotificationModel.channelName ?? "NA",
       'agora_token': pushNotificationModel.agoraToken ?? "NA",
+      'remaining_seconds':
+          pushNotificationModel.remainingSeconds?.toString() ?? '0', // ✅ FIXED
     },
     android: const AndroidParams(
       incomingCallNotificationChannelName: 'high_importance_channel',
@@ -324,32 +328,38 @@ Future<void> checkAndNavigationCallingPage() async {
   final type = extra['type']?.toString();
 
   if (type == 'CALL') {
-    final userId = int.tryParse(extra['caller_id']?.toString() ?? '0') ?? 0;
+    final remaingTime =
+        int.tryParse(extra['remaining_seconds']?.toString() ?? '0') ?? 0;
     final agoraAppId = extra['agora_app_id']?.toString() ?? '';
     final channel = extra['agora_channel']?.toString() ?? '';
     final agoraToken = extra['agora_token']?.toString() ?? '';
     final callerName = extra['caller_name']?.toString() ?? 'Unknown Caller';
     final callerImage = extra['caller_image']?.toString() ?? '';
+    final dynamic userIdExpert = await BasePrefs.readData(userId);
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    print(userId);
+    print(
+      "!!!!!!!!!!!!!!!!!!!!!!!!notification data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+    );
+    print(userIdExpert);
     print(agoraToken);
     print(channel);
     print(agoraAppId);
     print(callerName);
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    // const String appIdtep = "3f16ac1d315140d398de76194bab349e";
-    // const String tokentep =
-    //     "007eJxTYPB8+PrVP26+KZUbXh5V+T6netO93MevHV9NkGYu/thUsrtQgcE4zdAsMdkwxdjQ1NDEIMXY0iIl1dzM0NIkKTHJ2MQy1f37k4yGQEaGcBZBBkYoBPFZGEpSi0sYGABRKSIN";
-    // const String channeltep = "test";
+    print(callerImage);
+    print(remaingTime);
+    print(
+      "!!!!!!!!!!!!!!!!!!!!!!!!notification data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+    );
+
     Get.to(
       CallingFreePage(
+        remaingTime: remaingTime,
         userImageUrl: callerImage,
         callType: 0, // 0 = audio, 1 = video
-        userId: 0,
+        userId: int.parse(userIdExpert),
         appId: agoraAppId,
         channel: channel,
-        token: "",
+        token: agoraToken,
         userName: callerName,
       ),
     );

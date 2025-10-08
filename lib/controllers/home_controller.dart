@@ -204,6 +204,7 @@ class HomeController extends GetxController {
     return _productListModel!;
   }
 
+  // ignore: unused_field
   ProductListModel? _recommendProductModel;
 
   var isRecommendProductModelLoading = false.obs;
