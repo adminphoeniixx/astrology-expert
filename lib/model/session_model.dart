@@ -46,7 +46,7 @@ class Data {
   List<Product>? products;
   Slots? slots;
   DateTime? todayDate;
-  List<ServiceTypeElement>? serviceTypes;
+  List<ServiceType>? serviceTypes;
   ServiceCounts? serviceCounts;
   String? currentFilter;
 
@@ -73,8 +73,8 @@ class Data {
         : DateTime.parse(json["today_date"]),
     serviceTypes: json["service_types"] == null
         ? []
-        : List<ServiceTypeElement>.from(
-            json["service_types"]!.map((x) => ServiceTypeElement.fromJson(x)),
+        : List<ServiceType>.from(
+            json["service_types"]!.map((x) => ServiceType.fromJson(x)),
           ),
     serviceCounts: json["service_counts"] == null
         ? null
@@ -99,17 +99,17 @@ class Data {
 }
 
 class Product {
-  int? id;
+  dynamic id;
   String? name;
   String? description;
   String? price;
   String? sellingPrice;
   dynamic image;
   dynamic status;
-  int? categoryId;
+  dynamic categoryId;
   DateTime? createdAt;
   DateTime? updatedAt;
-  int? taxGroup;
+  dynamic taxGroup;
   String? priceInDolor;
   String? sellingPriceInDolar;
 
@@ -167,11 +167,11 @@ class Product {
 }
 
 class ServiceCounts {
-  int? the1;
-  int? the2;
-  int? the3;
-  int? the4;
-  int? all;
+  dynamic the1;
+  dynamic the2;
+  dynamic the3;
+  dynamic the4;
+  dynamic all;
 
   ServiceCounts({this.the1, this.the2, this.the3, this.the4, this.all});
 
@@ -192,24 +192,24 @@ class ServiceCounts {
   };
 }
 
-class ServiceTypeElement {
+class ServiceType {
   dynamic id;
   String? name;
 
-  ServiceTypeElement({this.id, this.name});
+  ServiceType({this.id, this.name});
 
-  factory ServiceTypeElement.fromJson(Map<String, dynamic> json) =>
-      ServiceTypeElement(id: json["id"], name: json["name"]);
+  factory ServiceType.fromJson(Map<String, dynamic> json) =>
+      ServiceType(id: json["id"], name: json["name"]);
 
   Map<String, dynamic> toJson() => {"id": id, "name": name};
 }
 
 class Sessions {
   List<SessionsData>? data;
-  int? currentPage;
-  int? lastPage;
-  int? perPage;
-  int? total;
+  dynamic currentPage;
+  dynamic lastPage;
+  dynamic perPage;
+  dynamic total;
   dynamic nextPageUrl;
   dynamic prevPageUrl;
 
@@ -226,7 +226,9 @@ class Sessions {
   factory Sessions.fromJson(Map<String, dynamic> json) => Sessions(
     data: json["data"] == null
         ? []
-        : List<SessionsData>.from(json["data"]!.map((x) => SessionsData.fromJson(x))),
+        : List<SessionsData>.from(
+            json["data"]!.map((x) => SessionsData.fromJson(x)),
+          ),
     currentPage: json["current_page"],
     lastPage: json["last_page"],
     perPage: json["per_page"],
@@ -249,166 +251,126 @@ class Sessions {
 }
 
 class SessionsData {
-  int? id;
-  int? orderId;
+  dynamic orderId;
   String? roomId;
   dynamic token;
-  int? userId;
-  dynamic startDate;
-  String? startTime;
-  String? status;
-  DateTime? createdAt;
-  DateTime? updatedAt;
+  dynamic userId;
+  dynamic customerId;
+  dynamic expertId;
   DateTime? date;
+  DateTime? startDate;
+  String? startTime;
+  String? endTime;
+  String? status;
+  dynamic serviceType;
   String? customerName;
   String? serviceName;
-  int? expertId;
-  DatumServiceType? serviceType;
-  dynamic audioFile;
   String? astrologerName;
   String? astrologerImage;
-  String? sessionTime;
-  String? endTime;
-  dynamic notes;
   dynamic preferLanguage;
-  String? orderType;
+  dynamic sessionTime;
+  String? notes;
+  DateTime? updatedAt;
+  DateTime? createdAt;
+  String? id;
+  dynamic orderType;
+  dynamic audioFile;
+  dynamic createdBy;
+  String? createdVia;
 
   SessionsData({
-    this.id,
     this.orderId,
     this.roomId,
     this.token,
     this.userId,
+    this.customerId,
+    this.expertId,
+    this.date,
     this.startDate,
     this.startTime,
+    this.endTime,
     this.status,
-    this.createdAt,
-    this.updatedAt,
-    this.date,
+    this.serviceType,
     this.customerName,
     this.serviceName,
-    this.expertId,
-    this.serviceType,
-    this.audioFile,
     this.astrologerName,
     this.astrologerImage,
-    this.sessionTime,
-    this.endTime,
-    this.notes,
     this.preferLanguage,
+    this.sessionTime,
+    this.notes,
+    this.updatedAt,
+    this.createdAt,
+    this.id,
     this.orderType,
+    this.audioFile,
+    this.createdBy,
+    this.createdVia,
   });
 
   factory SessionsData.fromJson(Map<String, dynamic> json) => SessionsData(
-    id: json["id"],
     orderId: json["order_id"],
     roomId: json["room_id"],
     token: json["token"],
     userId: json["user_id"],
-    startDate: json["start_date"],
-    startTime: json["start_time"],
-    status: json["status"],
-    createdAt: json["created_at"] == null
+    customerId: json["customer_id"],
+    expertId: json["expert_id"],
+    date: json["date"] == null ? null : DateTime.parse(json["date"]),
+    startDate: json["start_date"] == null
         ? null
-        : DateTime.parse(json["created_at"]),
+        : DateTime.parse(json["start_date"]),
+    startTime: json["start_time"],
+    endTime: json["end_time"],
+    status: json["status"],
+    serviceType: json["service_type"],
+    customerName: json["customer_name"],
+    serviceName: json["service_name"],
+    astrologerName: json["astrologer_name"],
+    astrologerImage: json["astrologer_image"],
+    preferLanguage: json["prefer_language"],
+    sessionTime: json["session_time"],
+    notes: json["notes"],
     updatedAt: json["updated_at"] == null
         ? null
         : DateTime.parse(json["updated_at"]),
-    date: json["date"] == null ? null : DateTime.parse(json["date"]),
-    customerName: json["customer_name"],
-    serviceName: json["service_name"],
-    expertId: json["expert_id"],
-    serviceType: json["service_type"] == null
+    createdAt: json["created_at"] == null
         ? null
-        : DatumServiceType.fromJson(json["service_type"]),
-    audioFile: json["audio_file"],
-    astrologerName: json["astrologer_name"],
-    astrologerImage: json["astrologer_image"],
-    sessionTime: json["session_time"],
-    endTime: json["end_time"],
-    notes: json["notes"],
-    preferLanguage: json["prefer_language"],
+        : DateTime.parse(json["created_at"]),
+    id: json["id"],
     orderType: json["order_type"],
+    audioFile: json["audio_file"],
+    createdBy: json["created_by"],
+    createdVia: json["created_via"],
   );
 
   Map<String, dynamic> toJson() => {
-    "id": id,
     "order_id": orderId,
     "room_id": roomId,
     "token": token,
     "user_id": userId,
-    "start_date": startDate,
-    "start_time": startTime,
-    "status": status,
-    "created_at": createdAt?.toIso8601String(),
-    "updated_at": updatedAt?.toIso8601String(),
+    "customer_id": customerId,
+    "expert_id": expertId,
     "date":
         "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
+    "start_date":
+        "${startDate!.year.toString().padLeft(4, '0')}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}",
+    "start_time": startTime,
+    "end_time": endTime,
+    "status": status,
+    "service_type": serviceType,
     "customer_name": customerName,
     "service_name": serviceName,
-    "expert_id": expertId,
-    "service_type": serviceType?.toJson(),
-    "audio_file": audioFile,
     "astrologer_name": astrologerName,
     "astrologer_image": astrologerImage,
-    "session_time": sessionTime,
-    "end_time": endTime,
-    "notes": notes,
     "prefer_language": preferLanguage,
-    "order_type": orderType,
-  };
-}
-
-class DatumServiceType {
-  int? id;
-  String? name;
-  String? image;
-  dynamic status;
-  DateTime? createdAt;
-  DateTime? updatedAt;
-  String? description;
-  String? showSlots;
-  String? dollerDescription;
-
-  DatumServiceType({
-    this.id,
-    this.name,
-    this.image,
-    this.status,
-    this.createdAt,
-    this.updatedAt,
-    this.description,
-    this.showSlots,
-    this.dollerDescription,
-  });
-
-  factory DatumServiceType.fromJson(Map<String, dynamic> json) =>
-      DatumServiceType(
-        id: json["id"],
-        name: json["name"],
-        image: json["image"],
-        status: json["status"],
-        createdAt: json["created_at"] == null
-            ? null
-            : DateTime.parse(json["created_at"]),
-        updatedAt: json["updated_at"] == null
-            ? null
-            : DateTime.parse(json["updated_at"]),
-        description: json["description"],
-        showSlots: json["show_slots"],
-        dollerDescription: json["doller_description"],
-      );
-
-  Map<String, dynamic> toJson() => {
-    "id": id,
-    "name": name,
-    "image": image,
-    "status": status,
-    "created_at": createdAt?.toIso8601String(),
+    "session_time": sessionTime,
+    "notes": notes,
     "updated_at": updatedAt?.toIso8601String(),
-    "description": description,
-    "show_slots": showSlots,
-    "doller_description": dollerDescription,
+    "created_at": createdAt?.toIso8601String(),
+    "id": id,
+    "order_type": orderType,
+    "audio_file": audioFile,
+    "created_by": createdBy,
+    "created_via": createdVia,
   };
 }
 
@@ -460,7 +422,7 @@ class Slots {
 }
 
 class Afternoon {
-  int? slotId;
+  dynamic slotId;
   String? name;
   String? startTime;
   String? endTime;

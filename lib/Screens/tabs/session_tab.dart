@@ -171,206 +171,87 @@ class _SessionTabState extends State<SessionTab> {
                               } else {
                                 return GestureDetector(
                                   onTap: () async {
-                                    print(
-                                      _homeController
-                                          .sessionListData[index]
-                                          .serviceType!
-                                          .id,
-                                    );
                                     switch (_homeController
                                         .sessionListData[index]
-                                        .serviceType!
-                                        .id) {
+                                        .serviceType!) {
                                       case 1:
-                                        Get.to(
-                                          const FirebaseChatScreen(
-                                            reciverId: 1,
-                                            roomId: "chat_expertId_userId",
-                                            senderId: 2,
-                                            subCollection: 'messages',
-                                          ),
-                                        );
+                                        await _homeController
+                                            .fetchSessionChatModelData(
+                                              sessionId: _homeController
+                                                  .sessionListData[index]
+                                                  .id!,
+                                            )
+                                            .then((value) {
+                                              print(
+                                                '========== SESSION CHAT MODEL ==========',
+                                              );
+                                              print(
+                                                'Customer Name: ${value.session?.customerName ?? ""}',
+                                              );
+                                              print(
+                                                'Remaining Time: ${value.pricing?.remainingSeconds.toString() ?? "0"}',
+                                              );
+                                              print(
+                                                'Receiver ID: ${value.session?.expertId}',
+                                              );
+                                              print(
+                                                'Sender ID: ${value.session?.customerId}',
+                                              );
+                                              print(
+                                                'Room ID: ${value.session?.roomId}',
+                                              );
+                                              print(
+                                                'SubCollection: free_chat_session',
+                                              );
+                                              print(
+                                                '========================================',
+                                              );
 
-                                      case 2:
-                                        Get.to(
-                                          const CallingFreePage(
-                                            remaingTime: 1,
-                                            appId: "",
-                                            callType: 0,
-                                            channel: "",
-                                            token: "",
-                                            userId: 2,
-                                            userImageUrl: "",
-                                            userName: "",
-                                          ),
-                                        );
-                                      case 3:
-                                        Get.to(
-                                          const CallingFreePage(
-                                            remaingTime: 1,
-                                            appId: "",
-                                            callType: 1,
-                                            channel: "",
-                                            token: "",
-                                            userId: 2,
-                                            userImageUrl: "",
-                                            userName: "",
-                                          ),
-                                        );
-                                        // _homeController
-                                        //     .joinChatSessions(
-                                        //       sessionId: _homeController
-                                        //           .commingSessionListData[index]
-                                        //           .id
-                                        //           .toString(),
-                                        //     )
-                                        //     .then((
-                                        //       joinChatSessionsValue,
-                                        //     ) async {
-                                        //       BasePrefs.readData(userId).then((
-                                        //         mUserId,
-                                        //       ) {
-                                        //         //_homeController.commingSessionListData[index].status
-                                        //         if (joinChatSessionsValue
-                                        //                 .joinStatus ==
-                                        //             'Completed') {
-                                        //           showDialog(
-                                        //             // ignore: use_build_context_synchronously
-                                        //             context: context,
-                                        //             builder: (BuildContext dialogContext) {
-                                        //               return AlertDialog(
-                                        //                 title: const Text(
-                                        //                   "Session Completed",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 content: const Text(
-                                        //                   "Your session has been completed successfully.",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 actions: [
-                                        //                   TextButton(
-                                        //                     child: const Text(
-                                        //                       "OK",
-                                        //                       style: TextStyle(
-                                        //                         fontFamily:
-                                        //                             productSans,
-                                        //                         color: black,
-                                        //                       ),
-                                        //                     ),
-                                        //                     onPressed: () {
-                                        //                       Navigator.pop(
-                                        //                         dialogContext,
-                                        //                       );
-                                        //                     },
-                                        //                   ),
-                                        //                 ],
-                                        //               );
-                                        //             },
-                                        //           );
-                                        //         } else if (joinChatSessionsValue
-                                        //                 .joinStatus ==
-                                        //             'Cancelled') {
-                                        //           showDialog(
-                                        //             // ignore: use_build_context_synchronously
-                                        //             context: context,
-                                        //             builder: (BuildContext dialogContext) {
-                                        //               return AlertDialog(
-                                        //                 title: const Text(
-                                        //                   "Session Cancelled",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 content: const Text(
-                                        //                   "Your session has been cancelled.",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 actions: [
-                                        //                   TextButton(
-                                        //                     child: const Text(
-                                        //                       "OK",
-                                        //                       style: TextStyle(
-                                        //                         fontFamily:
-                                        //                             productSans,
-                                        //                         color: black,
-                                        //                       ),
-                                        //                     ),
-                                        //                     onPressed: () {
-                                        //                       Navigator.pop(
-                                        //                         dialogContext,
-                                        //                       );
-                                        //                     },
-                                        //                   ),
-                                        //                 ],
-                                        //               );
-                                        //             },
-                                        //           );
-                                        //         } else if (joinChatSessionsValue
-                                        //                 .joinStatus ==
-                                        //             'Customer Not Available') {
-                                        //           showDialog(
-                                        //             // ignore: use_build_context_synchronously
-                                        //             context: context,
-                                        //             builder: (BuildContext dialogContext) {
-                                        //               return AlertDialog(
-                                        //                 title: const Text(
-                                        //                   "Session Cancelled",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 content: const Text(
-                                        //                   "Your session has been cancelled due to your unavailability. ",
-                                        //                   style: TextStyle(
-                                        //                     fontFamily:
-                                        //                         productSans,
-                                        //                   ),
-                                        //                 ),
-                                        //                 actions: [
-                                        //                   TextButton(
-                                        //                     child: const Text(
-                                        //                       "OK",
-                                        //                       style: TextStyle(
-                                        //                         fontFamily:
-                                        //                             productSans,
-                                        //                         color: black,
-                                        //                       ),
-                                        //                     ),
-                                        //                     onPressed: () {
-                                        //                       Navigator.pop(
-                                        //                         dialogContext,
-                                        //                       );
-                                        //                     },
-                                        //                   ),
-                                        //                 ],
-                                        //               );
-                                        //             },
-                                        //           );
-                                        //         } else {
-                                        //           Get.to(
-                                        //             FirebaseChatScreen(
-                                        //               chatSessionModel:
-                                        //                   joinChatSessionsValue,
-                                        //               senderId: int.parse(
-                                        //                 mUserId.toString(),
-                                        //               ),
-                                        //               subCollection: 'messages',
-                                        //             ),
-                                        //           );
-                                        //         }
-                                        //       });
-                                        //     });
+                                              Get.to(
+                                                FirebaseChatScreen(
+                                                  customerName:
+                                                      value
+                                                          .session
+                                                          ?.customerName ??
+                                                      "",
+                                                  remaingTime:
+                                                      value
+                                                          .pricing
+                                                          ?.remainingSeconds
+                                                          .toString() ??
+                                                      "0",
+                                                  reciverId:
+                                                      value.session!.expertId
+                                                          is int
+                                                      ? value.session!.expertId
+                                                      : int.tryParse(
+                                                              value
+                                                                  .session!
+                                                                  .expertId
+                                                                  .toString(),
+                                                            ) ??
+                                                            0,
+                                                  senderId:
+                                                      value.session!.customerId
+                                                          is int
+                                                      ? value
+                                                            .session!
+                                                            .customerId
+                                                      : int.tryParse(
+                                                              value
+                                                                  .session!
+                                                                  .customerId
+                                                                  .toString(),
+                                                            ) ??
+                                                            0,
+                                                  roomId: value.session!.roomId
+                                                      .toString(),
+                                                  subCollection:
+                                                      'messages',
+                                                ),
+                                              );
+                                            });
+
                                         break;
                                       default:
                                     }
@@ -517,20 +398,17 @@ class _SessionTabState extends State<SessionTab> {
                 child: Container(
                   width: 64,
                   height: 64,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(32),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle, // 👈 makes it circular
                     color: textLightColorSecondary,
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Image.network(
-                      sessionData.serviceType?.image ?? "",
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.image, color: Colors.black);
-                      },
-                    ),
+                  child: Image.network(
+                    sessionData.astrologerImage ?? "",
+                    fit: BoxFit.cover, // 👈 keeps the aspect ratio intact
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.image, color: Colors.black);
+                    },
                   ),
                 ),
               ),
@@ -617,7 +495,7 @@ class _SessionTabState extends State<SessionTab> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: text(
-                      sessionData.serviceType!.name ?? "",
+                      sessionData.serviceName ?? "",
                       fontSize: 12.0,
                       fontWeight: FontWeight.w500,
                       textColor: Colors.white,
@@ -631,7 +509,7 @@ class _SessionTabState extends State<SessionTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              sessionData.serviceType!.name != "Audio Recording"
+              sessionData.serviceName != "Audio Recording"
                   ? const SizedBox()
                   : GestureDetector(
                       onTap: () async {
@@ -744,7 +622,18 @@ class _SessionTabState extends State<SessionTab> {
                         sessionId: sessionData.orderId.toString(),
                       )
                       .then((value) {
-                        showSessionDetailSheet(context, value.data!.details!);
+                        if (value.success == true && value.data != null) {
+                          showSessionDetailSheet(context, value.data!.details!);
+                        } else {
+                          Get.snackbar(
+                            'Data Not Found',
+                            'Session details could not be loaded.',
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 2),
+                          );
+                        }
                       });
                 },
                 child: Container(

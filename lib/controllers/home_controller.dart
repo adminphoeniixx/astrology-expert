@@ -1,6 +1,7 @@
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
+import 'package:astro_partner_app/model/seassion_chat_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
@@ -39,6 +40,9 @@ class HomeController extends GetxController {
       final String finalUrl =
           pageUrl ??
           "${GetBaseUrl + GetDomainUrl}sessions${serviceType != null ? "?service_type=$serviceType" : ""}";
+      print("!!!!!!!!!!!!!!!!!!!!pageUrl!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      print(finalUrl);
+      print("!!!!!!!!!!!!!!!!!!!!pageUrl!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
       _sessionsModel = await _webApiServices!.getSessionsModel(
         pageUrl: finalUrl,
@@ -230,4 +234,28 @@ class HomeController extends GetxController {
   void _setFailure(Failure failure) {
     _failure = failure;
   }
+
+
+
+    SessionChatModel? get sessionChatModell => _sessionChatModel;
+  SessionChatModel? _sessionChatModel;
+
+  var isSessionChatModelLoding = false.obs;
+
+  Future<SessionChatModel> fetchSessionChatModelData({
+    required String sessionId,
+  }) async {
+    try {
+      isSessionChatModelLoding(true);
+      _sessionChatModel = await _webApiServices!.getSessionChatModel(
+        sessionId: sessionId,
+      );
+    } on Failure catch (e) {
+      isSessionChatModelLoding(false);
+      _setFailure(e);
+    }
+    isSessionChatModelLoding(false);
+    return _sessionChatModel!;
+  }
+
 }

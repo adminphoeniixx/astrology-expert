@@ -10,6 +10,7 @@ import 'package:astro_partner_app/model/auth/sinup_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
+import 'package:astro_partner_app/model/seassion_chat_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
@@ -804,6 +805,83 @@ class WebApiServices {
     }
 
     return _recommendProductModel;
+  }
+
+  SessionChatModel _sessionChatModel = SessionChatModel();
+
+  Future<SessionChatModel> getSessionChatModel({
+    required String sessionId,
+  }) async {
+    final String url = "${GetBaseUrl + GetDomainUrl2}sessions/details";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({"session_id": sessionId});
+
+      print("########_sessionChatModel#############");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          ...headers,
+          "Content-Type": "application/json", // ensure correct content type
+        },
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_sessionChatModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _sessionChatModel = SessionChatModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _sessionChatModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _sessionChatModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _sessionChatModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_sessionChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_sessionChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_sessionChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_sessionChatModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _sessionChatModel;
   }
 
   // Future<HomeModel> getHomeDataForCheck(Map<String, String> authHeader) async {

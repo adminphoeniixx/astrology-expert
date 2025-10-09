@@ -1,12 +1,9 @@
-
-
 import 'dart:async';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
-import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/chat_model.dart';
-import 'package:astro_partner_app/services/firebase_services.dart';
+import 'package:astro_partner_app/services/free_chat_service.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/msg_bubble.dart';
@@ -20,20 +17,24 @@ import 'package:intl/intl.dart';
 
 class FirebaseChatScreen extends StatefulWidget {
   final String roomId;
+  final String customerName;
+  final String remaingTime;
   final String subCollection; // e.g., 'adb_bcd'
   final int senderId;
-    final int reciverId;
-
+  final int reciverId;
 
   const FirebaseChatScreen({
-    required this.roomId,
+    required this.customerName,
     required this.reciverId,
+    required this.remaingTime,
+    required this.roomId,
     required this.subCollection,
     required this.senderId,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   _FirebaseChatScreenState createState() => _FirebaseChatScreenState();
 }
 
@@ -62,7 +63,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
-      await FirebaseServiceRequest.sendTextMessage(
+      await FreeFirebaseServiceRequest.sendTextMessage(
+        customerName: widget.customerName,
         message: _messageController.text,
         roomId: widget.roomId,
         subCollection: widget.subCollection,
@@ -82,7 +84,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
       final file = result.files.single;
       _selectedImageUrl.value = file.path!;
       File imageFile = File(file.path!);
-      await FirebaseServiceRequest.uploadMedia(
+      await FreeFirebaseServiceRequest.uploadMedia(
         file: imageFile,
         onProgress: (p0) {
           _progress.value = p0;
@@ -93,7 +95,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
         _selectedImageUrl.value = "";
         if (onValue.status!) {
           print("##########${onValue.mediaUrl}##########");
-          await FirebaseServiceRequest.sendMediaMessage(
+          await FreeFirebaseServiceRequest.sendMediaMessage(
+            customerName: widget.customerName,
             roomId: widget.roomId,
             subCollection: widget.subCollection,
             receiverId: widget.reciverId,
@@ -118,7 +121,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
 
   Future<void> _markMessageAsSeen(ChatMessageModel message) async {
     if (!message.isSeen && message.receiverId == widget.senderId) {
-      await FirebaseServiceRequest.markAsSeen(
+      await FreeFirebaseServiceRequest.markAsSeen(
         msgId: message.id,
         roomId: widget.roomId,
         subCollection: widget.subCollection,
@@ -141,9 +144,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
             fontSize: 18.0,
             fontWeight: FontWeight.w600,
           ),
-          content: text(
-            'The Chat has been completed. If you have any further information to share, please make the payment.',
-          ),
+          content: text('The Chat has been completed.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -154,9 +155,10 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
             ),
             TextButton(
               onPressed: () {
+                Navigator.of(context).pop();
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: text('Re-Payment'),
+              child: text('Ok'),
             ),
           ],
         );
@@ -167,7 +169,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
   Stream<DocumentSnapshot>? statusStream;
   late StreamSubscription<DocumentSnapshot> subscription;
   Timer? _typingTimer;
-  bool _isTypingSent = false;
+  // ignore: unused_field
+  final bool _isTypingSent = false;
 
   // void _handleTyping() {
   //   print("👀 _handleTyping triggered");
@@ -199,8 +202,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
   Future<void> setTypingStatus(bool isTyping) async {
     try {
       await FirebaseFirestore.instance
-          .collection('chat')
-          .doc('order_${widget.roomId}')
+          .collection('free_chat')
+          .doc(widget.roomId)
           .collection('status')
           .doc('typingStatus')
           .set({"user_${widget.senderId}": isTyping}, SetOptions(merge: true));
@@ -217,7 +220,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
     // _messagefocusNode.addListener(_handleFocusChange);
     statusStream = FirebaseFirestore.instance
         .collection('chat_status')
-        .doc('order_${widget.roomId}')
+        .doc(widget.roomId)
         .snapshots();
     subscription = statusStream!.listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
@@ -301,48 +304,45 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
         elevation: 1,
         centerTitle: true,
         title: text(
-         "Name",
+          widget.customerName,
           fontSize: 20.0,
           maxLine: 1,
+          textColor: white,
           fontWeight: FontWeight.w600,
           fontFamily: productSans,
         ),
         leading: GestureDetector(
           onTap: () {
-           // _homeController.getCommingSessionsData();
+            // _homeController.getCommingSessionsData();
             Navigator.of(context).pop();
           },
           child: const Center(
-            child: Icon(Icons.arrow_back_rounded, color: black),
+            child: Icon(Icons.arrow_back_rounded, color: white),
           ),
         ),
         actions: [
-          // widget.chatSessionModel.totalTime == null
+          // widget.remaingTime == null
           //     ? const SizedBox()
           //     :
-               Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: black,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    child: CountdownTimer(
-                      minutes: int.parse("5"
-                       // widget.chatSessionModel.totalTime!.toString(),
-                      ),
-                      textFontSize: 18.0,
-                      txtColor: white,
-                      onTimerComplete: () {
-                        _showCompletionDialog(context);
-                      },
-                    ),
-                  ),
-                ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: black,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: CountdownTimer(
+                minutes: int.parse(widget.remaingTime.toString()),
+                textFontSize: 18.0,
+                txtColor: white,
+                fontFamily: productSans,
+                onTimerComplete: () {
+                  _showCompletionDialog(context);
+                },
+              ),
+            ),
+          ),
         ],
       ),
       body: Stack(
@@ -357,8 +357,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
-                      .collection('chat')
-                      .doc('order_${widget.roomId}')
+                      .collection('free_chat')
+                      .doc(widget.roomId)
                       .collection(widget.subCollection)
                       .snapshots(),
                   builder: (context, snapshot) {
@@ -470,8 +470,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
               ),
               StreamBuilder<DocumentSnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('chat')
-                    .doc('order_${widget.roomId}')
+                    .collection('free_chat')
+                    .doc(widget.roomId)
                     .collection('status')
                     .doc('typingStatus')
                     .snapshots(),
@@ -481,8 +481,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
                   }
                   final typingData =
                       snapshot.data!.data() as Map<String, dynamic>?;
-                  final mkey =
-                      'user_${widget.roomId}';
+                  final mkey = 'user_${widget.roomId}';
                   final isTyping = typingData?[mkey] ?? false;
                   return isTyping
                       ? MessageBubble(

@@ -337,20 +337,6 @@ Future<void> checkAndNavigationCallingPage() async {
     final callerImage = extra['caller_image']?.toString() ?? '';
     final dynamic userIdExpert = await BasePrefs.readData(userId);
 
-    print(
-      "!!!!!!!!!!!!!!!!!!!!!!!!notification data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-    );
-    print(userIdExpert);
-    print(agoraToken);
-    print(channel);
-    print(agoraAppId);
-    print(callerName);
-    print(callerImage);
-    print(remaingTime);
-    print(
-      "!!!!!!!!!!!!!!!!!!!!!!!!notification data!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-    );
-
     Get.to(
       CallingFreePage(
         remaingTime: remaingTime,
@@ -363,7 +349,16 @@ Future<void> checkAndNavigationCallingPage() async {
         userName: callerName,
       ),
     );
-  } else {
+
+    //     Get.to(
+    //       const FirebaseChatScreen(
+    //         reciverId: 1,
+    //         roomId: "chat_expertId_userId",
+    //         senderId: 2,
+    //         subCollection: 'messages',
+    //       ),
+    //     );
+  } else  {
     await FlutterCallkitIncoming.endAllCalls();
   }
 }
