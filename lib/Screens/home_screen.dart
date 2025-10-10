@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:astro_partner_app/Screens/tabs/account_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/earning_tab.dart';
+import 'package:astro_partner_app/Screens/tabs/review_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/session_tab.dart';
 import 'package:astro_partner_app/Screens/auth/edit_profile_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
@@ -141,8 +142,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
       case TabItem.earnigTab:
         return Scaffold(
-          appBar: secondryTabAppBar(title: "Earning"),
+          appBar: secondryTabAppBar(title: "Earnings"),
           body: const EarningTab(),
+        );
+      case TabItem.reviewTab:
+        return Scaffold(
+          appBar: secondryTabAppBar(title: "Reviews"),
+          body: ReviewTab(),
         );
 
       case TabItem.profileTab:

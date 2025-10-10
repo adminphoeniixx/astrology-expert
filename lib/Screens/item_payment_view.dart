@@ -51,7 +51,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.earningData.payoutDate ?? "NA",
+                    widget.earningData.payoutDate ?? "Date",
                     style: const TextStyle(
                       fontSize: 16,
                       fontFamily: productSans,
@@ -64,7 +64,13 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green),
+                        border: Border.all(
+                          color:
+                              (widget.earningData.payoutStatus?.toLowerCase() ==
+                                  "paid")
+                              ? Colors.green
+                              : Colors.red,
+                        ),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -73,10 +79,15 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                         ),
                         child: Text(
                           widget.earningData.payoutStatus ?? "",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontFamily: productSans,
-                            color: Colors.green,
+                            color:
+                                (widget.earningData.payoutStatus
+                                        ?.toLowerCase() ==
+                                    "paid")
+                                ? Colors.green
+                                : Colors.red,
                           ),
                         ),
                       ),
@@ -86,15 +97,6 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
               ),
               const SizedBox(height: 15),
 
-              Text(
-                "Expert - ${widget.earningData.expertName.toString()}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
               Text(
                 "Week - ${widget.earningData.weekNumber.toString()}",
                 style: const TextStyle(
@@ -126,6 +128,18 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 ),
               ),
               const SizedBox(height: 12),
+
+              Text(
+                "TDS Deducted - ₹${widget.earningData.payableAmount.toString()}",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: productSans,
+                  color: white,
+                ),
+              ),
+              const SizedBox(height: 12),
+
               Text(
                 "Total Payable - ₹${widget.earningData.payableAmount.toString()}",
                 style: const TextStyle(
@@ -135,6 +149,29 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                   color: white,
                 ),
               ),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                "UTR Number - ------",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: productSans,
+                  color: white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Bank Name - ------",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: productSans,
+                  color: white,
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -265,35 +302,35 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                                         ),
                                       ],
                                     ),
-                                    const TableRow(
-                                      children: [
-                                        SizedBox(height: 8),
-                                        SizedBox(height: 8),
-                                      ],
-                                    ),
-                                    TableRow(
-                                      children: [
-                                        const Text(
-                                          "Total Discount",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: productSans,
-                                            color: white,
-                                          ),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Text(
-                                            "${_homeController.earningDetailsModel!.data!.earning!.transactions![index].tdsPercentage.toString()}%",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontFamily: productSans,
-                                              color: white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    // const TableRow(
+                                    //   children: [
+                                    //     SizedBox(height: 8),
+                                    //     SizedBox(height: 8),
+                                    //   ],
+                                    // ),
+                                    // TableRow(
+                                    //   children: [
+                                    //     const Text(
+                                    //       "Total Discount",
+                                    //       style: TextStyle(
+                                    //         fontSize: 14,
+                                    //         fontFamily: productSans,
+                                    //         color: white,
+                                    //       ),
+                                    //     ),
+                                    //     Align(
+                                    //       alignment: Alignment.centerRight,
+                                    //       child: Text(
+                                    //         "${_homeController.earningDetailsModel!.data!.earning!.transactions![index].tdsPercentage.toString()}%",
+                                    //         style: const TextStyle(
+                                    //           fontSize: 14,
+                                    //           fontFamily: productSans,
+                                    //           color: white,
+                                    //         ),
+                                    //       ),
+                                    //     ),
+                                    //   ],
+                                    // ),
                                     const TableRow(
                                       children: [
                                         SizedBox(height: 8),
@@ -338,40 +375,53 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontFamily: productSans,
-                                            color: Colors.green,
+                                            color:
+                                                white, // keep label consistent
                                           ),
                                         ),
                                         Align(
                                           alignment: Alignment.centerRight,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
+                                          child: Builder(
+                                            builder: (context) {
+                                              final status =
+                                                  _homeController
+                                                      .earningDetailsModel!
+                                                      .data!
+                                                      .earning!
+                                                      .transactions![index]
+                                                      .status ??
+                                                  "";
+
+                                              final statusColor =
+                                                  status.toLowerCase() == "paid"
+                                                  ? Colors.green
+                                                  : Colors.red;
+
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  border: Border.all(
+                                                    color: statusColor,
                                                   ),
-                                              child: Text(
-                                                _homeController
-                                                        .earningDetailsModel!
-                                                        .data!
-                                                        .earning!
-                                                        .transactions![index]
-                                                        .status ??
-                                                    "",
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontFamily: productSans,
-                                                  color: Colors.green,
                                                 ),
-                                              ),
-                                            ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
+                                                  child: Text(
+                                                    status,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontFamily: productSans,
+                                                      color: statusColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ),
                                       ],

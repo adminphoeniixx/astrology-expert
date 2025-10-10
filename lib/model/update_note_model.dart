@@ -44,8 +44,8 @@ class UpdateNoteModel {
 }
 
 class Data {
-  int? id;
-  String? notes;
+  dynamic id;
+  dynamic notes;
   DateTime? updatedAt;
 
   Data({this.id, this.notes, this.updatedAt});

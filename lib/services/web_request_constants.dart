@@ -3,6 +3,8 @@ const String http = "http";
 const String https = "https";
 const String GetDomainUrl = "/api/expert/";
 const String GetDomainUrl2 = "/api/";
+const String GetDomainUrl3 = "/api/user/";
+
 
 const String UPIGateway = "/upi/";
 const String GetBaseUrl = "https://vedamroots.com";

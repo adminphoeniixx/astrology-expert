@@ -164,9 +164,9 @@ class MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: msgType == 'Promotion'
               ? black //const Color(0xFFF9F4EF)
-              : (bgColor ?? (isMe ? primaryColor : black)),
+              : (bgColor ?? (isMe ? primaryColor : const Color(0xFF221d25))),
           border: Border.all(
-            color: bgColor != null ? Colors.grey : primaryColor,
+            color: bgColor != null ? const Color(0xFF221d25) : primaryColor,
             //isMe ? Colors.grey[400]! : Colors.grey[400]!,
           ),
           borderRadius: BorderRadius.only(
@@ -199,7 +199,7 @@ class MessageBubble extends StatelessWidget {
                     height: 40,
                     width: 200,
                     child: appBotton(
-                      buttonColor: black,
+                      buttonColor: const Color(0xFF221d25),
                       txt: "Recharge Now",
                       onPressed: () {
                         // Get.offAll(const MyHomePage(
@@ -247,7 +247,7 @@ class MessageBubble extends StatelessWidget {
 // Custom video player widget for handling video URLs
 class VideoPlayerWidget extends StatefulWidget {
   final String url;
-  const VideoPlayerWidget({required this.url, Key? key}) : super(key: key);
+  const VideoPlayerWidget({required this.url, super.key});
 
   @override
   _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
@@ -259,6 +259,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
+    // ignore: deprecated_member_use
     _controller = VideoPlayerController.network(widget.url)
       ..initialize().then((_) {
         setState(() {});

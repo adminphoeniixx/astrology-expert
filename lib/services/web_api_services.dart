@@ -320,21 +320,21 @@ class WebApiServices {
     } on SocketException catch (e) {
       _firebaseService.firebaseSocketException(
         apiCall: "getSessionsModel",
-        userId: userId,
+        // userId: userId,
         message: e.message,
       );
       throw Failure("No Internet connection. Please check your network.");
     } on FormatException catch (e) {
       _firebaseService.firebaseFormatException(
         apiCall: "getSessionsModel",
-        userId: userId,
+        // userId: userId,
         message: e.message,
       );
       throw Failure("Invalid server response format.");
     } on HttpException catch (e) {
       _firebaseService.firebaseHttpException(
         apiCall: "getSessionsModel",
-        userId: userId,
+        // userId: userId,
         message: e.message,
       );
       throw Failure("HTTP Error: ${e.message}");
@@ -342,7 +342,7 @@ class WebApiServices {
       _firebaseService.firebaseDioError(
         apiCall: "getSessionsModel",
         code: "unknown",
-        userId: userId,
+        // userId: userId,
         message: e.toString(),
       );
       throw Failure("An unexpected error occurred.");

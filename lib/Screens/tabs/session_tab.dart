@@ -100,7 +100,6 @@ class _SessionTabState extends State<SessionTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: white,
 
       body: Stack(
         children: [
@@ -214,24 +213,8 @@ class _SessionTabState extends State<SessionTab> {
                                                           .session
                                                           ?.customerName ??
                                                       "",
-                                                  remaingTime:
-                                                      value
-                                                          .pricing
-                                                          ?.remainingSeconds
-                                                          .toString() ??
-                                                      "0",
+                                                  remaingTime: "30",
                                                   reciverId:
-                                                      value.session!.expertId
-                                                          is int
-                                                      ? value.session!.expertId
-                                                      : int.tryParse(
-                                                              value
-                                                                  .session!
-                                                                  .expertId
-                                                                  .toString(),
-                                                            ) ??
-                                                            0,
-                                                  senderId:
                                                       value.session!.customerId
                                                           is int
                                                       ? value
@@ -244,10 +227,20 @@ class _SessionTabState extends State<SessionTab> {
                                                                   .toString(),
                                                             ) ??
                                                             0,
+                                                  senderId:
+                                                      value.session!.expertId
+                                                          is int
+                                                      ? value.session!.expertId
+                                                      : int.tryParse(
+                                                              value
+                                                                  .session!
+                                                                  .expertId
+                                                                  .toString(),
+                                                            ) ??
+                                                            0,
                                                   roomId: value.session!.roomId
                                                       .toString(),
-                                                  subCollection:
-                                                      'messages',
+                                                  subCollection: 'messages',
                                                 ),
                                               );
                                             });
@@ -418,17 +411,19 @@ class _SessionTabState extends State<SessionTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 4),
                     text(
-                      sessionData.astrologerName ?? "",
+                      sessionData.customerName ?? "",
                       fontSize: 16.0,
                       fontWeight: FontWeight.w600,
                       textColor: white,
                     ),
+
                     const SizedBox(height: 4),
                     text(
-                      sessionData.serviceName ?? "",
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w500,
+                      "Date : ${formatDate(sessionData.date)}",
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w400,
                       textColor: white,
                     ),
                     const SizedBox(height: 4),
@@ -439,36 +434,44 @@ class _SessionTabState extends State<SessionTab> {
                       textColor: white,
                     ),
                     const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () async {
-                        // try {
-                        //   final userIdValue = await BasePrefs.readData(userId);
-                        //   final supportData =
-                        //       await _homeController.getSupportChatModelData(
-                        //     customerId: userIdValue.toString(),
-                        //   );
-                        //   Get.to(SecondryTopNavBar(
-                        //     title: "Help",
-                        //     isAction: true,
-                        //     widget: SupportChatScreen(
-                        //       reciverId: supportData.supportId!,
-                        //       roomId: supportData.roomId!,
-                        //       senderId: int.parse(userIdValue),
-                        //       subCollection: "messages",
-                        //     ),
-                        //   ));
-                        // } catch (error) {
-                        //   debugPrint(
-                        //       "Error navigating to support chat: $error");
-                        // }
-                      },
-                      child: text(
-                        "Need Help?",
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.w500,
-                        textColor: Colors.white,
-                      ),
+                    text(
+                      "End at: ${sessionData.endTime ?? "NA"}",
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w400,
+                      textColor: white,
                     ),
+                    const SizedBox(height: 4),
+
+                    // GestureDetector(
+                    //   onTap: () async {
+                    //     // try {
+                    //     //   final userIdValue = await BasePrefs.readData(userId);
+                    //     //   final supportData =
+                    //     //       await _homeController.getSupportChatModelData(
+                    //     //     customerId: userIdValue.toString(),
+                    //     //   );
+                    //     //   Get.to(SecondryTopNavBar(
+                    //     //     title: "Help",
+                    //     //     isAction: true,
+                    //     //     widget: SupportChatScreen(
+                    //     //       reciverId: supportData.supportId!,
+                    //     //       roomId: supportData.roomId!,
+                    //     //       senderId: int.parse(userIdValue),
+                    //     //       subCollection: "messages",
+                    //     //     ),
+                    //     //   ));
+                    //     // } catch (error) {
+                    //     //   debugPrint(
+                    //     //       "Error navigating to support chat: $error");
+                    //     // }
+                    //   },
+                    //   child: text(
+                    //     "Need Help?",
+                    //     fontSize: 12.0,
+                    //     fontWeight: FontWeight.w500,
+                    //     textColor: Colors.white,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -577,13 +580,13 @@ class _SessionTabState extends State<SessionTab> {
                 onTap: () async {
                   await _homeController
                       .fetchProductListModeData(
-                        sessionId: sessionData.orderId.toString(),
+                        sessionId: sessionData.id.toString(),
                       )
                       .then((value) {
                         showRecommendedProductSheet(
                           context,
                           value.data!.products!,
-                          sessionData.orderId.toString(),
+                          sessionData.id.toString(),
                         );
                       });
                 },
@@ -619,7 +622,7 @@ class _SessionTabState extends State<SessionTab> {
                 onTap: () async {
                   await _homeController
                       .fetchSessionDetailsData(
-                        sessionId: sessionData.orderId.toString(),
+                        sessionId: sessionData.id.toString(),
                       )
                       .then((value) {
                         if (value.success == true && value.data != null) {
@@ -659,7 +662,7 @@ class _SessionTabState extends State<SessionTab> {
               ),
               GestureDetector(
                 onTap: () {
-                  _showUpdateNoteDialog(context, sessionData.id.toString());
+                  _showUpdateNoteDialog(context, sessionData.id!);
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -959,7 +962,7 @@ class _SessionTabState extends State<SessionTab> {
 
   String formatDate(DateTime? date) {
     if (date == null) return "-";
-    return DateFormat("yyyy-MM-dd").format(date);
+    return DateFormat("dd-MMM-yyyy").format(date);
   }
 
   void showSessionDetailSheet(BuildContext context, SessionDetails details) {

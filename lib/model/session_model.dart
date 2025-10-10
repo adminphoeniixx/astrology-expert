@@ -99,17 +99,17 @@ class Data {
 }
 
 class Product {
-  dynamic id;
+  int? id;
   String? name;
   String? description;
   String? price;
   String? sellingPrice;
   dynamic image;
   dynamic status;
-  dynamic categoryId;
+  int? categoryId;
   DateTime? createdAt;
   DateTime? updatedAt;
-  dynamic taxGroup;
+  int? taxGroup;
   String? priceInDolor;
   String? sellingPriceInDolar;
 
@@ -136,7 +136,7 @@ class Product {
     price: json["price"],
     sellingPrice: json["selling_price"],
     image: json["image"],
-    status: json["status"],
+    status:json["status"],
     categoryId: json["category_id"],
     createdAt: json["created_at"] == null
         ? null
@@ -167,11 +167,11 @@ class Product {
 }
 
 class ServiceCounts {
-  dynamic the1;
-  dynamic the2;
-  dynamic the3;
-  dynamic the4;
-  dynamic all;
+  int? the1;
+  int? the2;
+  int? the3;
+  int? the4;
+  int? all;
 
   ServiceCounts({this.the1, this.the2, this.the3, this.the4, this.all});
 
@@ -206,10 +206,10 @@ class ServiceType {
 
 class Sessions {
   List<SessionsData>? data;
-  dynamic currentPage;
-  dynamic lastPage;
-  dynamic perPage;
-  dynamic total;
+  int? currentPage;
+  int? lastPage;
+  int? perPage;
+  int? total;
   dynamic nextPageUrl;
   dynamic prevPageUrl;
 
@@ -226,9 +226,7 @@ class Sessions {
   factory Sessions.fromJson(Map<String, dynamic> json) => Sessions(
     data: json["data"] == null
         ? []
-        : List<SessionsData>.from(
-            json["data"]!.map((x) => SessionsData.fromJson(x)),
-          ),
+        : List<SessionsData>.from(json["data"]!.map((x) => SessionsData.fromJson(x))),
     currentPage: json["current_page"],
     lastPage: json["last_page"],
     perPage: json["per_page"],
@@ -254,29 +252,26 @@ class SessionsData {
   dynamic orderId;
   String? roomId;
   dynamic token;
-  dynamic userId;
-  dynamic customerId;
-  dynamic expertId;
+  int? userId;
+  int? customerId;
+  int? expertId;
   DateTime? date;
   DateTime? startDate;
   String? startTime;
-  String? endTime;
+  dynamic endTime;
   String? status;
-  dynamic serviceType;
+  int? serviceType;
   String? customerName;
   String? serviceName;
   String? astrologerName;
   String? astrologerImage;
   dynamic preferLanguage;
   dynamic sessionTime;
-  String? notes;
+  dynamic notes;
   DateTime? updatedAt;
   DateTime? createdAt;
   String? id;
   dynamic orderType;
-  dynamic audioFile;
-  dynamic createdBy;
-  String? createdVia;
 
   SessionsData({
     this.orderId,
@@ -302,9 +297,6 @@ class SessionsData {
     this.createdAt,
     this.id,
     this.orderType,
-    this.audioFile,
-    this.createdBy,
-    this.createdVia,
   });
 
   factory SessionsData.fromJson(Map<String, dynamic> json) => SessionsData(
@@ -337,9 +329,6 @@ class SessionsData {
         : DateTime.parse(json["created_at"]),
     id: json["id"],
     orderType: json["order_type"],
-    audioFile: json["audio_file"],
-    createdBy: json["created_by"],
-    createdVia: json["created_via"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -368,9 +357,6 @@ class SessionsData {
     "created_at": createdAt?.toIso8601String(),
     "id": id,
     "order_type": orderType,
-    "audio_file": audioFile,
-    "created_by": createdBy,
-    "created_via": createdVia,
   };
 }
 
@@ -422,7 +408,7 @@ class Slots {
 }
 
 class Afternoon {
-  dynamic slotId;
+  int? slotId;
   String? name;
   String? startTime;
   String? endTime;

@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:astro_partner_app/model/media_upload_model.dart';
+import 'package:astro_partner_app/services/web_request_constants.dart';
+import 'package:astro_partner_app/utils/data_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 
@@ -111,9 +113,12 @@ class FreeFirebaseServiceRequest {
     required Function(double) onProgress, // Progress callback
   }) async {
     Dio dio = Dio();
-    // String apiUrl = GetBaseUrl + GetDomainUrl + UPLOAD_MEDIA_API;
-    // // Set the authorization header
-    // dio.options.headers = await authHeader();
+    String apiUrl = GetBaseUrl + GetDomainUrl3 + UPLOAD_MEDIA_API;
+    // Set the authorization header
+    dio.options.headers = await authHeader();
+    print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
+    print(apiUrl);
+    print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
 
     try {
       // Create FormData with file
@@ -126,7 +131,7 @@ class FreeFirebaseServiceRequest {
 
       //   // Make the POST request
       final response = await dio.post(
-        "apiUrl",
+        apiUrl,
         data: formData,
         onSendProgress: (int sent, int total) {
           double progress = sent / total;

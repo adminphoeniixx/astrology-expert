@@ -57,7 +57,7 @@ class _EarningTabState extends State<EarningTab> {
                       padding: const EdgeInsets.only(top: 320),
                       child: Center(
                         child: text(
-                          "No earning are available.",
+                          "No earnings are available.",
                           fontFamily: productSans,
                           textColor: white,
                           fontWeight: FontWeight.w500,
@@ -65,27 +65,41 @@ class _EarningTabState extends State<EarningTab> {
                       ),
                     )
                   : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(top: 20),
-                        itemCount: _homeController.earningListData.length,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.only(top: 12, bottom: 24),
+                        itemCount: _homeController.earningListData.length + 1,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
                         itemBuilder: (BuildContext context, int index) {
-                          if (index == _homeController.sessionListData.length) {
+                          // ✅ Loader at the end
+                          if (index == _homeController.earningListData.length) {
                             return _homeController
-                                        .nextPageUrlforCommingSession
-                                        .value !=
-                                    ""
+                                    .nextPageUrlforCommingSession
+                                    .value
+                                    .isNotEmpty
                                 ? const Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: CupertinoActivityIndicator(),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 8.0,
+                                    ),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(),
+                                    ),
                                   )
-                                : const SizedBox();
-                          } else {
-                            return ItemPaymentView(
-                              earningData: _homeController
-                                  .earningListData[index], // <-- pass data here
-                            );
+                                : const SizedBox.shrink();
                           }
+
+                          // ✅ Item card with consistent outer spacing
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: ItemPaymentView(
+                              earningData:
+                                  _homeController.earningListData[index],
+                            ),
+                          );
                         },
                       ),
                     );

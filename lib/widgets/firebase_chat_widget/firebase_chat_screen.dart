@@ -13,7 +13,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'dart:io';
-import 'package:intl/intl.dart';
 
 class FirebaseChatScreen extends StatefulWidget {
   final String roomId;
@@ -135,6 +134,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -142,23 +142,43 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
           title: text(
             'Chat Complete',
             fontSize: 18.0,
+            fontFamily: productSans,
             fontWeight: FontWeight.w600,
+            textColor: white,
           ),
-          content: text('The Chat has been completed.'),
+          content: text(
+            'The Chat has been completed.',
+            fontSize: 18.0,
+            fontFamily: productSans,
+            fontWeight: FontWeight.w500,
+            textColor: white,
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: text('Cancel'),
+              child: text(
+                'Cancel',
+                fontSize: 18.0,
+                fontFamily: productSans,
+                fontWeight: FontWeight.w500,
+                textColor: white,
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: text('Ok'),
+              child: text(
+                'Ok',
+                fontSize: 18.0,
+                fontFamily: productSans,
+                fontWeight: FontWeight.w500,
+                textColor: white,
+              ),
             ),
           ],
         );
@@ -333,7 +353,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: CountdownTimer(
-                minutes: int.parse(widget.remaingTime.toString()),
+                minutes: (int.parse(widget.remaingTime) / 60).floor(),
                 textFontSize: 18.0,
                 txtColor: white,
                 fontFamily: productSans,
@@ -380,22 +400,26 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
                               );
                             }
                             // Get the current date and define the cutoff (e.g., last 24 hours)
-                            // final DateTime now = DateTime.now();
-                            // final DateTime cutoffDate =
-                            //     now.subtract(Duration(days: 1)); // 24 hours ago
+                            final DateTime now = DateTime.now();
+                            final DateTime cutoffDate = now.subtract(
+                              const Duration(days: 1),
+                            ); // 24 hours ago
                             // Filter chatDocs to only include messages within the last 24 hours
-                            final List<ChatMessageModel>
-                            recentChatDocs = chatDocs
-                                // .where((doc) {
-                                //   final message = ChatMessageModel.fromDocument(doc);
-                                //   final messageDate = message.dateTime;
-                                //   return messageDate.toDate().isAfter(
-                                //       cutoffDate); // Only messages after cutoff
-                                // })
-                                .map(
-                                  (doc) => ChatMessageModel.fromDocument(doc),
-                                )
-                                .toList();
+                            final List<ChatMessageModel> recentChatDocs =
+                                chatDocs
+                                    .where((doc) {
+                                      final message =
+                                          ChatMessageModel.fromDocument(doc);
+                                      final messageDate = message.dateTime;
+                                      return messageDate.toDate().isAfter(
+                                        cutoffDate,
+                                      ); // Only messages after cutoff
+                                    })
+                                    .map(
+                                      (doc) =>
+                                          ChatMessageModel.fromDocument(doc),
+                                    )
+                                    .toList();
                             // Sort the filtered messages by dateTime in descending order
                             recentChatDocs.sort(
                               (a, b) => b.dateTime.compareTo(a.dateTime),
@@ -595,52 +619,52 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
   //   );
   // }
 
-  Widget _buildDateSeparator(Timestamp date) {
-    DateTime dateTime = date.toDate(); // ✅ Convert Timestamp to DateTime
+  // Widget _buildDateSeparator(Timestamp date) {
+  //   DateTime dateTime = date.toDate(); // ✅ Convert Timestamp to DateTime
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final comparisonDate = DateTime(
-      dateTime.year,
-      dateTime.month,
-      dateTime.day,
-    );
-    final difference = today.difference(comparisonDate).inDays;
+  //   final now = DateTime.now();
+  //   final today = DateTime(now.year, now.month, now.day);
+  //   final comparisonDate = DateTime(
+  //     dateTime.year,
+  //     dateTime.month,
+  //     dateTime.day,
+  //   );
+  //   final difference = today.difference(comparisonDate).inDays;
 
-    String displayDate;
-    if (difference == 0) {
-      displayDate = 'Today';
-    } else if (difference == 1) {
-      displayDate = 'Yesterday';
-    } else if (difference == -1) {
-      displayDate = 'Tomorrow';
-    } else {
-      displayDate = DateFormat(
-        'd MMMM yyyy',
-      ).format(dateTime); // ✅ Pass DateTime instead of Timestamp
-    }
+  //   String displayDate;
+  //   if (difference == 0) {
+  //     displayDate = 'Today';
+  //   } else if (difference == 1) {
+  //     displayDate = 'Yesterday';
+  //   } else if (difference == -1) {
+  //     displayDate = 'Tomorrow';
+  //   } else {
+  //     displayDate = DateFormat(
+  //       'd MMMM yyyy',
+  //     ).format(dateTime); // ✅ Pass DateTime instead of Timestamp
+  //   }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        children: <Widget>[
-          const Expanded(
-            child: Divider(color: Colors.grey, thickness: 1, endIndent: 10),
-          ),
-          Text(
-            displayDate,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 14,
-            ), // ✅ Fixed 'black' variable error
-          ),
-          const Expanded(
-            child: Divider(color: Colors.grey, thickness: 1, indent: 10),
-          ),
-        ],
-      ),
-    );
-  }
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  //     child: Row(
+  //       children: <Widget>[
+  //         const Expanded(
+  //           child: Divider(color: Colors.grey, thickness: 1, endIndent: 10),
+  //         ),
+  //         Text(
+  //           displayDate,
+  //           style: const TextStyle(
+  //             color: Colors.black,
+  //             fontSize: 14,
+  //           ), // ✅ Fixed 'black' variable error
+  //         ),
+  //         const Expanded(
+  //           child: Divider(color: Colors.grey, thickness: 1, indent: 10),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // ListTile msgPlaceHolder(String extension) {
   //   return ListTile(
