@@ -14,9 +14,9 @@ String earningDetailsModelToJson(EarningDetailsModel data) =>
 
 class EarningDetailsModel {
   bool? success;
-  String? message;
+  dynamic message;
   Data? data;
-  String? currencySymbol;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   EarningDetailsModel({
@@ -56,21 +56,21 @@ class Data {
 }
 
 class Earning {
-  int? expertId;
-  String? financialYear;
-  int? weekNumber;
+  dynamic expertId;
+  dynamic financialYear;
+  dynamic weekNumber;
   DateTime? weekStart;
   DateTime? weekEnd;
-  int? totalCommission;
-  int? payableAmount;
-  String? payoutStatus;
+  dynamic totalCommission;
+  dynamic payableAmount;
+  dynamic payoutStatus;
   dynamic payoutDate;
   dynamic utr;
   DateTime? createdAt;
   DateTime? updatedAt;
   List<Transaction>? transactions;
-  String? expertName;
-  String? id;
+  dynamic expertName;
+  dynamic id;
 
   Earning({
     this.expertId,
@@ -143,12 +143,12 @@ class Earning {
 
 class Transaction {
   DateTime? date;
-  int? commission;
-  int? tds;
-  int? tdsPercentage;
-  int? payableAmount;
-  int? serviceSessionId;
-  String? status;
+  dynamic commission;
+  dynamic tds;
+  dynamic tdsPercentage;
+  dynamic payableAmount;
+  dynamic serviceSessionId;
+  dynamic status;
   SessionDetailData? sessionData;
 
   Transaction({
@@ -188,27 +188,27 @@ class Transaction {
 }
 
 class SessionDetailData {
-  int? id;
-  int? orderId;
-  String? roomId;
+  dynamic id;
+  dynamic orderId;
+  dynamic roomId;
   dynamic token;
-  int? userId;
+  dynamic userId;
   dynamic startDate;
-  String? startTime;
-  String? status;
+  dynamic startTime;
+  dynamic status;
   DateTime? createdAt;
   DateTime? updatedAt;
   DateTime? date;
-  String? customerName;
-  String? serviceName;
-  int? expertId;
-  String? serviceType;
+  dynamic customerName;
+  dynamic serviceName;
+  dynamic expertId;
+  dynamic serviceType;
   dynamic audioFile;
-  String? astrologerName;
-  String? astrologerImage;
-  String? sessionTime;
-  String? endTime;
-  String? notes;
+  dynamic astrologerName;
+  dynamic astrologerImage;
+  dynamic sessionTime;
+  dynamic endTime;
+  dynamic notes;
   dynamic preferLanguage;
   Order? order;
 
@@ -297,43 +297,43 @@ class SessionDetailData {
 }
 
 class Order {
-  int? id;
-  String? name;
+  dynamic id;
+  dynamic name;
   dynamic email;
   dynamic mobile;
   dynamic city;
   dynamic state;
   dynamic pincode;
   dynamic address;
-  int? customerId;
+  dynamic customerId;
   dynamic couponCode;
-  int? subTotal;
-  int? tax;
-  int? discount;
-  int? total;
-  String? status;
-  String? paymentStatus;
-  int? productId;
+  dynamic subTotal;
+  dynamic tax;
+  dynamic discount;
+  dynamic total;
+  dynamic status;
+  dynamic paymentStatus;
+  dynamic productId;
   DateTime? date;
-  String? time;
+  dynamic time;
   DateTime? createdAt;
   DateTime? updatedAt;
-  String? orderType;
-  int? serviceType;
-  String? transactionId;
+  dynamic orderType;
+  dynamic serviceType;
+  dynamic transactionId;
   dynamic expertId;
   dynamic cashfreeSessionId;
-  String? cfOrderId;
-  String? paymentSessionId;
+  dynamic cfOrderId;
+  dynamic paymentSessionId;
   dynamic addressId;
   dynamic amount;
-  String? walletDeduction;
+  dynamic walletDeduction;
   DateTime? sessionDate;
-  String? startTime;
-  String? endTime;
+  dynamic startTime;
+  dynamic endTime;
   dynamic customerName;
-  String? taxRate;
-  String? serviceTypeName;
+  dynamic taxRate;
+  dynamic serviceTypeName;
   dynamic addressType;
 
   Order({

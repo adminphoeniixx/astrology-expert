@@ -162,9 +162,9 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 "Bank Name - ------",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontFamily: productSans,
@@ -447,7 +447,8 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 20),
                       itemBuilder: (context, index) {
-                        return orderAmountItem(
+                        return 
+                        orderAmountItem(
                           _homeController
                               .earningDetailsModel!
                               .data!

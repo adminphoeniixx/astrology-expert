@@ -3,14 +3,10 @@ import 'dart:io';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
-import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
-import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
-import 'package:astro_partner_app/widgets/agora_video_calling/audio_call_page.dart';
-import 'package:astro_partner_app/widgets/agora_video_calling/calling.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -100,7 +96,6 @@ class _SessionTabState extends State<SessionTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Stack(
         children: [
           SizedBox(
@@ -294,84 +289,84 @@ class _SessionTabState extends State<SessionTab> {
     //   }
     // }
 
-    Future<String> getDownloadsDirectoryPath() async {
-      Directory? downloadsDirectory;
-      if (Platform.isAndroid) {
-        downloadsDirectory = await getExternalStorageDirectory();
-        final path =
-            "${downloadsDirectory!.parent.parent.parent.parent.path}/Download";
-        return path;
-      } else if (Platform.isIOS) {
-        downloadsDirectory = await getApplicationDocumentsDirectory();
-        return downloadsDirectory.path;
-      }
-      throw Exception("Unsupported platform");
-    }
+    // Future<String> getDownloadsDirectoryPath() async {
+    //   Directory? downloadsDirectory;
+    //   if (Platform.isAndroid) {
+    //     downloadsDirectory = await getExternalStorageDirectory();
+    //     final path =
+    //         "${downloadsDirectory!.parent.parent.parent.parent.path}/Download";
+    //     return path;
+    //   } else if (Platform.isIOS) {
+    //     downloadsDirectory = await getApplicationDocumentsDirectory();
+    //     return downloadsDirectory.path;
+    //   }
+    //   throw Exception("Unsupported platform");
+    // }
 
-    Future<void> showDownloadDialog(
-      BuildContext context,
-      String url,
-      String sessionId,
-    ) async {
-      double progress = 0;
+    // Future<void> showDownloadDialog(
+    //   BuildContext context,
+    //   String url,
+    //   String sessionId,
+    // ) async {
+    //   double progress = 0;
 
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Downloading"),
-            content: StatefulBuilder(
-              builder: (BuildContext context, StateSetter setState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LinearProgressIndicator(value: progress),
-                    const SizedBox(height: 20),
-                    Text("${(progress * 100).toStringAsFixed(0)}% downloaded"),
-                  ],
-                );
-              },
-            ),
-          );
-        },
-      );
+    //   showDialog(
+    //     context: context,
+    //     barrierDismissible: false,
+    //     builder: (context) {
+    //       return AlertDialog(
+    //         title: const Text("Downloading"),
+    //         content: StatefulBuilder(
+    //           builder: (BuildContext context, StateSetter setState) {
+    //             return Column(
+    //               mainAxisSize: MainAxisSize.min,
+    //               children: [
+    //                 LinearProgressIndicator(value: progress),
+    //                 const SizedBox(height: 20),
+    //                 Text("${(progress * 100).toStringAsFixed(0)}% downloaded"),
+    //               ],
+    //             );
+    //           },
+    //         ),
+    //       );
+    //     },
+    //   );
 
-      try {
-        final dio = Dio();
-        final downloadsDirectoryPath = await getDownloadsDirectoryPath();
-        final filePath = "$downloadsDirectoryPath/${sessionId}_audio.mp3";
+    //   try {
+    //     final dio = Dio();
+    //     final downloadsDirectoryPath = await getDownloadsDirectoryPath();
+    //     final filePath = "$downloadsDirectoryPath/${sessionId}_audio.mp3";
 
-        await dio.download(
-          url,
-          filePath,
-          onReceiveProgress: (received, total) {
-            if (total != -1) {
-              final currentProgress = received / total;
-              // Update the progress in the dialog
-              (context as Element).markNeedsBuild();
-              setState(() {
-                progress = currentProgress;
-              });
-            }
-          },
-        );
+    //     await dio.download(
+    //       url,
+    //       filePath,
+    //       onReceiveProgress: (received, total) {
+    //         if (total != -1) {
+    //           final currentProgress = received / total;
+    //           // Update the progress in the dialog
+    //           (context as Element).markNeedsBuild();
+    //           setState(() {
+    //             progress = currentProgress;
+    //           });
+    //         }
+    //       },
+    //     );
 
-        // ignore: use_build_context_synchronously
-        Navigator.of(context).pop(); // Close the dialog after download
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Download completed: $filePath")),
-        );
-      } catch (e) {
-        // ignore: use_build_context_synchronously
-        Navigator.of(context).pop(); // Close the dialog on error
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error downloading audio: $e")));
-      }
-    }
+    //     // ignore: use_build_context_synchronously
+    //     Navigator.of(context).pop(); // Close the dialog after download
+    //     // ignore: use_build_context_synchronously
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("Download completed: $filePath")),
+    //     );
+    //   } catch (e) {
+    //     // ignore: use_build_context_synchronously
+    //     Navigator.of(context).pop(); // Close the dialog on error
+    //     // ignore: use_build_context_synchronously
+    //     ScaffoldMessenger.of(
+    //       context,
+    //     ).showSnackBar(SnackBar(content: Text("Error downloading audio: $e")));
+    //   }
+    // }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -389,21 +384,32 @@ class _SessionTabState extends State<SessionTab> {
               Padding(
                 padding: const EdgeInsets.only(top: 5),
                 child: Container(
-                  width: 64,
-                  height: 64,
+                  width: 70,
+                  height: 70,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle, // 👈 makes it circular
                     color: textLightColorSecondary,
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: Image.network(
-                    sessionData.astrologerImage ?? "",
-                    fit: BoxFit.cover, // 👈 keeps the aspect ratio intact
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.image, color: Colors.black);
-                    },
-                  ),
+                  child: Image.asset(launchImage, scale: 0.5, fit: BoxFit.fill),
                 ),
+
+                //  Container(
+                //   width: 70,
+                //   height: 70,
+                //   decoration: const BoxDecoration(
+                //     shape: BoxShape.circle, // 👈 makes it circular
+                //     color: textLightColorSecondary,
+                //   ),
+                //   clipBehavior: Clip.hardEdge,
+                //   child: Image.network(
+                //     sessionData.astrologerImage ?? "",
+                //     fit: BoxFit.cover, // 👈 keeps the aspect ratio intact
+                //     errorBuilder: (context, error, stackTrace) {
+                //       return const Icon(Icons.image, color: Colors.black);
+                //     },
+                //   ),
+                // ),
               ),
               const SizedBox(width: 10), // Space between image and text content
               // Text Content

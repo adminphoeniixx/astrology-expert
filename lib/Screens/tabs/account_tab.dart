@@ -3,7 +3,6 @@ import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
-import 'package:astro_partner_app/controllers/user_controller.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';

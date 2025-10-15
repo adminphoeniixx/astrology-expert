@@ -45,13 +45,13 @@ class _EditProfileState extends State<EditProfile> {
   setdata() async {
     setState(() {
       nametextEditingController.text =
-          _authController.getprofile!.data!.name ?? "";
+          _authController.getprofile!.data!.name ?? "NA";
       genderextEditingController.text =
-          _authController.getprofile!.data!.gender ?? "";
+          _authController.getprofile!.data!.gender ?? "NA";
       mobiletextEditingController.text =
-          _authController.getprofile!.data!.mobile ?? "";
+          _authController.getprofile!.data!.mobile ?? "NA";
       emailtextEditingController.text =
-          _authController.getprofile!.data!.email ?? "";
+          _authController.getprofile!.data!.email ?? "NA";
     });
   }
 

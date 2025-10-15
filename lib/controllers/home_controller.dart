@@ -1,6 +1,7 @@
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
+import 'package:astro_partner_app/model/review_list_model.dart';
 import 'package:astro_partner_app/model/seassion_chat_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
@@ -235,9 +236,7 @@ class HomeController extends GetxController {
     _failure = failure;
   }
 
-
-
-    SessionChatModel? get sessionChatModell => _sessionChatModel;
+  SessionChatModel? get sessionChatModel => _sessionChatModel;
   SessionChatModel? _sessionChatModel;
 
   var isSessionChatModelLoding = false.obs;
@@ -258,4 +257,20 @@ class HomeController extends GetxController {
     return _sessionChatModel!;
   }
 
+  ReviewListModel? get reviewListModel => _reviewListModel;
+  ReviewListModel? _reviewListModel;
+
+  var isReviewListModelLoding = false.obs;
+
+  Future<ReviewListModel> fetchReviewListModelData() async {
+    try {
+      isReviewListModelLoding(true);
+      _reviewListModel = await _webApiServices!.getReviewListModel();
+    } on Failure catch (e) {
+      isReviewListModelLoding(false);
+      _setFailure(e);
+    }
+    isReviewListModelLoding(false);
+    return _reviewListModel!;
+  }
 }
