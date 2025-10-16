@@ -584,17 +584,33 @@ class _SessionTabState extends State<SessionTab> {
                     ),
               GestureDetector(
                 onTap: () async {
-                  await _homeController
+                  final response = await _homeController
                       .fetchProductListModeData(
                         sessionId: sessionData.id.toString(),
-                      )
-                      .then((value) {
-                        showRecommendedProductSheet(
-                          context,
-                          value.data!.products!,
-                          sessionData.id.toString(),
-                        );
-                      });
+                      );
+
+                  // Check if API returned data successfully
+                  if (response.data != null &&
+                      response.data!.products != null &&
+                      response.data!.products!.isNotEmpty) {
+                    showRecommendedProductSheet(
+                      context,
+                      response.data!.products!,
+                      sessionData.id.toString(),
+                    );
+                  } else {
+                    // Handle empty or invalid data
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: text(
+                          "No products available right now.",
+                          fontFamily: productSans,
+                          textColor: white,
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -1205,7 +1221,6 @@ class _SessionTabState extends State<SessionTab> {
 
                   const SizedBox(height: 16),
 
-                  // Recommend button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
@@ -1217,8 +1232,8 @@ class _SessionTabState extends State<SessionTab> {
                     onPressed: selectedIndexes.isEmpty
                         ? null
                         : () async {
-                            final selectedIds = selectedIndexes
-                                .map((i) => products[i].id!)
+                            final List<int> selectedIds = selectedIndexes
+                                .map<int>((i) => products[i].id!)
                                 .toList();
 
                             bool success = await _homeController
@@ -1242,7 +1257,7 @@ class _SessionTabState extends State<SessionTab> {
                         color: black,
                         fontSize: 14,
                         fontFamily: productSans,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),

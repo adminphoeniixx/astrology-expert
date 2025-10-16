@@ -14,9 +14,9 @@ String productListModelToJson(ProductListModel data) =>
 
 class ProductListModel {
   bool? success;
-  String? message;
+  dynamic message;
   Data? data;
-  String? currencySymbol;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   ProductListModel({
@@ -44,10 +44,10 @@ class ProductListModel {
 }
 
 class Data {
-  int? sessionId;
+  dynamic sessionId;
   List<Product>? products;
-  int? totalProducts;
-  int? selectedCount;
+  dynamic totalProducts;
+  dynamic selectedCount;
 
   Data({this.sessionId, this.products, this.totalProducts, this.selectedCount});
 
@@ -71,14 +71,14 @@ class Data {
 }
 
 class Product {
-  int? id;
-  String? name;
-  String? description;
-  String? price;
-  String? sellingPrice;
-  String? priceInDolor;
-  String? sellingPriceInDolar;
-  int? categoryId;
+  dynamic id;
+  dynamic name;
+  dynamic description;
+  dynamic price;
+  dynamic sellingPrice;
+  dynamic priceInDolor;
+  dynamic sellingPriceInDolar;
+  dynamic categoryId;
   bool? isSelected;
   DateTime? createdAt;
   DateTime? updatedAt;
