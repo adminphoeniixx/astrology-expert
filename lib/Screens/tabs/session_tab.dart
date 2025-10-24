@@ -10,13 +10,10 @@ import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// ignore: depend_on_referenced_packages
-import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -387,7 +384,7 @@ class _SessionTabState extends State<SessionTab> {
                   width: 70,
                   height: 70,
                   decoration: const BoxDecoration(
-                    shape: BoxShape.circle, // 👈 makes it circular
+                  //  shape: BoxShape.circle, // 👈 makes it circular
                     color: textLightColorSecondary,
                   ),
                   clipBehavior: Clip.hardEdge,
@@ -398,7 +395,7 @@ class _SessionTabState extends State<SessionTab> {
                 //   width: 70,
                 //   height: 70,
                 //   decoration: const BoxDecoration(
-                //     shape: BoxShape.circle, // 👈 makes it circular
+                //   //  shape: BoxShape.circle, // 👈 makes it circular
                 //     color: textLightColorSecondary,
                 //   ),
                 //   clipBehavior: Clip.hardEdge,
@@ -1079,97 +1076,95 @@ class _SessionTabState extends State<SessionTab> {
       ),
     );
   }
+void showRecommendedProductSheet(
+  BuildContext context,
+  List<Product> products,
+  String sessionId,
+) {
+  Set<int> selectedIndexes = {
+    for (int i = 0; i < products.length; i++)
+      if (products[i].isSelected == true) i,
+  };
 
-  void showRecommendedProductSheet(
-    BuildContext context,
-    List<Product> products,
-    String sessionId,
-  ) {
-    // ✅ Start me hi recommended products ko select kar lo
-    Set<int> selectedIndexes = {
-      for (int i = 0; i < products.length; i++)
-        if (products[i].isSelected == true) i,
-    };
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-      ),
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: black,
-                border: Border(top: BorderSide(color: primaryColor)),
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(10),
-                  topLeft: Radius.circular(10),
-                ),
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+    ),
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: black,
+              border: Border(top: BorderSide(color: primaryColor)),
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(10),
+                topLeft: Radius.circular(10),
               ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Recommended Products",
-                    style: TextStyle(
-                      fontFamily: productSans,
-                      fontSize: 16,
-                      color: white,
-                      fontWeight: FontWeight.bold,
-                    ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Recommended Products",
+                  style: TextStyle(
+                    fontFamily: productSans,
+                    fontSize: 16,
+                    color: white,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: 16),
 
-                  // Product list
-                  SizedBox(
-                    height: 400,
-                    child: ListView.builder(
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        final isSelected = selectedIndexes.contains(index);
+                SizedBox(
+                  height: 400,
+                  child: ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      final isSelected = selectedIndexes.contains(index);
 
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (isSelected) {
-                                selectedIndexes.remove(index);
-                              } else {
-                                selectedIndexes.add(index);
-                              }
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: const Color(0xFF221d25),
-                              border: Border.all(
-                                color: isSelected
-                                    ? primaryColor
-                                    : const Color(0xFF221d25),
-                              ),
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              selectedIndexes.remove(index);
+                            } else {
+                              selectedIndexes.add(index);
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFF221d25),
+                            border: Border.all(
+                              color: isSelected
+                                  ? primaryColor
+                                  : const Color(0xFF221d25),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      text(
+                                      Text(
                                         product.name ?? "",
-                                        fontSize: 14.0,
+                                       
+                                        style:const TextStyle( fontSize: 14.0,
                                         fontFamily: productSans,
-                                        textColor: white,
-                                        fontWeight: FontWeight.w600,
+                                        color: white,
+                                        fontWeight: FontWeight.w600,),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 6),
                                       text(
@@ -1189,86 +1184,89 @@ class _SessionTabState extends State<SessionTab> {
                                       ),
                                     ],
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? primaryColor
-                                          : Colors.grey,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: text(
-                                      isSelected
-                                          ? "Recommended"
-                                          : "Not Recommended",
-                                      fontSize: 12.0,
-                                      fontFamily: productSans,
-                                      fontWeight: FontWeight.w500,
-                                      textColor: black,
-                                    ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ],
-                              ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? primaryColor
+                                        : Colors.grey,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: text(
+                                    isSelected
+                                        ? "Recommended"
+                                        : "Not Recommended",
+                                    fontSize: 12.0,
+                                    fontFamily: productSans,
+                                    fontWeight: FontWeight.w500,
+                                    textColor: black,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  onPressed: selectedIndexes.isEmpty
+                      ? null
+                      : () async {
+                          final List<int> selectedIds = selectedIndexes
+                              .map<int>((i) => products[i].id!)
+                              .toList();
+
+                          bool success = await _homeController
+                              .fetchRecommendProductModelData(
+                            sessionId: sessionId,
+                            productIds: selectedIds,
+                          );
+
+                          if (success) {
+                            setState(() {
+                              for (var i in selectedIndexes) {
+                                products[i].isSelected = true;
+                              }
+                            });
+                            Navigator.pop(context);
+                          }
+                        },
+                  child: const Text(
+                    "Recommend Selected",
+                    style: TextStyle(
+                      color: black,
+                      fontSize: 14,
+                      fontFamily: productSans,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 
-                  const SizedBox(height: 16),
-
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    onPressed: selectedIndexes.isEmpty
-                        ? null
-                        : () async {
-                            final List<int> selectedIds = selectedIndexes
-                                .map<int>((i) => products[i].id!)
-                                .toList();
-
-                            bool success = await _homeController
-                                .fetchRecommendProductModelData(
-                                  sessionId: sessionId,
-                                  productIds: selectedIds,
-                                );
-
-                            if (success) {
-                              setState(() {
-                                for (var i in selectedIndexes) {
-                                  products[i].isSelected = true;
-                                }
-                              });
-                              Navigator.pop(context);
-                            }
-                          },
-                    child: const Text(
-                      "Recommend Selected",
-                      style: TextStyle(
-                        color: black,
-                        fontSize: 14,
-                        fontFamily: productSans,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   String typeCall(int type) {
     switch (type) {

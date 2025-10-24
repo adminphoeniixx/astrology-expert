@@ -356,7 +356,7 @@ class _EditProfileState extends State<EditProfile> {
                                       fontFamily: productSans,
                                       color: white,
                                     ),
-                                    enabled: false,
+                                    enabled: isEdited,
                                     decoration: const InputDecoration(
                                       contentPadding: EdgeInsets.fromLTRB(
                                         16,
@@ -402,102 +402,102 @@ class _EditProfileState extends State<EditProfile> {
                                     ),
                                   ),
                                   const SizedBox(height: 30),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      // Obx(() {
-                                      //   if (_authController
-                                      //       .isUserEditProfileLoading.value) {
-                                      //     return Padding(
-                                      //       padding: const EdgeInsets.symmetric(
-                                      //           vertical: 48),
-                                      //       child: appBotton(
-                                      //         txt: "Processing",
-                                      //         buttonColor:
-                                      //             const Color(0xFF221d25),
-                                      //         height: 48,
-                                      //         txtColor: white,
-                                      //         width: 295,
-                                      //       ),
-                                      //     );
-                                      //   } else {
-                                      //     return isEdited
-                                      //         ? appBotton(
-                                      //             onPressed: () async {
-                                      //               // UserData userData =
-                                      //               //     await BasePrefs.readData();
-                                      //               print(_selectedDate!
-                                      //                   .toIso8601String());
-                                      //               print(await messaging
-                                      //                   .getToken());
-                                      //               print(_authController
-                                      //                   .signUpModel!
-                                      //                   .user!
-                                      //                   .gender!);
-                                      //               SignUpModel signUpModel = await _authController.editUserProfile(
-                                      //                   city:
-                                      //                       citytextEditingController
-                                      //                           .text,
-                                      //                   birthday: _selectedDate!
-                                      //                       .toIso8601String(),
-                                      //                   gender:
-                                      //                       genderDropdownvalue!,
-                                      //                   email:
-                                      //                       emailtextEditingController
-                                      //                           .text,
-                                      //                   name:
-                                      //                       nametextEditingController
-                                      //                           .text);
-                                      //               if (signUpModel.status!) {
-                                      //                 Get.back();
-                                      //                 Get.snackbar("Save User",
-                                      //                     signUpModel.message!,
-                                      //                     backgroundColor:
-                                      //                         black,
-                                      //                     colorText: white);
-                                      //                 // _authController.getUserData();
-                                      //               } else {
-                                      //                 Get.snackbar(
-                                      //                     "Edit Profile",
-                                      //                     signUpModel.message!,
-                                      //                     backgroundColor:
-                                      //                         errorBg,
-                                      //                     colorText: white);
-                                      //               }
-                                      //             },
-                                      //             txt: "Submit",
-                                      //             buttonColor:
-                                      //                 const Color(0xFF221d25),
-                                      //             height: 48,
-                                      //             txtColor: white,
-                                      //             width: 295,
-                                      //           )
-                                      //         : const SizedBox();
-                                      //   }
-                                      // }),
-                                      appBotton(
-                                        txt: "Submit",
-                                        buttonColor: const Color(0xFF221d25),
-                                        height: 48,
-                                        txtColor: white,
-                                        width: 295,
-                                      ),
-                                      // const SizedBox(height: 20),
-                                      // GestureDetector(
-                                      //   onTap: () {
-                                      //     showDeleteAccountDialog(context);
-                                      //   },
-                                      //   child: text(
-                                      //     "Delete account",
-                                      //     fontFamily: productSans,
-                                      //     textColor: white,
-                                      //   ),
-                                      // ),
-                                    ],
-                                  ),
+                                  // Column(
+                                  //   crossAxisAlignment:
+                                  //       CrossAxisAlignment.center,
+                                  //   mainAxisAlignment:
+                                  //       MainAxisAlignment.spaceBetween,
+                                  //   children: [
+                                  // Obx(() {
+                                  //   if (_authController
+                                  //       .isUserEditProfileLoading.value) {
+                                  //     return Padding(
+                                  //       padding: const EdgeInsets.symmetric(
+                                  //           vertical: 48),
+                                  //       child: appBotton(
+                                  //         txt: "Processing",
+                                  //         buttonColor:
+                                  //             const Color(0xFF221d25),
+                                  //         height: 48,
+                                  //         txtColor: white,
+                                  //         width: 295,
+                                  //       ),
+                                  //     );
+                                  //   } else {
+                                  //     return isEdited
+                                  //         ? appBotton(
+                                  //             onPressed: () async {
+                                  //               // UserData userData =
+                                  //               //     await BasePrefs.readData();
+                                  //               print(_selectedDate!
+                                  //                   .toIso8601String());
+                                  //               print(await messaging
+                                  //                   .getToken());
+                                  //               print(_authController
+                                  //                   .signUpModel!
+                                  //                   .user!
+                                  //                   .gender!);
+                                  //               SignUpModel signUpModel = await _authController.editUserProfile(
+                                  //                   city:
+                                  //                       citytextEditingController
+                                  //                           .text,
+                                  //                   birthday: _selectedDate!
+                                  //                       .toIso8601String(),
+                                  //                   gender:
+                                  //                       genderDropdownvalue!,
+                                  //                   email:
+                                  //                       emailtextEditingController
+                                  //                           .text,
+                                  //                   name:
+                                  //                       nametextEditingController
+                                  //                           .text);
+                                  //               if (signUpModel.status!) {
+                                  //                 Get.back();
+                                  //                 Get.snackbar("Save User",
+                                  //                     signUpModel.message!,
+                                  //                     backgroundColor:
+                                  //                         black,
+                                  //                     colorText: white);
+                                  //                 // _authController.getUserData();
+                                  //               } else {
+                                  //                 Get.snackbar(
+                                  //                     "Edit Profile",
+                                  //                     signUpModel.message!,
+                                  //                     backgroundColor:
+                                  //                         errorBg,
+                                  //                     colorText: white);
+                                  //               }
+                                  //             },
+                                  //             txt: "Submit",
+                                  //             buttonColor:
+                                  //                 const Color(0xFF221d25),
+                                  //             height: 48,
+                                  //             txtColor: white,
+                                  //             width: 295,
+                                  //           )
+                                  //         : const SizedBox();
+                                  //   }
+                                  // }),
+                                  // appBotton(
+                                  //   txt: "Submit",
+                                  //   buttonColor: const Color(0xFF221d25),
+                                  //   height: 48,
+                                  //   txtColor: white,
+                                  //   width: 295,
+                                  // ),
+                                  // const SizedBox(height: 20),
+                                  // GestureDetector(
+                                  //   onTap: () {
+                                  //     showDeleteAccountDialog(context);
+                                  //   },
+                                  //   child: text(
+                                  //     "Delete account",
+                                  //     fontFamily: productSans,
+                                  //     textColor: white,
+                                  //   ),
+                                  // ),
+                                  //   ],
+                                  // ),
                                   const SizedBox(height: 20),
                                 ],
                               ),

@@ -130,7 +130,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
               const SizedBox(height: 12),
 
               Text(
-                "TDS Deducted - ₹${widget.earningData.payableAmount.toString()}",
+                "TDS Deducted - ₹${widget.earningData.totalTds.toString()}",
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -152,9 +152,9 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
 
               const SizedBox(height: 12),
 
-              const Text(
-                "UTR Number - ------",
-                style: TextStyle(
+              Text(
+                "UTR Number - ${widget.earningData.utr ?? "---"}",
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontFamily: productSans,
@@ -162,9 +162,9 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                "Bank Name - ------",
-                style: TextStyle(
+              Text(
+                "Bank Name - ${widget.earningData.bankName ?? "---"}",
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   fontFamily: productSans,
@@ -228,7 +228,9 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: secondryTabAppBar(title: "Orders of Date - ${widget.orderDate}"),
+      appBar: secondryTabAppBar(
+        title: "Sessions of Date - ${widget.orderDate}",
+      ),
       body: Stack(
         children: [
           SizedBox(
@@ -447,8 +449,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 20),
                       itemBuilder: (context, index) {
-                        return 
-                        orderAmountItem(
+                        return orderAmountItem(
                           _homeController
                               .earningDetailsModel!
                               .data!
@@ -495,7 +496,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     TableRow(
                       children: [
                         const Text(
-                          "Order id",
+                          "Session id",
                           style: TextStyle(
                             fontSize: 14,
                             fontFamily: productSans,
@@ -505,7 +506,60 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "#${orderData.orderId.toString()}",
+                            "#${orderData.orderId ?? ""}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: productSans,
+                              color: white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const TableRow(
+                      children: [SizedBox(height: 8), SizedBox(height: 8)],
+                    ),
+                    // TableRow(
+                    //   children: [
+                    //     const Text(
+                    //       "Session name",
+                    //       style: TextStyle(
+                    //         fontSize: 14,
+                    //         fontFamily: productSans,
+                    //         color: white,
+                    //       ),
+                    //     ),
+                    //     Align(
+                    //       alignment: Alignment.centerRight,
+                    //       child: Text(
+                    //         orderData.serviceName??"",
+                    //         style: const TextStyle(
+                    //           fontSize: 14,
+                    //           fontFamily: productSans,
+                    //           color: white,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    // const TableRow(
+                    //   children: [SizedBox(height: 8), SizedBox(height: 8)],
+                    // ),
+                    TableRow(
+                      children: [
+                        const Text(
+                          "Session type",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: productSans,
+                            color: white,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            orderData.order!.serviceType ?? "--",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -522,7 +576,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     TableRow(
                       children: [
                         const Text(
-                          "Order name",
+                          "SessionSession time",
                           style: TextStyle(
                             fontSize: 14,
                             fontFamily: productSans,
@@ -532,33 +586,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            orderData.serviceName.toString(),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Order type",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            orderData.order!.serviceTypeName.toString(),
+                            "${orderData.sessionTime ?? "0"} Minute",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -575,7 +603,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     TableRow(
                       children: [
                         const Text(
-                          "Order time",
+                          "Session Subtotal:",
                           style: TextStyle(
                             fontSize: 14,
                             fontFamily: productSans,
@@ -585,34 +613,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "${orderData.sessionTime.toString()} Minute",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Order Subtotal:",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "₹${orderData.order!.total.toString()}",
+                            "₹${orderData.order!.total ?? "0"}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -628,33 +629,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         SizedBox(height: 8),
                       ],
                     ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Order tax:",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "-₹${orderData.order!.tax.toString()}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
 
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
                     TableRow(
                       children: [
                         const Text(
@@ -669,7 +644,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "₹${orderData.order!.total.toString()}",
+                            "₹${orderData.order!.total ?? "0"}",
                             style: const TextStyle(
                               fontSize: 16,
                               fontFamily: productSans,

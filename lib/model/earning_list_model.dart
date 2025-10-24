@@ -104,7 +104,9 @@ class Earnings {
   factory Earnings.fromJson(Map<String, dynamic> json) => Earnings(
     data: json["data"] == null
         ? []
-        : List<EarningData>.from(json["data"]!.map((x) => EarningData.fromJson(x))),
+        : List<EarningData>.from(
+            json["data"]!.map((x) => EarningData.fromJson(x)),
+          ),
     currentPage: json["current_page"],
     lastPage: json["last_page"],
     perPage: json["per_page"],
@@ -146,6 +148,8 @@ class EarningData {
   List<Transaction>? transactions;
   String? expertName;
   String? id;
+  dynamic bankName;
+  int? totalTds;
 
   EarningData({
     this.expertId,
@@ -163,6 +167,8 @@ class EarningData {
     this.transactions,
     this.expertName,
     this.id,
+    this.bankName,
+    this.totalTds,
   });
 
   factory EarningData.fromJson(Map<String, dynamic> json) => EarningData(
@@ -191,6 +197,8 @@ class EarningData {
           ),
     expertName: json["expert_name"],
     id: json["id"],
+    bankName: json["bank_name"],
+    totalTds: json["total_tds"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -213,6 +221,8 @@ class EarningData {
         : List<dynamic>.from(transactions!.map((x) => x.toJson())),
     "expert_name": expertName,
     "id": id,
+    "bank_name": bankName,
+    "total_tds": totalTds,
   };
 }
 
