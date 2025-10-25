@@ -52,10 +52,10 @@ class ReviewListModel {
 }
 
 class Astrologer {
-  int? id;
-  String? name;
-  int? rating;
-  int? totalRatings;
+  dynamic id;
+  dynamic name;
+  dynamic rating;
+  dynamic totalRatings;
 
   Astrologer({this.id, this.name, this.rating, this.totalRatings});
 
@@ -76,10 +76,10 @@ class Astrologer {
 
 class Rating {
   String? id;
-  int? orderId;
+  dynamic orderId;
   String? consultType;
   String? servicveType;
-  int? rating;
+  dynamic rating;
   String? description;
   DateTime? createdAt;
   Customer? customer;
@@ -123,7 +123,7 @@ class Rating {
 }
 
 class Customer {
-  int? id;
+  dynamic id;
   String? name;
 
   Customer({this.id, this.name});

@@ -53,17 +53,14 @@ class _EarningTabState extends State<EarningTab> {
               return circularProgress();
             } else {
               return _homeController.earningListData.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 320),
-                      child: Center(
-                        child: text(
-                          "No earnings are available.",
-                          fontFamily: productSans,
-                          textColor: white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )
+                  ? Center(
+                    child: text(
+                      "No earnings are available.",
+                      fontFamily: productSans,
+                      textColor: white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
                   : Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16.0,

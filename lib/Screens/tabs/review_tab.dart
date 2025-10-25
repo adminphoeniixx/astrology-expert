@@ -87,10 +87,10 @@ class _ReviewTabState extends State<ReviewTab> {
                   children: [
                     homeController.reviewListModel!.ratings!.isEmpty
                         ? Padding(
-                            padding: const EdgeInsets.only(top: 220),
+                            padding: const EdgeInsets.only(top: 400),
                             child: Center(
                               child: text(
-                                "Reviwes Not found!",
+                                "Reviwes not found!",
                                 fontFamily: productSans,
                                 textColor: white,
                               ),
