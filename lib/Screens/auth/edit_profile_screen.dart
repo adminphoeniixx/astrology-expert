@@ -28,6 +28,8 @@ class _EditProfileState extends State<EditProfile> {
   TextEditingController emailtextEditingController = TextEditingController();
   TextEditingController birthtextEditingController = TextEditingController();
   TextEditingController citytextEditingController = TextEditingController();
+  TextEditingController pantextEditingController = TextEditingController();
+  TextEditingController aadhartextEditingController = TextEditingController();
 
   // late FirebaseMessaging messaging;
 
@@ -399,6 +401,60 @@ class _EditProfileState extends State<EditProfile> {
                                         fontFamily: productSans,
                                       ),
                                       labelText: "Email ID",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 30),
+                                  const SizedBox(height: 10),
+                                  TextFormField(
+                                    controller: aadhartextEditingController,
+                                    style: const TextStyle(
+                                      fontFamily: productSans,
+                                      color: white,
+                                    ),
+                                    enabled: isEdited,
+                                    decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.fromLTRB(
+                                        16,
+                                        15,
+                                        4,
+                                        8,
+                                      ),
+                                      labelStyle: TextStyle(
+                                        color: white,
+                                        fontFamily: productSans,
+                                      ),
+                                      hintStyle: TextStyle(
+                                        color: textColorSecondary,
+                                        fontFamily: productSans,
+                                      ),
+                                      labelText: "Aadhar Number",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 30),
+                                  const SizedBox(height: 10),
+                                  TextFormField(
+                                    controller: pantextEditingController,
+                                    style: const TextStyle(
+                                      fontFamily: productSans,
+                                      color: white,
+                                    ),
+                                    enabled: isEdited,
+                                    decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.fromLTRB(
+                                        16,
+                                        15,
+                                        4,
+                                        8,
+                                      ),
+                                      labelStyle: TextStyle(
+                                        color: white,
+                                        fontFamily: productSans,
+                                      ),
+                                      hintStyle: TextStyle(
+                                        color: textColorSecondary,
+                                        fontFamily: productSans,
+                                      ),
+                                      labelText: "PAN Number",
                                     ),
                                   ),
                                   const SizedBox(height: 30),

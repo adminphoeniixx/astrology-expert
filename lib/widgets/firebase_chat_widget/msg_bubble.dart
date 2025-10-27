@@ -1,6 +1,5 @@
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
-import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/document_view_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/image_view_widget.dart';
 import 'package:astro_partner_app/widgets/video_player/video_player_vertical.dart';
@@ -157,17 +156,12 @@ class MessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: msgType == 'Promotion'
-            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 6)
-            : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: msgType == 'Promotion'
-              ? black //const Color(0xFFF9F4EF)
-              : (bgColor ?? (isMe ? primaryColor : const Color(0xFF221d25))),
+          color: bgColor ?? (isMe ? primaryColor : const Color(0xFF221d25)),
           border: Border.all(
-            color: bgColor != null ? const Color(0xFF221d25) : primaryColor,
-            //isMe ? Colors.grey[400]! : Colors.grey[400]!,
+            color: bgColor ?? (isMe ? primaryColor : const Color(0xFF221d25)),
           ),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(12),
@@ -188,32 +182,7 @@ class MessageBubble extends StatelessWidget {
                     message,
                     style: TextStyle(color: isMe ? Colors.black : primaryColor),
                   ),
-            // 👇 Add Book Now button for promotion message
-            if (msgType == 'Promotion') ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: 200,
-                  child: SizedBox(
-                    height: 40,
-                    width: 200,
-                    child: appBotton(
-                      buttonColor: const Color(0xFF221d25),
-                      txt: "Recharge Now",
-                      onPressed: () {
-                        // Get.offAll(const MyHomePage(
-                        //   tabItem: TabItem.consultTab,
-                        // ));
-                        // _paymentDialog(context);
-                        //  Get.to(const AddMoneyPage(from: 'chat'));
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 5),
-            ],
+
             const SizedBox(height: 5),
             showTime
                 ? Row(
@@ -231,7 +200,7 @@ class MessageBubble extends StatelessWidget {
                         Icon(
                           isRead ? Icons.done_all : Icons.check,
                           size: 14,
-                          color: isRead ? primaryColor : Colors.black,
+                          color: isRead ? black : black,
                         ),
                       ],
                     ],
@@ -250,6 +219,7 @@ class VideoPlayerWidget extends StatefulWidget {
   const VideoPlayerWidget({required this.url, super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
 }
 

@@ -4,7 +4,6 @@ import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -206,33 +205,14 @@ class _ReviewTabState extends State<ReviewTab> {
                                                 ),
                                               ),
                                               const SizedBox(height: 5),
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  SvgPicture.asset(
-                                                    starIcon,
-                                                    height: 12,
-                                                    width: 12,
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  Text(
-                                                    homeController
-                                                        .reviewListModel!
-                                                        .ratings![index]
-                                                        .rating
-                                                        .toString(),
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      fontSize: 12.0,
-                                                      fontFamily: productSans,
-                                                      color: white,
-                                                    ),
-                                                  ),
-                                                ],
+                                              buildRatingStars(
+                                                double.parse(
+                                                  homeController
+                                                      .reviewListModel!
+                                                      .ratings![index]
+                                                      .rating
+                                                      .toString(),
+                                                ),
                                               ),
                                               const SizedBox(height: 5),
                                               SizedBox(
@@ -278,4 +258,25 @@ class _ReviewTabState extends State<ReviewTab> {
   //   }
   //   return total / data.length; // Return average rating
   // }
+}
+
+/// ✅ Helper function to build star rating
+Widget buildRatingStars(double rating) {
+  List<Widget> stars = [];
+  int fullStars = rating.floor();
+  bool hasHalfStar = (rating - fullStars) >= 0.5;
+
+  for (int i = 0; i < fullStars; i++) {
+    stars.add(const Icon(Icons.star, color: Colors.amber, size: 16));
+  }
+
+  if (hasHalfStar) {
+    stars.add(const Icon(Icons.star_half, color: Colors.amber, size: 16));
+  }
+
+  while (stars.length < 5) {
+    stars.add(const Icon(Icons.star_border, color: Colors.amber, size: 16));
+  }
+
+  return Row(children: stars);
 }

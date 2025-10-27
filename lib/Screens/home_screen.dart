@@ -5,7 +5,6 @@ import 'package:astro_partner_app/Screens/tabs/account_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/earning_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/review_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/session_tab.dart';
-import 'package:astro_partner_app/Screens/auth/edit_profile_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
@@ -350,13 +349,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ],
                 ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () {
-                    Get.to(const EditProfile());
-                  },
-                  child: SvgPicture.asset(edit2Icon, color: white),
-                ),
+                // const Spacer(),
+                // GestureDetector(
+                //   onTap: () {
+                //     Get.to(const EditProfile());
+                //   },
+                //   child: SvgPicture.asset(edit2Icon, color: white),
+                // ),
               ],
             ),
           );

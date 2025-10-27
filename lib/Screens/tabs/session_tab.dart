@@ -51,9 +51,9 @@ class _SessionTabState extends State<SessionTab> {
   final Map<String, String> serviceTypes = {
     "All Sessions": "all",
     "Live Chat": "1",
-    "Audio Recording": "2",
+    // "Audio Recording": "2",
     "Call Consultation": "3",
-    "Video Consultation": "4",
+    // "Video Consultation": "4",
   };
   Future<bool> requestPermission() async {
     var status = await Permission.storage.request();
@@ -104,149 +104,166 @@ class _SessionTabState extends State<SessionTab> {
             if (_homeController.isSessionsModelLoding.value) {
               return circularProgress();
             } else {
-              return SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 15),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ValueListenableBuilder<String>(
-                          valueListenable: _selectedFilter,
-                          builder: (context, selected, _) {
-                            return Row(
-                              children: serviceTypes.keys.map((label) {
-                                return _buildFilterChip(
-                                  label,
-                                  selected == label,
-                                );
-                              }).toList(),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-                    _homeController.sessionListData.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: 320),
-                            child: Center(
-                              child: text(
-                                "No sessions are available.",
-                                fontFamily: productSans,
-                                textColor: white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            physics: const ClampingScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: _homeController.sessionListData.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              if (index ==
-                                  _homeController.sessionListData.length) {
-                                return _homeController
-                                            .nextPageUrlforCommingSession
-                                            .value !=
-                                        ""
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: CupertinoActivityIndicator(),
-                                      )
-                                    : const SizedBox();
-                              } else {
-                                return GestureDetector(
-                                  onTap: () async {
-                                    switch (_homeController
-                                        .sessionListData[index]
-                                        .serviceType!) {
-                                      case 1:
-                                        await _homeController
-                                            .fetchSessionChatModelData(
-                                              sessionId: _homeController
-                                                  .sessionListData[index]
-                                                  .id!,
-                                            )
-                                            .then((value) {
-                                              print(
-                                                '========== SESSION CHAT MODEL ==========',
-                                              );
-                                              print(
-                                                'Customer Name: ${value.session?.customerName ?? ""}',
-                                              );
-                                              print(
-                                                'Remaining Time: ${value.pricing?.remainingSeconds.toString() ?? "0"}',
-                                              );
-                                              print(
-                                                'Receiver ID: ${value.session?.expertId}',
-                                              );
-                                              print(
-                                                'Sender ID: ${value.session?.customerId}',
-                                              );
-                                              print(
-                                                'Room ID: ${value.session?.roomId}',
-                                              );
-                                              print(
-                                                'SubCollection: free_chat_session',
-                                              );
-                                              print(
-                                                '========================================',
-                                              );
-
-                                              Get.to(
-                                                FirebaseChatScreen(
-                                                  customerName:
-                                                      value
-                                                          .session
-                                                          ?.customerName ??
-                                                      "",
-                                                  remaingTime: "30",
-                                                  reciverId:
-                                                      value.session!.customerId
-                                                          is int
-                                                      ? value
-                                                            .session!
-                                                            .customerId
-                                                      : int.tryParse(
-                                                              value
-                                                                  .session!
-                                                                  .customerId
-                                                                  .toString(),
-                                                            ) ??
-                                                            0,
-                                                  senderId:
-                                                      value.session!.expertId
-                                                          is int
-                                                      ? value.session!.expertId
-                                                      : int.tryParse(
-                                                              value
-                                                                  .session!
-                                                                  .expertId
-                                                                  .toString(),
-                                                            ) ??
-                                                            0,
-                                                  roomId: value.session!.roomId
-                                                      .toString(),
-                                                  subCollection: 'messages',
-                                                ),
-                                              );
-                                            });
-
-                                        break;
-                                      default:
-                                    }
-                                  },
-                                  child: sessionItemsWidget(index),
-                                );
-                              }
+              return RefreshIndicator(
+                color: primaryColor,
+                backgroundColor: Colors.black,
+                onRefresh: _refreshSessionData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: _scrollmainController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 15),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ValueListenableBuilder<String>(
+                            valueListenable: _selectedFilter,
+                            builder: (context, selected, _) {
+                              return Row(
+                                children: serviceTypes.keys.map((label) {
+                                  return _buildFilterChip(
+                                    label,
+                                    selected == label,
+                                  );
+                                }).toList(),
+                              );
                             },
                           ),
-                  ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+                      _homeController.sessionListData.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 320),
+                              child: Center(
+                                child: text(
+                                  "No sessions are available.",
+                                  fontFamily: productSans,
+                                  textColor: white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              physics: const ClampingScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: _homeController.sessionListData.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index ==
+                                    _homeController.sessionListData.length) {
+                                  return _homeController
+                                              .nextPageUrlforCommingSession
+                                              .value !=
+                                          ""
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: CupertinoActivityIndicator(),
+                                        )
+                                      : const SizedBox();
+                                } else {
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      switch (_homeController
+                                          .sessionListData[index]
+                                          .serviceType!) {
+                                        case 1:
+                                          await _homeController
+                                              .fetchSessionChatModelData(
+                                                sessionId: _homeController
+                                                    .sessionListData[index]
+                                                    .id!,
+                                              )
+                                              .then((value) {
+                                                print(
+                                                  '========== SESSION CHAT MODEL ==========',
+                                                );
+                                                print(
+                                                  'Customer Name: ${value.session?.customerName ?? ""}',
+                                                );
+                                                print(
+                                                  'Remaining Time: ${value.pricing?.remainingSeconds.toString() ?? "0"}',
+                                                );
+                                                print(
+                                                  'Receiver ID: ${value.session?.expertId}',
+                                                );
+                                                print(
+                                                  'Sender ID: ${value.session?.customerId}',
+                                                );
+                                                print(
+                                                  'Room ID: ${value.session?.roomId}',
+                                                );
+                                                print(
+                                                  'SubCollection: free_chat_session',
+                                                );
+                                                print(
+                                                  '========================================',
+                                                );
+
+                                                Get.to(
+                                                  FirebaseChatScreen(
+                                                    customerName:
+                                                        value
+                                                            .session
+                                                            ?.customerName ??
+                                                        "",
+                                                    remaingTime:
+                                                        value
+                                                            .pricing
+                                                            ?.remainingSeconds
+                                                            .toString() ??
+                                                        "0",
+                                                    reciverId:
+                                                        value
+                                                                .session!
+                                                                .customerId
+                                                            is int
+                                                        ? value
+                                                              .session!
+                                                              .customerId
+                                                        : int.tryParse(
+                                                                value
+                                                                    .session!
+                                                                    .customerId
+                                                                    .toString(),
+                                                              ) ??
+                                                              0,
+                                                    senderId:
+                                                        value.session!.expertId
+                                                            is int
+                                                        ? value
+                                                              .session!
+                                                              .expertId
+                                                        : int.tryParse(
+                                                                value
+                                                                    .session!
+                                                                    .expertId
+                                                                    .toString(),
+                                                              ) ??
+                                                              0,
+                                                    roomId: value
+                                                        .session!
+                                                        .roomId
+                                                        .toString(),
+                                                    subCollection: 'messages',
+                                                  ),
+                                                );
+                                              });
+
+                                          break;
+                                        default:
+                                      }
+                                    },
+                                    child: sessionItemsWidget(index),
+                                  );
+                                }
+                              },
+                            ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -254,6 +271,11 @@ class _SessionTabState extends State<SessionTab> {
         ],
       ),
     );
+  }
+
+  Future<void> _refreshSessionData() async {
+    final type = serviceTypes[_selectedFilter.value] ?? "all";
+    await _homeController.fetchSessionData(serviceType: type);
   }
 
   bool isCurrentTimeLessThanSixPM() {
@@ -380,15 +402,13 @@ class _SessionTabState extends State<SessionTab> {
               // Image Container
               Padding(
                 padding: const EdgeInsets.only(top: 5),
-                child: Container(
-                  width: 70,
+                child: SizedBox(
                   height: 70,
-                  decoration: const BoxDecoration(
-                  //  shape: BoxShape.circle, // 👈 makes it circular
-                    color: textLightColorSecondary,
+                  width: 70,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(launchImage, fit: BoxFit.fill),
                   ),
-                  clipBehavior: Clip.hardEdge,
-                  child: Image.asset(launchImage, scale: 0.5, fit: BoxFit.fill),
                 ),
 
                 //  Container(
@@ -416,7 +436,7 @@ class _SessionTabState extends State<SessionTab> {
                   children: [
                     const SizedBox(height: 4),
                     text(
-                      sessionData.customerName ?? "",
+                      sessionData.customerName ?? "NA",
                       fontSize: 16.0,
                       fontWeight: FontWeight.w600,
                       textColor: white,
@@ -488,8 +508,9 @@ class _SessionTabState extends State<SessionTab> {
                     sessionData.status ?? "",
                     fontSize: 11.0,
                     fontWeight: FontWeight.w500,
-                    textColor: white,
+                    textColor: getStatusColor(sessionData.status ?? ""),
                   ),
+
                   const SizedBox(height: 55),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -668,7 +689,7 @@ class _SessionTabState extends State<SessionTab> {
                     padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     child: Center(
                       child: Text(
-                        "Seassion Details",
+                        "Customer Details",
                         style: TextStyle(
                           fontFamily: productSans,
                           fontSize: 12,
@@ -693,7 +714,7 @@ class _SessionTabState extends State<SessionTab> {
                     padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     child: Center(
                       child: Text(
-                        "Upate Note",
+                        "Update Note",
                         style: TextStyle(
                           fontFamily: productSans,
                           fontSize: 12,
@@ -709,6 +730,21 @@ class _SessionTabState extends State<SessionTab> {
         ],
       ),
     );
+  }
+
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case "ongoing":
+        return Colors.orange;
+      case "completed":
+        return Colors.green;
+      case "missed":
+        return Colors.red;
+      case "pending":
+        return Colors.yellow;
+      default:
+        return Colors.white; // default color
+    }
   }
 
   Future<bool> requestStoragePermission(BuildContext context) async {
@@ -1076,197 +1112,200 @@ class _SessionTabState extends State<SessionTab> {
       ),
     );
   }
-void showRecommendedProductSheet(
-  BuildContext context,
-  List<Product> products,
-  String sessionId,
-) {
-  Set<int> selectedIndexes = {
-    for (int i = 0; i < products.length; i++)
-      if (products[i].isSelected == true) i,
-  };
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-    ),
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: black,
-              border: Border(top: BorderSide(color: primaryColor)),
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(10),
-                topLeft: Radius.circular(10),
+  void showRecommendedProductSheet(
+    BuildContext context,
+    List<Product> products,
+    String sessionId,
+  ) {
+    Set<int> selectedIndexes = {
+      for (int i = 0; i < products.length; i++)
+        if (products[i].isSelected == true) i,
+    };
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: black,
+                border: Border(top: BorderSide(color: primaryColor)),
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(10),
+                  topLeft: Radius.circular(10),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Recommended Products",
-                  style: TextStyle(
-                    fontFamily: productSans,
-                    fontSize: 16,
-                    color: white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  height: 400,
-                  child: ListView.builder(
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final product = products[index];
-                      final isSelected = selectedIndexes.contains(index);
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (isSelected) {
-                              selectedIndexes.remove(index);
-                            } else {
-                              selectedIndexes.add(index);
-                            }
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: const Color(0xFF221d25),
-                            border: Border.all(
-                              color: isSelected
-                                  ? primaryColor
-                                  : const Color(0xFF221d25),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        product.name ?? "",
-                                       
-                                        style:const TextStyle( fontSize: 14.0,
-                                        fontFamily: productSans,
-                                        color: white,
-                                        fontWeight: FontWeight.w600,),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 6),
-                                      text(
-                                        "₹${product.sellingPrice ?? ""}",
-                                        textColor: white,
-                                        fontSize: 12.0,
-                                        fontFamily: productSans,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      text(
-                                        "₹${product.price ?? ""}",
-                                        textColor: Colors.grey,
-                                        lineThrough: true,
-                                        fontSize: 12.0,
-                                        fontFamily: productSans,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? primaryColor
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: text(
-                                    isSelected
-                                        ? "Recommended"
-                                        : "Not Recommended",
-                                    fontSize: 12.0,
-                                    fontFamily: productSans,
-                                    fontWeight: FontWeight.w500,
-                                    textColor: black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Recommended Products",
+                    style: TextStyle(
+                      fontFamily: productSans,
+                      fontSize: 16,
+                      color: white,
+                      fontWeight: FontWeight.bold,
                     ),
-                    minimumSize: const Size(double.infinity, 50),
                   ),
-                  onPressed: selectedIndexes.isEmpty
-                      ? null
-                      : () async {
-                          final List<int> selectedIds = selectedIndexes
-                              .map<int>((i) => products[i].id!)
-                              .toList();
+                  const SizedBox(height: 16),
 
-                          bool success = await _homeController
-                              .fetchRecommendProductModelData(
-                            sessionId: sessionId,
-                            productIds: selectedIds,
-                          );
+                  SizedBox(
+                    height: 400,
+                    child: ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        final isSelected = selectedIndexes.contains(index);
 
-                          if (success) {
+                        return GestureDetector(
+                          onTap: () {
                             setState(() {
-                              for (var i in selectedIndexes) {
-                                products[i].isSelected = true;
+                              if (isSelected) {
+                                selectedIndexes.remove(index);
+                              } else {
+                                selectedIndexes.add(index);
                               }
                             });
-                            Navigator.pop(context);
-                          }
-                        },
-                  child: const Text(
-                    "Recommend Selected",
-                    style: TextStyle(
-                      color: black,
-                      fontSize: 14,
-                      fontFamily: productSans,
-                      fontWeight: FontWeight.w500,
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: const Color(0xFF221d25),
+                              border: Border.all(
+                                color: isSelected
+                                    ? primaryColor
+                                    : const Color(0xFF221d25),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product.name ?? "",
+
+                                          style: const TextStyle(
+                                            fontSize: 14.0,
+                                            fontFamily: productSans,
+                                            color: white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        text(
+                                          "₹${product.sellingPrice ?? ""}",
+                                          textColor: white,
+                                          fontSize: 12.0,
+                                          fontFamily: productSans,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        text(
+                                          "₹${product.price ?? ""}",
+                                          textColor: Colors.grey,
+                                          lineThrough: true,
+                                          fontSize: 12.0,
+                                          fontFamily: productSans,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? primaryColor
+                                          : Colors.grey,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: text(
+                                      isSelected
+                                          ? "Recommended"
+                                          : "Not Recommended",
+                                      fontSize: 12.0,
+                                      fontFamily: productSans,
+                                      fontWeight: FontWeight.w500,
+                                      textColor: black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
 
+                  const SizedBox(height: 16),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    onPressed: selectedIndexes.isEmpty
+                        ? null
+                        : () async {
+                            final List<int> selectedIds = selectedIndexes
+                                .map<int>((i) => products[i].id!)
+                                .toList();
+
+                            bool success = await _homeController
+                                .fetchRecommendProductModelData(
+                                  sessionId: sessionId,
+                                  productIds: selectedIds,
+                                );
+
+                            if (success) {
+                              setState(() {
+                                for (var i in selectedIndexes) {
+                                  products[i].isSelected = true;
+                                }
+                              });
+                              Navigator.pop(context);
+                            }
+                          },
+                    child: const Text(
+                      "Recommend Selected",
+                      style: TextStyle(
+                        color: black,
+                        fontSize: 14,
+                        fontFamily: productSans,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   String typeCall(int type) {
     switch (type) {

@@ -5,12 +5,11 @@ import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
+import 'package:astro_partner_app/widgets/about_us.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
+import 'package:astro_partner_app/widgets/contact_us.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AccountTab extends StatefulWidget {
   const AccountTab({super.key});
@@ -19,20 +18,7 @@ class AccountTab extends StatefulWidget {
 }
 
 class _AccountTabState extends State<AccountTab> {
-  // final UserController _userController = Get.put(UserController());
-
-  List<String> drowerItems = [
-    'Profile',
-    'About Us',
-    'Refund & Return policy',
-    'Shipping & Delivery Policy',
-    'Disclaimer',
-    'Cancellation',
-    'Terms & Conditions Policy',
-    'Contact Us',
-    'Privacy Policy',
-    // 'Delete Account',
-  ];
+  List<String> drowerItems = ['Profile', 'About Us', 'Contact Us'];
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +36,14 @@ class _AccountTabState extends State<AccountTab> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 30),
+
+                  /// ✅ Bank Details Box
+                  bankDetailsBox(),
+
+                  const SizedBox(height: 30),
+
+                  /// ✅ Drawer Options
                   Column(
                     children: List.generate(
                       drowerItems.length,
@@ -60,109 +53,12 @@ class _AccountTabState extends State<AccountTab> {
                             case 0:
                               changeScreen(context, const EditProfile());
                               break;
-                            // case 1:
-                            //   changeScreen(context, const PaymentPage());
-                            //   break;
-                            // case 2:
-                            //   changeScreen(context, const SessionsPage());
-                            //   break;
-                            // case 3:
-                            //   changeScreen(
-                            //       context,
-                            //       const ChatScreen(
-                            //         astroName: "Chat",
-                            //         reciverId: 2,
-                            //         roomId: 2,
-                            //         senderId: 4,
-                            //         subCollection: "message",
-                            //         timmer: "0",
-                            //       ));
-                            //   break;
                             case 1:
-                              // changeScreen(
-                              //     context, const ServiceOrdersListScreen());
+                              changeScreen(context, const AboutUsScreen());
                               break;
                             case 2:
-                              // changeScreen(
-                              //     context, const ProductOrdersListScreen());
+                              changeScreen(context, const ContactUsScreen());
                               break;
-                            case 3:
-                              //   changeScreen(context, const AstroMoney());
-                              break;
-
-                            case 4:
-                              // changeScreen(
-                              //     context, const AstrologyInfoScreen());
-                              break;
-                            case 5:
-                              //  changeScreen(context, FaqScreen());
-                              break;
-
-                            case 6:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const RefundPolocyScreen(),
-                              //     ));
-                              break;
-                            case 7:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const ShippingAndDeliveryPolocyScreen(),
-                              //     ));
-                              break;
-                            case 8:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const DisclaimerPolocyScreen(),
-                              //     ));
-                              break;
-                            case 9:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const CancellationPolocyScreen(),
-                              //     ));
-                              break;
-                            case 10:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const TermsPolocyScreen(),
-                              //     ));
-                              break;
-
-                            case 11:
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (context) =>
-                              //           const ContactUsPolocyScreen(),
-                              //     ));
-                              break;
-
-                            case 12:
-                              // changeScreen(
-                              //     context,
-                              //     const PrivacyPolocyScreen(
-                              //         title: "Privacy Policy"));
-                              break;
-
-                            case 13:
-                              shareAppUrl();
-                              break;
-
-                            // case 14:
-                            //   showDeleteAccountDialog(context);
-                            //   break;
-
                             default:
                           }
                         },
@@ -171,7 +67,7 @@ class _AccountTabState extends State<AccountTab> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Container(height: 15, width: 2, color: black),
+                              Container(height: 15, width: 2, color: const Color(0xFF221d25)),
                               const SizedBox(width: 15),
                               text(
                                 drowerItems[index],
@@ -185,74 +81,20 @@ class _AccountTabState extends State<AccountTab> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
+                  /// ✅ Bottom Info + Logout
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: () async {
-                          const url =
-                              'https://www.facebook.com/astrologymatrix/ ';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            // Handle error if the URL can't be opened
-                            debugPrint("Could not launch $url");
-                          }
-                        },
-                        child: SvgPicture.asset(
-                          facebookIcon,
-                          height: 25,
-                          width: 25,
+                      SizedBox(
+                        width: 200,
+                        child: text(
+                          "Powered by: Vedam Roots Co.\nVersion 162.325.32",
+                          textColor: logoutBorderColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12.0,
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () async {
-                          const url =
-                              'https://www.instagram.com/astrologymatrix/';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            // Handle error if the URL can't be opened
-                            debugPrint("Could not launch $url");
-                          }
-                        },
-                        child: SvgPicture.asset(
-                          instaIcon,
-                          height: 25,
-                          width: 25,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () async {
-                          const url =
-                              'https://www.youtube.com/@Astrology.Matrix/';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            // Handle error if the URL can't be opened
-                            debugPrint("Could not launch $url");
-                          }
-                        },
-                        child: SvgPicture.asset(
-                          youtubeIcon,
-                          height: 25,
-                          width: 25,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () async {
-                          const url = 'https://twitter.com/astrologymatrix/';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            // Handle error if the URL can't be opened
-                            debugPrint("Could not launch $url");
-                          }
-                        },
-                        child: SvgPicture.asset(xIcon, height: 25, width: 25),
                       ),
                       const Spacer(),
                       GestureDetector(
@@ -267,9 +109,7 @@ class _AccountTabState extends State<AccountTab> {
                           child: Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
+                                  horizontal: 20, vertical: 10),
                               child: text(
                                 "Logout",
                                 textColor: logoutBorderColor,
@@ -282,20 +122,8 @@ class _AccountTabState extends State<AccountTab> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: SizedBox(
-                      width: 200,
-                      child: text(
-                        "Powered by: Vedam roots experts \n Version 162.325.32",
-                        textColor: logoutBorderColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12.0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
+
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
@@ -305,12 +133,63 @@ class _AccountTabState extends State<AccountTab> {
     );
   }
 
-  void shareAppUrl() {
-    String appUrl =
-        'https://play.google.com/store/apps/details?id=com.app.astrologymatrix'; // Replace with your app's URL
-    Share.share(appUrl, subject: 'Check out this app!');
+  /// ✅ Bank Details Widget
+  Widget bankDetailsBox() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF221d25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Bank Details",
+            style: TextStyle(
+              fontFamily: productSans,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          bankDetailRow("Account Holder", "User Name"),
+          bankDetailRow("Bank Name", "HDFC Bank"),
+          bankDetailRow("Account Number", "**** **** 5678"),
+          bankDetailRow("IFSC Code", "HDFC0001234"),
+        ],
+      ),
+    );
   }
 
+  /// ✅ Single Detail Row
+  Widget bankDetailRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+                fontSize: 13,
+                color: textColorSecondary,
+                fontFamily: productSans),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+                fontSize: 13, color: white, fontFamily: productSans),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ✅ Logout Function
   logoutNow() async {
     showDialog(
       context: context,
@@ -345,13 +224,12 @@ class _AccountTabState extends State<AccountTab> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: black, // Red color for logout button
+                backgroundColor: black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               onPressed: () {
-                // Proceed with logout
                 BasePrefs.clearPrefs().then((value) {
                   Get.offAll(const SpleshScreen());
                 });

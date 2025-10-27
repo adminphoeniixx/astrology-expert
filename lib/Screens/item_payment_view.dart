@@ -119,7 +119,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
               const SizedBox(height: 12),
 
               Text(
-                "Total Commision - ₹${widget.earningData.totalCommission.toString()}",
+                "Total Commision - ₹${widget.earningData.totalCommission.toStringAsFixed(2)}",
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -130,7 +130,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
               const SizedBox(height: 12),
 
               Text(
-                "TDS Deducted - ₹${widget.earningData.totalTds.toString()}",
+                "TDS Deducted - ₹${widget.earningData.totalTds.toStringAsFixed(2)}",
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -138,10 +138,11 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                   color: white,
                 ),
               ),
+
               const SizedBox(height: 12),
 
               Text(
-                "Total Payable - ₹${widget.earningData.payableAmount.toString()}",
+                "Total Payable - ₹${widget.earningData.payableAmount.toStringAsFixed(2)}",
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -493,33 +494,33 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     1: FlexColumnWidth(3),
                   },
                   children: [
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Session id",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "#${orderData.orderId ?? ""}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // TableRow(
+                    //   children: [
+                    //     const Text(
+                    //       "Session id",
+                    //       style: TextStyle(
+                    //         fontSize: 14,
+                    //         fontFamily: productSans,
+                    //         color: white,
+                    //       ),
+                    //     ),
+                    //     Align(
+                    //       alignment: Alignment.centerRight,
+                    //       child: Text(
+                    //         "#${orderData.orderId ?? ""}",
+                    //         style: const TextStyle(
+                    //           fontSize: 14,
+                    //           fontFamily: productSans,
+                    //           color: white,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
 
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
+                    // const TableRow(
+                    //   children: [SizedBox(height: 8), SizedBox(height: 8)],
+                    // ),
                     // TableRow(
                     //   children: [
                     //     const Text(
@@ -559,7 +560,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            orderData.order!.serviceType ?? "--",
+                            orderData.order!.name ?? "",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -576,7 +577,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     TableRow(
                       children: [
                         const Text(
-                          "SessionSession time",
+                          "Session time",
                           style: TextStyle(
                             fontSize: 14,
                             fontFamily: productSans,
@@ -586,7 +587,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "${orderData.sessionTime ?? "0"} Minute",
+                            "${orderData.startTime ?? "0"}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -613,7 +614,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "₹${orderData.order!.total ?? "0"}",
+                            "₹${orderData.order!.totalAmount ?? "0"}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: productSans,
@@ -644,7 +645,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            "₹${orderData.order!.total ?? "0"}",
+                            "₹${orderData.order!.payableAmount ?? "0"}",
                             style: const TextStyle(
                               fontSize: 16,
                               fontFamily: productSans,

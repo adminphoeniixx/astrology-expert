@@ -131,56 +131,64 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
   void _showCompletionDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // Tap outside dialog also disabled
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF221d25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          title: text(
-            'Chat Complete',
-            fontSize: 18.0,
-            fontFamily: productSans,
-            fontWeight: FontWeight.w600,
-            textColor: white,
-          ),
-          content: text(
-            'The Chat has been completed.',
-            fontSize: 18.0,
-            fontFamily: productSans,
-            fontWeight: FontWeight.w500,
-            textColor: white,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: text(
-                'Cancel',
-                fontSize: 18.0,
-                fontFamily: productSans,
-                fontWeight: FontWeight.w500,
-                textColor: white,
-              ),
+        // ignore: deprecated_member_use
+        return WillPopScope(
+          onWillPop: () async {
+            return false; // Back button disable
+          },
+          child: AlertDialog(
+            backgroundColor: const Color(0xFF221d25),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: text(
-                'Ok',
-                fontSize: 18.0,
-                fontFamily: productSans,
-                fontWeight: FontWeight.w500,
-                textColor: white,
-              ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            title: text(
+              'Chat Complete',
+              fontSize: 18.0,
+              fontFamily: productSans,
+              fontWeight: FontWeight.w600,
+              textColor: white,
             ),
-          ],
+            content: text(
+              'The Chat has been completed.',
+              fontSize: 18.0,
+              fontFamily: productSans,
+              fontWeight: FontWeight.w500,
+              textColor: white,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(
+                    context,
+                  ).pop(); // Close previous screen if needed
+                },
+                child: text(
+                  'Cancel',
+                  fontSize: 18.0,
+                  fontFamily: productSans,
+                  fontWeight: FontWeight.w500,
+                  textColor: white,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop(); // Close previous screen
+                },
+                child: text(
+                  'Ok',
+                  fontSize: 18.0,
+                  fontFamily: productSans,
+                  fontWeight: FontWeight.w500,
+                  textColor: white,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -341,28 +349,30 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen>
           ),
         ),
         actions: [
-          // widget.remaingTime == null
-          //     ? const SizedBox()
-          //     :
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: black,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: CountdownTimer(
-                minutes: (int.parse(widget.remaingTime) / 60).floor(),
-                textFontSize: 18.0,
-                txtColor: white,
-                fontFamily: productSans,
-                onTimerComplete: () {
-                  _showCompletionDialog(context);
-                },
-              ),
-            ),
-          ),
+          widget.remaingTime == "00" || widget.remaingTime.isEmpty
+              ? const SizedBox()
+              : Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: black,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: CountdownTimer(
+                      minutes: (int.parse(widget.remaingTime) / 60).ceil(),
+                      textFontSize: 18.0,
+                      txtColor: white,
+                      fontFamily: productSans,
+                      onTimerComplete: () {
+                        _showCompletionDialog(context);
+                      },
+                    ),
+                  ),
+                ),
         ],
       ),
       body: Stack(

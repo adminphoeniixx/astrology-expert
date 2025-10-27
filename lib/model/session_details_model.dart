@@ -13,9 +13,9 @@ String sessionDetailsModelToJson(SessionDetailsModel data) =>
 
 class SessionDetailsModel {
   bool? success;
-  String? message;
+  dynamic message;
   Data? data;
-  String? currencySymbol;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   SessionDetailsModel({
@@ -47,13 +47,15 @@ class Data {
   SessionDetails? details;
   List<dynamic>? attachments;
   User? user;
-  String? title;
+  dynamic title;
 
   Data({this.session, this.details, this.attachments, this.user, this.title});
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
     session: json["session"] == null ? null : Session.fromJson(json["session"]),
-    details: json["details"] == null ? null : SessionDetails.fromJson(json["details"]),
+    details: json["details"] == null
+        ? null
+        : SessionDetails.fromJson(json["details"]),
     attachments: json["attachments"] == null
         ? []
         : List<dynamic>.from(json["attachments"]!.map((x) => x)),
@@ -73,29 +75,29 @@ class Data {
 }
 
 class SessionDetails {
-  int? id;
-  int? orderId;
+  dynamic id;
+  dynamic orderId;
   DateTime? date;
-  String? slots;
-  String? fullName;
-  String? birthTime;
+  dynamic slots;
+  dynamic fullName;
+  dynamic birthTime;
   DateTime? dateOfBirth;
-  String? placeOfBirth;
+  dynamic placeOfBirth;
   dynamic rightPalmImage;
   dynamic leftPalmImage;
   dynamic consultationTime;
   DateTime? createdAt;
   DateTime? updatedAt;
-  int? expertId;
-  String? birthTimeAccuracy;
+  dynamic expertId;
+  dynamic birthTimeAccuracy;
   dynamic partnerName;
   dynamic partnerDateOfBirth;
   dynamic partnerBirthTime;
   dynamic partnerPlaceOfBirth;
   dynamic questionDescription;
-  String? birthPartnerAccuracy;
+  dynamic birthPartnerAccuracy;
   dynamic preferLanguage;
-  String? serviceTypeName;
+  dynamic serviceTypeName;
 
   SessionDetails({
     this.id,
@@ -185,25 +187,25 @@ class SessionDetails {
 }
 
 class Session {
-  int? id;
-  int? orderId;
-  String? roomId;
+  dynamic id;
+  dynamic orderId;
+  dynamic roomId;
   dynamic token;
-  int? userId;
+  dynamic userId;
   dynamic startDate;
   dynamic startTime;
-  String? status;
+  dynamic status;
   DateTime? createdAt;
   DateTime? updatedAt;
   DateTime? date;
-  String? customerName;
-  String? serviceName;
-  int? expertId;
-  String? serviceType;
+  dynamic customerName;
+  dynamic serviceName;
+  dynamic expertId;
+  dynamic serviceType;
   dynamic audioFile;
-  String? astrologerName;
-  String? astrologerImage;
-  String? sessionTime;
+  dynamic astrologerName;
+  dynamic astrologerImage;
+  dynamic sessionTime;
   dynamic endTime;
   dynamic notes;
   dynamic preferLanguage;
@@ -290,11 +292,11 @@ class Session {
 }
 
 class User {
-  int? id;
-  String? role;
-  String? name;
-  String? email;
-  String? avatar;
+  dynamic id;
+  dynamic role;
+  dynamic name;
+  dynamic email;
+  dynamic avatar;
   dynamic emailVerifiedAt;
   dynamic settings;
   DateTime? createdAt;
@@ -302,18 +304,18 @@ class User {
   dynamic referralCode;
   dynamic referralCodeUsed;
   dynamic stateId;
-  int? isWinningAmount;
-  String? mobile;
-  int? isOtpVerified;
-  String? deviceToken;
-  String? gender;
-  String? city;
+  dynamic isWinningAmount;
+  dynamic mobile;
+  dynamic isOtpVerified;
+  dynamic deviceToken;
+  dynamic gender;
+  dynamic city;
   DateTime? birthday;
   dynamic code;
   dynamic emailOtp;
-  int? isEmailVerified;
-  int? profileStatus;
-  int? profileCompletePercentage;
+  dynamic isEmailVerified;
+  dynamic profileStatus;
+  dynamic profileCompletePercentage;
   dynamic accountNumber;
   dynamic ifscCode;
   dynamic clientName;
@@ -321,25 +323,25 @@ class User {
   dynamic clientMobile;
   dynamic clientVpa;
   dynamic appVersion;
-  String? accountStatus;
+  dynamic accountStatus;
   dynamic google2FaSecret;
   dynamic deletedAt;
   dynamic twoFactorConfirmedAt;
   dynamic otp;
-  int? rating;
+  dynamic rating;
   dynamic description;
-  int? slotCharges;
-  int? audioRecordingCharges;
+  dynamic slotCharges;
+  dynamic audioRecordingCharges;
   dynamic experience;
   dynamic languages;
   dynamic totalReadings;
-  String? availableForFreeChat;
-  String? birthTime;
+  dynamic availableForFreeChat;
+  dynamic birthTime;
   dynamic availableForSupportChat;
   dynamic birthPlace;
   dynamic birthTimeAccuracy;
-  String? availableForPaidChat;
-  String? profilePhotoUrl;
+  dynamic availableForPaidChat;
+  dynamic profilePhotoUrl;
 
   User({
     this.id,

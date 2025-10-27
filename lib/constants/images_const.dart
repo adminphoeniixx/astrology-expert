@@ -73,6 +73,8 @@ const emptyDataIcon = "assets/icons/empty_data.svg";
 const callIcon = "assets/icons/call_icon.svg";
 const locationIcon = "assets/icons/location_icon.svg";
 const liveChatIcon2 = "assets/icons/Astro chat icon.svg";
+const panCardIcon = "assets/icons/pan card.svg";
+const adharCardIcon = "assets/icons/aadhar card.svg";
 
 const aboutUs = "assets/images/about_us.png";
 const contactUs = "assets/images/contact_us.png";

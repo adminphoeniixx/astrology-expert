@@ -14,9 +14,9 @@ String earningListModelToJson(EarningListModel data) =>
 
 class EarningListModel {
   bool? success;
-  String? message;
+  dynamic message;
   Data? data;
-  String? currencySymbol;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   EarningListModel({
@@ -80,12 +80,12 @@ class Data {
 
 class Earnings {
   List<EarningData>? data;
-  int? currentPage;
-  int? lastPage;
-  int? perPage;
-  int? total;
-  int? from;
-  int? to;
+  dynamic currentPage;
+  dynamic lastPage;
+  dynamic perPage;
+  dynamic total;
+  dynamic from;
+  dynamic to;
   dynamic prevPageUrl;
   dynamic nextPageUrl;
 
@@ -133,23 +133,23 @@ class Earnings {
 }
 
 class EarningData {
-  int? expertId;
-  String? financialYear;
-  int? weekNumber;
+  dynamic expertId;
+  dynamic financialYear;
+  dynamic weekNumber;
   DateTime? weekStart;
   DateTime? weekEnd;
-  int? totalCommission;
-  int? payableAmount;
-  String? payoutStatus;
+  dynamic totalCommission;
+  dynamic payableAmount;
+  dynamic payoutStatus;
   dynamic payoutDate;
   dynamic utr;
   DateTime? createdAt;
   DateTime? updatedAt;
   List<Transaction>? transactions;
-  String? expertName;
-  String? id;
+  dynamic expertName;
+  dynamic id;
   dynamic bankName;
-  int? totalTds;
+  dynamic totalTds;
 
   EarningData({
     this.expertId,
@@ -228,12 +228,12 @@ class EarningData {
 
 class Transaction {
   DateTime? date;
-  int? commission;
-  int? tds;
-  int? tdsPercentage;
-  int? payableAmount;
-  int? serviceSessionId;
-  String? status;
+  dynamic commission;
+  dynamic tds;
+  dynamic tdsPercentage;
+  dynamic payableAmount;
+  dynamic serviceSessionId;
+  dynamic status;
   SessionData? sessionData;
 
   Transaction({
@@ -309,10 +309,10 @@ class SessionData {
 }
 
 class Pagination {
-  int? currentPage;
-  int? lastPage;
-  int? perPage;
-  int? total;
+  dynamic currentPage;
+  dynamic lastPage;
+  dynamic perPage;
+  dynamic total;
 
   Pagination({this.currentPage, this.lastPage, this.perPage, this.total});
 
