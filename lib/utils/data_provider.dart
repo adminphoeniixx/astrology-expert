@@ -6,10 +6,11 @@ import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/validator/validate.dart';
 
-
 Future<String?> getAccessToken() async {
-  var token =
-      await BasePrefs.readData(accessToken).onError((error, stackTrace) {
+  var token = await BasePrefs.readData(accessToken).onError((
+    error,
+    stackTrace,
+  ) {
     return null;
   });
   if (isValidString(token)) {
@@ -72,17 +73,18 @@ Future<int?> getUserId() async {
 
 Future<Map<String, String>> authHeader() async {
   Map<String, String> header;
-  var value = await BasePrefs.readData(accessToken)
-      .onError((error, stackTrace) => null);
-  var isIndiaValue =
-      await BasePrefs.readData(isIndia).onError((error, stackTrace) => "true");
+  var value = await BasePrefs.readData(
+    accessToken,
+  ).onError((error, stackTrace) => null);
+  await BasePrefs.readData(isIndia).onError((error, stackTrace) => "true");
   if (value != null) {
-    var token = await BasePrefs.readData(accessToken)
-        .onError((error, stackTrace) => null);
+    var token = await BasePrefs.readData(
+      accessToken,
+    ).onError((error, stackTrace) => null);
     header = {
       "Accept": "application/json",
       'is_india': "true",
-      HttpHeaders.authorizationHeader: "Bearer $token"
+      HttpHeaders.authorizationHeader: "Bearer $token",
     };
   } else {
     header = {"Accept": "application/json"};
@@ -116,11 +118,13 @@ Future<Map<String, String>> authHeader() async {
 
 Future<Map<String, String>> uniqueAuthHeader() async {
   Map<String, String> header;
-  var value = await BasePrefs.readData(accessToken)
-      .onError((error, stackTrace) => null);
+  var value = await BasePrefs.readData(
+    accessToken,
+  ).onError((error, stackTrace) => null);
   if (value != null) {
-    var token = await BasePrefs.readData(accessToken)
-        .onError((error, stackTrace) => null);
+    var token = await BasePrefs.readData(
+      accessToken,
+    ).onError((error, stackTrace) => null);
     header = {"Accept": "application/json", "Authorization": "Bearer $token"};
   } else {
     header = {"Accept": "application/json"};

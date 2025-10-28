@@ -14,9 +14,9 @@ String getProfileModelToJson(GetProfileModel data) =>
 
 class GetProfileModel {
   bool? status;
-  String? message;
-  Data? data;
-  String? currencySymbol;
+  dynamic message;
+  ProfileData? data;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   GetProfileModel({
@@ -31,7 +31,7 @@ class GetProfileModel {
       GetProfileModel(
         status: json["status"],
         message: json["message"],
-        data: json["data"] == null ? null : Data.fromJson(json["data"]),
+        data: json["data"] == null ? null : ProfileData.fromJson(json["data"]),
         currencySymbol: json["currency_symbol"],
       );
 
@@ -43,12 +43,12 @@ class GetProfileModel {
   };
 }
 
-class Data {
-  int? id;
-  String? role;
-  String? name;
-  String? email;
-  String? avatar;
+class ProfileData {
+  dynamic id;
+  dynamic role;
+  dynamic name;
+  dynamic email;
+  dynamic avatar;
   dynamic emailVerifiedAt;
   dynamic settings;
   DateTime? createdAt;
@@ -56,18 +56,18 @@ class Data {
   dynamic referralCode;
   dynamic referralCodeUsed;
   dynamic stateId;
-  int? isWinningAmount;
-  String? mobile;
-  int? isOtpVerified;
-  String? deviceToken;
-  String? gender;
+  dynamic isWinningAmount;
+  dynamic mobile;
+  dynamic isOtpVerified;
+  dynamic deviceToken;
+  dynamic gender;
   dynamic city;
-  dynamic birthday;
+  DateTime? birthday;
   dynamic code;
   dynamic emailOtp;
-  int? isEmailVerified;
-  int? profileStatus;
-  int? profileCompletePercentage;
+  dynamic isEmailVerified;
+  dynamic profileStatus;
+  dynamic profileCompletePercentage;
   dynamic accountNumber;
   dynamic ifscCode;
   dynamic clientName;
@@ -75,27 +75,31 @@ class Data {
   dynamic clientMobile;
   dynamic clientVpa;
   dynamic appVersion;
-  String? accountStatus;
+  dynamic accountStatus;
   dynamic google2FaSecret;
   dynamic deletedAt;
   dynamic twoFactorConfirmedAt;
   dynamic otp;
-  double? rating;
+  dynamic rating;
   dynamic description;
-  int? slotCharges;
-  int? audioRecordingCharges;
-  String? experience;
-  String? languages;
-  String? totalReadings;
-  String? availableForFreeChat;
+  dynamic slotCharges;
+  dynamic audioRecordingCharges;
+  dynamic experience;
+  dynamic languages;
+  dynamic totalReadings;
+  dynamic availableForFreeChat;
   dynamic birthTime;
-  String? availableForSupportChat;
+  dynamic availableForSupportChat;
   dynamic birthPlace;
   dynamic birthTimeAccuracy;
-  String? availableForPaidChat;
-  String? profilePhotoUrl;
+  dynamic availableForPaidChat;
+  dynamic currentChatStatus;
+  dynamic panCard;
+  dynamic adharCard;
+  dynamic bankName;
+  dynamic profilePhotoUrl;
 
-  Data({
+  ProfileData({
     this.id,
     this.role,
     this.name,
@@ -145,10 +149,14 @@ class Data {
     this.birthPlace,
     this.birthTimeAccuracy,
     this.availableForPaidChat,
+    this.currentChatStatus,
+    this.panCard,
+    this.adharCard,
+    this.bankName,
     this.profilePhotoUrl,
   });
 
-  factory Data.fromJson(Map<String, dynamic> json) => Data(
+  factory ProfileData.fromJson(Map<String, dynamic> json) => ProfileData(
     id: json["id"],
     role: json["role"],
     name: json["name"],
@@ -171,7 +179,9 @@ class Data {
     deviceToken: json["device_token"],
     gender: json["gender"],
     city: json["city"],
-    birthday: json["birthday"],
+    birthday: json["birthday"] == null
+        ? null
+        : DateTime.parse(json["birthday"]),
     code: json["code"],
     emailOtp: json["email_otp"],
     isEmailVerified: json["is_email_verified"],
@@ -189,7 +199,7 @@ class Data {
     deletedAt: json["deleted_at"],
     twoFactorConfirmedAt: json["two_factor_confirmed_at"],
     otp: json["otp"],
-    rating: json["rating"]?.toDouble(),
+    rating: json["rating"],
     description: json["description"],
     slotCharges: json["slot_charges"],
     audioRecordingCharges: json["audio_recording_charges"],
@@ -202,6 +212,10 @@ class Data {
     birthPlace: json["birth_place"],
     birthTimeAccuracy: json["birth_time_accuracy"],
     availableForPaidChat: json["available_for_paid_chat"],
+    currentChatStatus: json["current_chat_status"],
+    panCard: json["pan_card"],
+    adharCard: json["adhar_card"],
+    bankName: json["bank_name"],
     profilePhotoUrl: json["profile_photo_url"],
   );
 
@@ -224,7 +238,8 @@ class Data {
     "device_token": deviceToken,
     "gender": gender,
     "city": city,
-    "birthday": birthday,
+    "birthday":
+        "${birthday!.year.toString().padLeft(4, '0')}-${birthday!.month.toString().padLeft(2, '0')}-${birthday!.day.toString().padLeft(2, '0')}",
     "code": code,
     "email_otp": emailOtp,
     "is_email_verified": isEmailVerified,
@@ -255,6 +270,10 @@ class Data {
     "birth_place": birthPlace,
     "birth_time_accuracy": birthTimeAccuracy,
     "available_for_paid_chat": availableForPaidChat,
+    "current_chat_status": currentChatStatus,
+    "pan_card": panCard,
+    "adhar_card": adharCard,
+    "bank_name": bankName,
     "profile_photo_url": profilePhotoUrl,
   };
 }

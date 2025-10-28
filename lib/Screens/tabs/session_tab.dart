@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
@@ -50,7 +48,7 @@ class _SessionTabState extends State<SessionTab> {
 
   final Map<String, String> serviceTypes = {
     "All Sessions": "all",
-    "Live Chat": "1",
+    "Live Chat Consultation": "1",
     // "Audio Recording": "2",
     "Call Consultation": "3",
     // "Video Consultation": "4",
@@ -167,6 +165,19 @@ class _SessionTabState extends State<SessionTab> {
                                 } else {
                                   return GestureDetector(
                                     onTap: () async {
+                                      // ✅ First check status BEFORE hitting API
+                                      if (_homeController
+                                              .sessionListData[index]
+                                              .status ==
+                                          "Completed") {
+                                        Get.snackbar(
+                                          "Session Closed",
+                                          "This session is already completed.",
+                                        ); // Optional
+                                        return;
+                                      }
+
+                                      // ✅ Safe to call API now
                                       switch (_homeController
                                           .sessionListData[index]
                                           .serviceType!) {
@@ -178,31 +189,6 @@ class _SessionTabState extends State<SessionTab> {
                                                     .id!,
                                               )
                                               .then((value) {
-                                                print(
-                                                  '========== SESSION CHAT MODEL ==========',
-                                                );
-                                                print(
-                                                  'Customer Name: ${value.session?.customerName ?? ""}',
-                                                );
-                                                print(
-                                                  'Remaining Time: ${value.pricing?.remainingSeconds.toString() ?? "0"}',
-                                                );
-                                                print(
-                                                  'Receiver ID: ${value.session?.expertId}',
-                                                );
-                                                print(
-                                                  'Sender ID: ${value.session?.customerId}',
-                                                );
-                                                print(
-                                                  'Room ID: ${value.session?.roomId}',
-                                                );
-                                                print(
-                                                  'SubCollection: free_chat_session',
-                                                );
-                                                print(
-                                                  '========================================',
-                                                );
-
                                                 Get.to(
                                                   FirebaseChatScreen(
                                                     customerName:
@@ -217,46 +203,35 @@ class _SessionTabState extends State<SessionTab> {
                                                             .toString() ??
                                                         "0",
                                                     reciverId:
-                                                        value
-                                                                .session!
-                                                                .customerId
-                                                            is int
-                                                        ? value
-                                                              .session!
-                                                              .customerId
-                                                        : int.tryParse(
-                                                                value
-                                                                    .session!
-                                                                    .customerId
-                                                                    .toString(),
-                                                              ) ??
-                                                              0,
+                                                        int.tryParse(
+                                                          value
+                                                                  .session
+                                                                  ?.customerId
+                                                                  .toString() ??
+                                                              "0",
+                                                        ) ??
+                                                        0,
                                                     senderId:
-                                                        value.session!.expertId
-                                                            is int
-                                                        ? value
-                                                              .session!
-                                                              .expertId
-                                                        : int.tryParse(
-                                                                value
-                                                                    .session!
-                                                                    .expertId
-                                                                    .toString(),
-                                                              ) ??
-                                                              0,
-                                                    roomId: value
-                                                        .session!
-                                                        .roomId
-                                                        .toString(),
+                                                        int.tryParse(
+                                                          value
+                                                                  .session
+                                                                  ?.expertId
+                                                                  .toString() ??
+                                                              "0",
+                                                        ) ??
+                                                        0,
+                                                    roomId:
+                                                        value.session?.roomId
+                                                            .toString() ??
+                                                        "",
                                                     subCollection: 'messages',
                                                   ),
                                                 );
                                               });
-
                                           break;
-                                        default:
                                       }
                                     },
+
                                     child: sessionItemsWidget(index),
                                   );
                                 }
@@ -504,28 +479,22 @@ class _SessionTabState extends State<SessionTab> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  text(
-                    sessionData.status ?? "",
-                    fontSize: 11.0,
-                    fontWeight: FontWeight.w500,
-                    textColor: getStatusColor(sessionData.status ?? ""),
-                  ),
-
-                  const SizedBox(height: 55),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF221d25),
+                      border: Border.all(
+                        color: getStatusColor(sessionData.status ?? ""),
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: text(
-                      sessionData.serviceName ?? "",
-                      fontSize: 12.0,
+                      sessionData.status ?? "",
+                      fontSize: 11.0,
                       fontWeight: FontWeight.w500,
-                      textColor: Colors.white,
+                      textColor: getStatusColor(sessionData.status ?? ""),
                     ),
                   ),
                 ],
@@ -536,6 +505,19 @@ class _SessionTabState extends State<SessionTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF221d25)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: text(
+                  sessionData.serviceName ?? "",
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.w500,
+                  textColor: Colors.white,
+                ),
+              ),
               sessionData.serviceName != "Audio Recording"
                   ? const SizedBox()
                   : GestureDetector(
@@ -553,7 +535,7 @@ class _SessionTabState extends State<SessionTab> {
                           return; // user ne cancel kar diya
                         }
 
-                        File file = File(result.files.single.path!);
+                        // File file = File(result.files.single.path!);
 
                         // var response = await _homeController.joinAudioSessions(
                         //   sessionId: sessionData.id.toString(),
@@ -666,7 +648,11 @@ class _SessionTabState extends State<SessionTab> {
                       )
                       .then((value) {
                         if (value.success == true && value.data != null) {
-                          showSessionDetailSheet(context, value.data!.details!);
+                          showSessionDetailSheet(
+                            context,
+                            value.data!.session!,
+                            value.data!.user!,
+                          );
                         } else {
                           Get.snackbar(
                             'Data Not Found',
@@ -1015,12 +1001,26 @@ class _SessionTabState extends State<SessionTab> {
     );
   }
 
-  String formatDate(DateTime? date) {
+  String formatDate(dynamic date) {
     if (date == null) return "-";
-    return DateFormat("dd-MMM-yyyy").format(date);
+    try {
+      if (date is String) {
+        return DateFormat("dd-MMM-yyyy").format(DateTime.parse(date));
+      } else if (date is DateTime) {
+        return DateFormat("dd-MMM-yyyy").format(date);
+      } else {
+        return "-";
+      }
+    } catch (e) {
+      return "-";
+    }
   }
 
-  void showSessionDetailSheet(BuildContext context, SessionDetails details) {
+  void showSessionDetailSheet(
+    BuildContext context,
+    SessionDetails details,
+    User data,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -1043,7 +1043,7 @@ class _SessionTabState extends State<SessionTab> {
               children: [
                 const Center(
                   child: Text(
-                    "Session Details",
+                    "Customer Details",
                     style: TextStyle(
                       fontFamily: productSans,
                       fontSize: 18,
@@ -1055,22 +1055,21 @@ class _SessionTabState extends State<SessionTab> {
                 const SizedBox(height: 20),
 
                 // Order info
-                _detailRow("Order ID:", details.orderId?.toString() ?? ""),
-                _detailRow("Order Date:", formatDate(details.date)),
-                _detailRow("Session Time:", details.consultationTime ?? "NA"),
+                //  _detailRow("Order Date:", formatDate(details.date)),
+                //  _detailRow("Session Time:", details.sessionTime ?? "NA"),
 
-                const Divider(color: Colors.white30, height: 30),
+                // const Divider(color: Colors.white30, height: 30),
 
-                // Customer info
-                _detailRow("Customer Name:", details.fullName ?? ""),
+                // // Customer info
+                _detailRow("Customer Name:", details.customerName ?? ""),
                 _detailRow("Customer Gender:", ""),
-                _detailRow("Date Of Birth:", formatDate(details.dateOfBirth)),
-                _detailRow("Birth Time:", details.birthTime ?? ""),
+                _detailRow("Date Of Birth:", formatDate(data.birthday)),
+                _detailRow("Birth Time:", data.birthTime ?? ""),
                 _detailRow(
                   "Birth Date Accuracy:",
-                  details.birthTimeAccuracy ?? "",
+                  data.birthTimeAccuracy ?? "",
                 ),
-                _detailRow("Place Of Birth:", details.placeOfBirth ?? ""),
+                _detailRow("Place Of Birth:", data.birthPlace ?? ""),
                 const SizedBox(height: 50),
               ],
             ),
@@ -1081,7 +1080,7 @@ class _SessionTabState extends State<SessionTab> {
   }
 
   /// Reusable widget: one detail per line
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(dynamic label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(

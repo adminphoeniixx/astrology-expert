@@ -124,4 +124,19 @@ class UserController extends GetxController {
   set validationError(String msg) {
     autoValidationError = msg;
   }
+
+  var isDeleteAccount = false.obs;
+  ApiResponse deleteAccountResponse = ApiResponse();
+  Future<ApiResponse> deleteAccount() async {
+    try {
+      isDeleteAccount(true);
+      deleteAccountResponse = await _webApiServices!.deleteAccountAPI();
+    } on Failure catch (e) {
+      isDeleteAccount(false);
+
+      _setFailure(e);
+    }
+    isDeleteAccount(false);
+    return deleteAccountResponse;
+  }
 }

@@ -54,6 +54,12 @@ class _EditProfileState extends State<EditProfile> {
           _authController.getprofile!.data!.mobile ?? "NA";
       emailtextEditingController.text =
           _authController.getprofile!.data!.email ?? "NA";
+      pantextEditingController.text =
+          _authController.getprofile!.data!.panCard ?? "NA";
+      aadhartextEditingController.text =
+          _authController.getprofile!.data!.adharCard ?? "NA";
+      citytextEditingController.text =
+          _authController.getprofile!.data!.city ?? "NA";
     });
   }
 
@@ -186,84 +192,85 @@ class _EditProfileState extends State<EditProfile> {
                                     margin: const EdgeInsets.symmetric(
                                       vertical: 8,
                                     ),
-                                    child: !isEdited
-                                        ? TextFormField(
-                                            enabled: false,
-                                            controller:
-                                                genderextEditingController,
-                                            style: const TextStyle(
-                                              fontFamily: productSans,
-                                              color: white,
-                                            ),
-                                            decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.fromLTRB(
-                                                    16,
-                                                    15,
-                                                    4,
-                                                    8,
-                                                  ),
-                                              labelStyle: TextStyle(
-                                                color: white,
-                                                fontFamily: productSans,
-                                              ),
-                                              hintStyle: TextStyle(
-                                                color: textColorSecondary,
-                                                fontFamily: productSans,
-                                              ),
-                                              labelText: "Gender",
-                                              border: UnderlineInputBorder(),
-                                            ),
-                                          )
-                                        : DropdownButtonFormField(
-                                            decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.fromLTRB(
-                                                    16,
-                                                    15,
-                                                    4,
-                                                    8,
-                                                  ),
-                                              labelStyle: TextStyle(
-                                                color: white,
-                                                fontFamily: productSans,
-                                              ),
-                                              hintStyle: TextStyle(
-                                                color: textColorSecondary,
-                                                fontFamily: productSans,
-                                              ),
-                                              labelText: "Gender",
-                                              border: UnderlineInputBorder(),
-                                            ),
-                                            value: genderDropdownvalue,
-                                            icon: const Icon(
-                                              Icons.keyboard_arrow_down,
-                                              color: white,
-                                            ),
-                                            dropdownColor: const Color(
-                                              0xFF221d25,
-                                            ), // Yaha background color set karo
-                                            items: genderItems.map((
-                                              String items,
-                                            ) {
-                                              return DropdownMenuItem(
-                                                value: items,
-                                                child: Text(
-                                                  items,
-                                                  style: const TextStyle(
-                                                    fontFamily: productSans,
-                                                    color: white,
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
-
-                                            onChanged: (String? newValue) {
-                                              setState(() {
-                                                genderDropdownvalue = newValue!;
-                                              });
-                                            },
+                                    child:
+                                        // !isEdited
+                                        //     ?
+                                        TextFormField(
+                                          enabled: isEdited,
+                                          controller:
+                                              genderextEditingController,
+                                          style: const TextStyle(
+                                            fontFamily: productSans,
+                                            color: white,
                                           ),
+                                          decoration: const InputDecoration(
+                                            contentPadding: EdgeInsets.fromLTRB(
+                                              16,
+                                              15,
+                                              4,
+                                              8,
+                                            ),
+                                            labelStyle: TextStyle(
+                                              color: white,
+                                              fontFamily: productSans,
+                                            ),
+                                            hintStyle: TextStyle(
+                                              color: textColorSecondary,
+                                              fontFamily: productSans,
+                                            ),
+                                            labelText: "Gender",
+                                            border: UnderlineInputBorder(),
+                                          ),
+                                        ),
+                                    //       : DropdownButtonFormField(
+                                    //           decoration: const InputDecoration(
+                                    //             contentPadding:
+                                    //                 EdgeInsets.fromLTRB(
+                                    //                   16,
+                                    //                   15,
+                                    //                   4,
+                                    //                   8,
+                                    //                 ),
+                                    //             labelStyle: TextStyle(
+                                    //               color: white,
+                                    //               fontFamily: productSans,
+                                    //             ),
+                                    //             hintStyle: TextStyle(
+                                    //               color: textColorSecondary,
+                                    //               fontFamily: productSans,
+                                    //             ),
+                                    //             labelText: "Gender",
+                                    //             border: UnderlineInputBorder(),
+                                    //           ),
+                                    //           value: genderDropdownvalue,
+                                    //           icon: const Icon(
+                                    //             Icons.keyboard_arrow_down,
+                                    //             color: white,
+                                    //           ),
+                                    //           dropdownColor: const Color(
+                                    //             0xFF221d25,
+                                    //           ), // Yaha background color set karo
+                                    //           items: genderItems.map((
+                                    //             String items,
+                                    //           ) {
+                                    //             return DropdownMenuItem(
+                                    //               value: items,
+                                    //               child: Text(
+                                    //                 items,
+                                    //                 style: const TextStyle(
+                                    //                   fontFamily: productSans,
+                                    //                   color: white,
+                                    //                 ),
+                                    //               ),
+                                    //             );
+                                    //           }).toList(),
+
+                                    //           onChanged: (String? newValue) {
+                                    //             setState(() {
+                                    //               genderDropdownvalue = newValue!;
+                                    //             });
+                                    //           },
+                                    //         ),
                                   ),
                                   const SizedBox(height: 10),
 

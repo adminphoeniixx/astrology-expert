@@ -1,3 +1,4 @@
+import 'package:astro_partner_app/model/api_response.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
@@ -273,4 +274,31 @@ class HomeController extends GetxController {
     isReviewListModelLoding(false);
     return _reviewListModel!;
   }
+
+  var isEndingChat = false.obs;
+  ApiResponse endChatResponse = ApiResponse();
+  Future<ApiResponse> endChat({
+    required int expertId,
+    required int customerId,
+    required int durationSeconds,
+    String notes = "",
+  }) async {
+    try {
+      isEndingChat(true);
+      endChatResponse = await _webApiServices!.endChatAPI(
+        expertId: expertId,
+        customerId: customerId,
+        durationSeconds: durationSeconds,
+        notes: notes,
+      );
+    } on Failure catch (e) {
+      isEndingChat(false);
+
+      _setFailure(e);
+    }
+    isEndingChat(false);
+    return endChatResponse;
+  }
+
+
 }

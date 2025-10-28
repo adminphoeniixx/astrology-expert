@@ -129,17 +129,14 @@ class MessageBubble extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.insert_drive_file,
-              color: isMe ? Colors.white : Colors.black,
-            ),
+            Icon(Icons.insert_drive_file, color: isMe ? white : black),
             const SizedBox(width: 8),
             Builder(
               builder: (context) {
                 return Text(
                   "Document: ${mediaUrl.split('/').last}",
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                  style: TextStyle(color: isMe ? white : black),
                 );
               },
             ),
@@ -180,7 +177,7 @@ class MessageBubble extends StatelessWidget {
                 ? _buildMediaContent(message, context)
                 : Text(
                     message,
-                    style: TextStyle(color: isMe ? Colors.black : primaryColor),
+                    style: TextStyle(color: isMe ? black : primaryColor),
                   ),
 
             const SizedBox(height: 5),

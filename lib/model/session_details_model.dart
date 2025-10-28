@@ -3,6 +3,7 @@
 //     final sessionDetailsModel = sessionDetailsModelFromJson(jsonString);
 
 import 'dart:convert';
+
 import 'package:astro_partner_app/utils/enum.dart';
 
 SessionDetailsModel sessionDetailsModelFromJson(String str) =>
@@ -43,19 +44,17 @@ class SessionDetailsModel {
 }
 
 class Data {
-  Session? session;
-  SessionDetails? details;
+  SessionDetails? session;
   List<dynamic>? attachments;
   User? user;
   dynamic title;
 
-  Data({this.session, this.details, this.attachments, this.user, this.title});
+  Data({this.session, this.attachments, this.user, this.title});
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    session: json["session"] == null ? null : Session.fromJson(json["session"]),
-    details: json["details"] == null
+    session: json["session"] == null
         ? null
-        : SessionDetails.fromJson(json["details"]),
+        : SessionDetails.fromJson(json["session"]),
     attachments: json["attachments"] == null
         ? []
         : List<dynamic>.from(json["attachments"]!.map((x) => x)),
@@ -65,7 +64,6 @@ class Data {
 
   Map<String, dynamic> toJson() => {
     "session": session?.toJson(),
-    "details": details?.toJson(),
     "attachments": attachments == null
         ? []
         : List<dynamic>.from(attachments!.map((x) => x)),
@@ -75,219 +73,110 @@ class Data {
 }
 
 class SessionDetails {
-  dynamic id;
-  dynamic orderId;
-  DateTime? date;
-  dynamic slots;
-  dynamic fullName;
-  dynamic birthTime;
-  DateTime? dateOfBirth;
-  dynamic placeOfBirth;
-  dynamic rightPalmImage;
-  dynamic leftPalmImage;
-  dynamic consultationTime;
-  DateTime? createdAt;
-  DateTime? updatedAt;
+  dynamic rating;
+  dynamic userId;
+  dynamic customerId;
   dynamic expertId;
-  dynamic birthTimeAccuracy;
-  dynamic partnerName;
-  dynamic partnerDateOfBirth;
-  dynamic partnerBirthTime;
-  dynamic partnerPlaceOfBirth;
-  dynamic questionDescription;
-  dynamic birthPartnerAccuracy;
+  dynamic roomId;
+  dynamic token;
+  dynamic date;
+  dynamic startDate;
+  dynamic startTime;
+  dynamic endTime;
+  dynamic status;
+  dynamic serviceType;
+  dynamic customerName;
+  dynamic serviceName;
+  dynamic astrologerName;
+  dynamic astrologerImage;
   dynamic preferLanguage;
-  dynamic serviceTypeName;
+  dynamic sessionTime;
+  dynamic notes;
+  dynamic updatedAt;
+  dynamic createdAt;
+  dynamic id;
 
   SessionDetails({
-    this.id,
-    this.orderId,
-    this.date,
-    this.slots,
-    this.fullName,
-    this.birthTime,
-    this.dateOfBirth,
-    this.placeOfBirth,
-    this.rightPalmImage,
-    this.leftPalmImage,
-    this.consultationTime,
-    this.createdAt,
-    this.updatedAt,
+    this.rating,
+    this.userId,
+    this.customerId,
     this.expertId,
-    this.birthTimeAccuracy,
-    this.partnerName,
-    this.partnerDateOfBirth,
-    this.partnerBirthTime,
-    this.partnerPlaceOfBirth,
-    this.questionDescription,
-    this.birthPartnerAccuracy,
+    this.roomId,
+    this.token,
+    this.date,
+    this.startDate,
+    this.startTime,
+    this.endTime,
+    this.status,
+    this.serviceType,
+    this.customerName,
+    this.serviceName,
+    this.astrologerName,
+    this.astrologerImage,
     this.preferLanguage,
-    this.serviceTypeName,
+    this.sessionTime,
+    this.notes,
+    this.updatedAt,
+    this.createdAt,
+    this.id,
   });
 
   factory SessionDetails.fromJson(Map<String, dynamic> json) => SessionDetails(
-    id: json["id"],
-    orderId: json["order_id"],
-    date: json["date"] == null ? null : DateTime.parse(json["date"]),
-    slots: json["slots"],
-    fullName: json["full_name"],
-    birthTime: json["birth_time"],
-    dateOfBirth: json["date_of_birth"] == null
-        ? null
-        : DateTime.parse(json["date_of_birth"]),
-    placeOfBirth: json["place_of_birth"],
-    rightPalmImage: json["right_palm_image"],
-    leftPalmImage: json["left_palm_image"],
-    consultationTime: json["consultation_time"],
-    createdAt: json["created_at"] == null
-        ? null
-        : DateTime.parse(json["created_at"]),
-    updatedAt: json["updated_at"] == null
-        ? null
-        : DateTime.parse(json["updated_at"]),
+    rating: json["rating"],
+    userId: json["user_id"],
+    customerId: json["customer_id"],
     expertId: json["expert_id"],
-    birthTimeAccuracy: json["birth_time_accuracy"],
-    partnerName: json["partner_name"],
-    partnerDateOfBirth: json["partner_date_of_birth"],
-    partnerBirthTime: json["partner_birth_time"],
-    partnerPlaceOfBirth: json["partner_place_of_birth"],
-    questionDescription: json["question_description"],
-    birthPartnerAccuracy: json["birth_partner_accuracy"],
-    preferLanguage: json["prefer_language"],
-    serviceTypeName: json["service_type_name"],
-  );
-
-  Map<String, dynamic> toJson() => {
-    "id": id,
-    "order_id": orderId,
-    "date":
-        "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
-    "slots": slots,
-    "full_name": fullName,
-    "birth_time": birthTime,
-    "date_of_birth":
-        "${dateOfBirth!.year.toString().padLeft(4, '0')}-${dateOfBirth!.month.toString().padLeft(2, '0')}-${dateOfBirth!.day.toString().padLeft(2, '0')}",
-    "place_of_birth": placeOfBirth,
-    "right_palm_image": rightPalmImage,
-    "left_palm_image": leftPalmImage,
-    "consultation_time": consultationTime,
-    "created_at": createdAt?.toIso8601String(),
-    "updated_at": updatedAt?.toIso8601String(),
-    "expert_id": expertId,
-    "birth_time_accuracy": birthTimeAccuracy,
-    "partner_name": partnerName,
-    "partner_date_of_birth": partnerDateOfBirth,
-    "partner_birth_time": partnerBirthTime,
-    "partner_place_of_birth": partnerPlaceOfBirth,
-    "question_description": questionDescription,
-    "birth_partner_accuracy": birthPartnerAccuracy,
-    "prefer_language": preferLanguage,
-    "service_type_name": serviceTypeName,
-  };
-}
-
-class Session {
-  dynamic id;
-  dynamic orderId;
-  dynamic roomId;
-  dynamic token;
-  dynamic userId;
-  dynamic startDate;
-  dynamic startTime;
-  dynamic status;
-  DateTime? createdAt;
-  DateTime? updatedAt;
-  DateTime? date;
-  dynamic customerName;
-  dynamic serviceName;
-  dynamic expertId;
-  dynamic serviceType;
-  dynamic audioFile;
-  dynamic astrologerName;
-  dynamic astrologerImage;
-  dynamic sessionTime;
-  dynamic endTime;
-  dynamic notes;
-  dynamic preferLanguage;
-
-  Session({
-    this.id,
-    this.orderId,
-    this.roomId,
-    this.token,
-    this.userId,
-    this.startDate,
-    this.startTime,
-    this.status,
-    this.createdAt,
-    this.updatedAt,
-    this.date,
-    this.customerName,
-    this.serviceName,
-    this.expertId,
-    this.serviceType,
-    this.audioFile,
-    this.astrologerName,
-    this.astrologerImage,
-    this.sessionTime,
-    this.endTime,
-    this.notes,
-    this.preferLanguage,
-  });
-
-  factory Session.fromJson(Map<String, dynamic> json) => Session(
-    id: json["id"],
-    orderId: json["order_id"],
     roomId: json["room_id"],
     token: json["token"],
-    userId: json["user_id"],
-    startDate: json["start_date"],
-    startTime: json["start_time"],
-    status: json["status"],
-    createdAt: json["created_at"] == null
+    date: json["date"] == null ? null : DateTime.parse(json["date"]),
+    startDate: json["start_date"] == null
         ? null
-        : DateTime.parse(json["created_at"]),
+        : DateTime.parse(json["start_date"]),
+    startTime: json["start_time"],
+    endTime: json["end_time"],
+    status: json["status"],
+    serviceType: json["service_type"],
+    customerName: json["customer_name"],
+    serviceName: json["service_name"],
+    astrologerName: json["astrologer_name"],
+    astrologerImage: json["astrologer_image"],
+    preferLanguage: json["prefer_language"],
+    sessionTime: json["session_time"],
+    notes: json["notes"],
     updatedAt: json["updated_at"] == null
         ? null
         : DateTime.parse(json["updated_at"]),
-    date: json["date"] == null ? null : DateTime.parse(json["date"]),
-    customerName: json["customer_name"],
-    serviceName: json["service_name"],
-    expertId: json["expert_id"],
-    serviceType: json["service_type"],
-    audioFile: json["audio_file"],
-    astrologerName: json["astrologer_name"],
-    astrologerImage: json["astrologer_image"],
-    sessionTime: json["session_time"],
-    endTime: json["end_time"],
-    notes: json["notes"],
-    preferLanguage: json["prefer_language"],
+    createdAt: json["created_at"] == null
+        ? null
+        : DateTime.parse(json["created_at"]),
+    id: json["id"],
   );
 
   Map<String, dynamic> toJson() => {
-    "id": id,
-    "order_id": orderId,
+    "rating": rating,
+    "user_id": userId,
+    "customer_id": customerId,
+    "expert_id": expertId,
     "room_id": roomId,
     "token": token,
-    "user_id": userId,
-    "start_date": startDate,
-    "start_time": startTime,
-    "status": status,
-    "created_at": createdAt?.toIso8601String(),
-    "updated_at": updatedAt?.toIso8601String(),
     "date":
         "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
+    "start_date":
+        "${startDate!.year.toString().padLeft(4, '0')}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}",
+    "start_time": startTime,
+    "end_time": endTime,
+    "status": status,
+    "service_type": serviceType,
     "customer_name": customerName,
     "service_name": serviceName,
-    "expert_id": expertId,
-    "service_type": serviceType,
-    "audio_file": audioFile,
     "astrologer_name": astrologerName,
     "astrologer_image": astrologerImage,
-    "session_time": sessionTime,
-    "end_time": endTime,
-    "notes": notes,
     "prefer_language": preferLanguage,
+    "session_time": sessionTime,
+    "notes": notes,
+    "updated_at": updatedAt?.toIso8601String(),
+    "created_at": createdAt?.toIso8601String(),
+    "id": id,
   };
 }
 
@@ -299,8 +188,8 @@ class User {
   dynamic avatar;
   dynamic emailVerifiedAt;
   dynamic settings;
-  DateTime? createdAt;
-  DateTime? updatedAt;
+  dynamic createdAt;
+  dynamic updatedAt;
   dynamic referralCode;
   dynamic referralCodeUsed;
   dynamic stateId;
@@ -310,7 +199,7 @@ class User {
   dynamic deviceToken;
   dynamic gender;
   dynamic city;
-  DateTime? birthday;
+  dynamic birthday;
   dynamic code;
   dynamic emailOtp;
   dynamic isEmailVerified;
@@ -341,6 +230,10 @@ class User {
   dynamic birthPlace;
   dynamic birthTimeAccuracy;
   dynamic availableForPaidChat;
+  dynamic currentChatStatus;
+  dynamic panCard;
+  dynamic adharCard;
+  dynamic bankName;
   dynamic profilePhotoUrl;
 
   User({
@@ -393,6 +286,10 @@ class User {
     this.birthPlace,
     this.birthTimeAccuracy,
     this.availableForPaidChat,
+    this.currentChatStatus,
+    this.panCard,
+    this.adharCard,
+    this.bankName,
     this.profilePhotoUrl,
   });
 
@@ -404,12 +301,8 @@ class User {
     avatar: json["avatar"],
     emailVerifiedAt: json["email_verified_at"],
     settings: json["settings"],
-    createdAt: json["created_at"] == null
-        ? null
-        : DateTime.parse(json["created_at"]),
-    updatedAt: json["updated_at"] == null
-        ? null
-        : DateTime.parse(json["updated_at"]),
+    createdAt: json["created_at"],
+    updatedAt: json["updated_at"],
     referralCode: json["referral_code"],
     referralCodeUsed: json["referral_code_used"],
     stateId: json["state_id"],
@@ -419,9 +312,7 @@ class User {
     deviceToken: json["device_token"],
     gender: json["gender"],
     city: json["city"],
-    birthday: json["birthday"] == null
-        ? null
-        : DateTime.parse(json["birthday"]),
+    birthday: json["birthday"],
     code: json["code"],
     emailOtp: json["email_otp"],
     isEmailVerified: json["is_email_verified"],
@@ -452,6 +343,10 @@ class User {
     birthPlace: json["birth_place"],
     birthTimeAccuracy: json["birth_time_accuracy"],
     availableForPaidChat: json["available_for_paid_chat"],
+    currentChatStatus: json["current_chat_status"],
+    panCard: json["pan_card"],
+    adharCard: json["adhar_card"],
+    bankName: json["bank_name"],
     profilePhotoUrl: json["profile_photo_url"],
   );
 
@@ -474,8 +369,7 @@ class User {
     "device_token": deviceToken,
     "gender": gender,
     "city": city,
-    "birthday":
-        "${birthday!.year.toString().padLeft(4, '0')}-${birthday!.month.toString().padLeft(2, '0')}-${birthday!.day.toString().padLeft(2, '0')}",
+    "birthday": birthday,
     "code": code,
     "email_otp": emailOtp,
     "is_email_verified": isEmailVerified,
@@ -506,6 +400,10 @@ class User {
     "birth_place": birthPlace,
     "birth_time_accuracy": birthTimeAccuracy,
     "available_for_paid_chat": availableForPaidChat,
+    "current_chat_status": currentChatStatus,
+    "pan_card": panCard,
+    "adhar_card": adharCard,
+    "bank_name": bankName,
     "profile_photo_url": profilePhotoUrl,
   };
 }

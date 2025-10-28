@@ -31,6 +31,9 @@ class WebApiServices {
 
   ApiResponse _apiResponse = ApiResponse();
   ApiResponse _authResponse = ApiResponse();
+  ApiResponse _endChat = ApiResponse();
+  ApiResponse _deleteAccount = ApiResponse();
+
   SessionsModel _sessionsModel = SessionsModel();
   GetProfileModel _userProfile = GetProfileModel();
   EarningDetailsModel _earningDetailsModel = EarningDetailsModel();
@@ -1016,5 +1019,81 @@ class WebApiServices {
     }
 
     return _reviewListModel;
+  }
+
+  Future<ApiResponse> endChatAPI({
+    required int expertId,
+    required int customerId,
+    required int durationSeconds,
+    required String notes,
+  }) async {
+    try {
+      const String url = "$GetBaseUrl${GetDomainUrl2}chat/sessions/end";
+      final headers = await authHeader();
+      headers.remove("Content-Type"); // ✅ Server rejects JSON type
+
+      print("########## endChatAPI ##########");
+      print(headers);
+      print("URL: $url");
+      print("########## endChatAPI ##########");
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: {
+          "expert_id": expertId.toString(),
+          "customer_id": customerId.toString(),
+          "duration_seconds": durationSeconds.toString(),
+          "notes": notes,
+        },
+      );
+
+      print("########## endChatAPI Response ##########");
+      print("Status Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+      print("########## endChatAPI Response ##########");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final parsed = jsonDecode(response.body);
+        return ApiResponse.fromJson(parsed)
+          ..requestStatus = RequestStatus.loaded;
+      } else {
+        _endChat.requestStatus = RequestStatus.failure;
+      }
+    } catch (e) {
+      _endChat.requestStatus = RequestStatus.failure;
+    }
+    return _endChat;
+  }
+
+  Future<ApiResponse> deleteAccountAPI() async {
+    try {
+      const String url = "$GetBaseUrl${GetDomainUrl2}expert-delete-account";
+      final headers = await authHeader();
+      headers.remove("Content-Type"); // ✅ Server rejects JSON type
+
+      print("########## deleteAccountAPI ##########");
+      print(headers);
+      print("URL: $url");
+      print("########## deleteAccountAPI ##########");
+
+      final response = await http.post(Uri.parse(url), headers: headers);
+
+      print("########## deleteAccountAPI Response ##########");
+      print("Status Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+      print("########## deleteAccountAPI Response ##########");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final parsed = jsonDecode(response.body);
+        return ApiResponse.fromJson(parsed)
+          ..requestStatus = RequestStatus.loaded;
+      } else {
+        _deleteAccount.requestStatus = RequestStatus.failure;
+      }
+    } catch (e) {
+      _deleteAccount.requestStatus = RequestStatus.failure;
+    }
+    return _deleteAccount;
   }
 }

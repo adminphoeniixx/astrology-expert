@@ -5,7 +5,6 @@ import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';

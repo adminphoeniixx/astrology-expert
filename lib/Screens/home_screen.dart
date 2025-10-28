@@ -147,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
       case TabItem.reviewTab:
         return Scaffold(
           appBar: secondryTabAppBar(title: "Reviews"),
-          body: ReviewTab(),
+          body: const ReviewTab(),
         );
 
       case TabItem.profileTab:
