@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'karmik-24969.firebasestorage.app',
     measurementId: 'G-LNESZ1CPTT',
   );
+
 }

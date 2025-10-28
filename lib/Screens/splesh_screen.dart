@@ -5,6 +5,7 @@ import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -32,13 +33,17 @@ class _SpleshScreenState extends State<SpleshScreen> {
       // (Optional) App version info
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       print("App version: ${packageInfo.version}");
-
-      if (!mounted) return;
-
+      // String? token = await FirebaseMessaging.instance.getToken();
+      // print("FCM Token: $token");
+      print("!!!!!!!!!0!!!!!!!!!!");
+      // if (!mounted) return;
+      print("!!!!!!!!!1!!!!!!!!!!");
       if (value == null) {
+        print("!!!!!!!!!2!!!!!!!!!!");
+
         changeScreenReplacement(context, const LoginScreen());
       } else {
-        changeScreenReplacement(context, const MyHomePage( ));
+        changeScreenReplacement(context, const MyHomePage());
       }
     });
   }
@@ -53,6 +58,11 @@ class _SpleshScreenState extends State<SpleshScreen> {
           ),
         ],
       ),
+      // body: Container(
+      //   color: Colors.red,
+      //   height: double.infinity,
+      //   width: double.infinity,
+      // ),
     );
   }
 }

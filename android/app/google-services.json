@@ -45,6 +45,25 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:876265852052:android:3c12f94d04d1f453ae7881",
+        "android_client_info": {
+          "package_name": "vedam.roots.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqzIApNHcDOwmZMWsF0e31GTvuSDexVGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:876265852052:android:6a2aaae649be7264ae7881",
         "android_client_info": {
           "package_name": "vedam.roots.expert.app"

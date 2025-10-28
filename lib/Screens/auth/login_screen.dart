@@ -27,6 +27,14 @@ class _LoginScreenState extends State<LoginScreen> {
   // final LoaderController _loaderController = Get.put(LoaderController());
   TextEditingController mobileController = TextEditingController();
   String phoneNumber = "";
+
+  @override
+  void initState() {
+    print("!!!!!!!!!3!!!!!!!!!!");
+
+    super.initState();
+  }
+
   @override
   void dispose() {
     Future.delayed(Duration.zero, () {
@@ -76,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                         const SizedBox(height: 50),
-                       
+
                         CustomNumberTextFormField(
                           icon: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -103,8 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 if (_formKey.currentState!.validate() &&
                                     phoneNumber.isNotEmpty) {
                                   _userController.setOtpStatus(OtpFor.login);
-                                  ApiResponse loginModel =
-                                      await _userController.getLoginWithOtp(
+                                  ApiResponse loginModel = await _userController
+                                      .getLoginWithOtp(
                                         mobile: phoneNumber,
                                         screen: 'login',
                                       );
@@ -114,10 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       OTPVerifyScreen(phoneNumber: phoneNumber),
                                     );
                                   } else {
-                                    showToast(
-                                      context,
-                                      msg: loginModel.message,
-                                    );
+                                    showToast(context, msg: loginModel.message);
                                   }
                                 } else {
                                   showToast(context, msg: "somthing wrong..");
@@ -126,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           }
                         }),
-                        
 
                         const SizedBox(height: 95),
                       ],

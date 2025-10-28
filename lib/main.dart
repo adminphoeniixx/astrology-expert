@@ -196,6 +196,15 @@ Future<void> checkAndNavigationCallingPage() async {
         userName: callerName,
       ),
     );
+
+    //     Get.to(
+    //       const FirebaseChatScreen(
+    //         reciverId: 1,
+    //         roomId: "chat_expertId_userId",
+    //         senderId: 2,
+    //         subCollection: 'messages',
+    //       ),
+    //     );
   } else {
     await FlutterCallkitIncoming.endAllCalls();
   }
@@ -252,7 +261,6 @@ Future<void> main() async {
   await initLocalNotifications();
   await initializeFirebaseMessaging();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
   runApp(const MyApp());
 }
 
@@ -313,7 +321,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       final type = message.data['type']?.toString();
       print("!!!!!!!!!!!!!!three!!!!!!!!!!!!!");
       print(message.data);
-
       if (type == 'CALL') {
         await checkAndNavigationCallingPage();
       }
