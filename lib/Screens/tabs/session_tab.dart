@@ -191,6 +191,9 @@ class _SessionTabState extends State<SessionTab> {
                                               .then((value) {
                                                 Get.to(
                                                   FirebaseChatScreen(
+                                                    startTime: _homeController
+                                                        .sessionListData[index]
+                                                        .startTime!,
                                                     sessionStatus: _homeController
                                                         .sessionListData[index]
                                                         .status!,

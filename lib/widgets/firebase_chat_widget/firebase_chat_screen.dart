@@ -29,7 +29,7 @@ class _ChatListEntry {
 
 class FirebaseChatScreen extends StatefulWidget {
   final String sessionStatus;
-
+  final String startTime;
   final String roomId;
   final String customerName;
   final String remaingTime;
@@ -38,6 +38,7 @@ class FirebaseChatScreen extends StatefulWidget {
   final int reciverId;
 
   const FirebaseChatScreen({
+    required this.startTime,
     required this.sessionStatus,
     required this.customerName,
     required this.reciverId,
@@ -84,6 +85,48 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
       }
     });
   }
+
+  int calculateTimer(String startTimeString) {
+    DateTime now = DateTime.now();
+
+    // Parse HH:mm:ss
+    List<String> parts = startTimeString.split(":");
+    int h = int.parse(parts[0]);
+    int m = int.parse(parts[1]);
+    int s = int.parse(parts[2]);
+
+    // Convert both times to total seconds since day start
+    int nowSeconds = now.hour * 3600 + now.minute * 60 + now.second;
+    int startSeconds = h * 3600 + m * 60 + s;
+
+    // Difference
+    int diff = nowSeconds - startSeconds;
+
+    // Handle previous day case (if negative)
+    if (diff < 0) diff += 24 * 3600;
+
+    return diff;
+  }
+
+  // int calculateTimer(String startTimeString) {
+  //   // Parse start time "HH:mm:ss"
+  //   DateTime now = DateTime.now();
+  //   List<String> parts = startTimeString.split(":");
+  //   DateTime startTime = DateTime(
+  //     now.year,
+  //     now.month,
+  //     now.day,
+  //     int.parse(parts[0]),
+  //     int.parse(parts[1]),
+  //     int.parse(parts[2]),
+  //   );
+
+  //   // Calculate difference
+  //   Duration diff = now.difference(startTime);
+
+  //   // Return seconds (ensure no negative)
+  //   return diff.inSeconds < 0 ? 0 : diff.inSeconds;
+  // }
 
   void _startTimer() {
     if (_isCompleted) return; // ✅ UPDATED: no timer if completed
@@ -323,6 +366,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   @override
   void initState() {
     super.initState();
+    print("################calculateTimer#################");
+    print(widget.startTime);
+    print(DateTime.now());
+    int dd = calculateTimer(widget.startTime);
+    print(dd);
 
     // Listen end signal -> show popup only if NOT completed
     // FirebaseFirestore.instance
@@ -524,213 +572,216 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   @override
   Widget build(BuildContext context) {
     // ignore: deprecated_member_use
-    return WillPopScope(
-      onWillPop: () async {
-        // ✅ UPDATED (Option C): if completed -> direct back, else show popup
-        if (_isCompleted) {
-          return true; // allow pop directly
-        } else {
-          _showExitPopup();
-          return false;
-        }
-      },
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFF221d25),
+      appBar: AppBar(
         backgroundColor: const Color(0xFF221d25),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF221d25),
-          shadowColor: const Color(0xFF221d25),
-          leadingWidth: 60,
-          toolbarHeight: 60,
-          elevation: 1,
-          centerTitle: true,
-          title: text(
-            widget.customerName,
-            fontSize: 20.0,
-            maxLine: 1,
-            textColor: white,
-            fontWeight: FontWeight.w600,
-            fontFamily: productSans,
-          ),
-          leading: GestureDetector(
-            onTap: () async {
-              // ✅ Same logic as back press
-              if (_isCompleted) {
-                Navigator.of(context).pop();
-              } else {
-                _showExitPopup();
-              }
-            },
-            child: const Center(
-              child: Icon(Icons.arrow_back_rounded, color: white),
+        elevation: 1,
+        centerTitle: true,
+        leadingWidth: 60,
+        leading: GestureDetector(
+          onTap: () {
+            _showExitPopup(); // back par popup hoga
+          },
+          child: const Icon(Icons.arrow_back_rounded, color: white),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            text(
+              widget.customerName,
+              fontSize: 18.0,
+              textColor: white,
+              fontWeight: FontWeight.w600,
+              fontFamily: productSans,
             ),
-          ),
-          actions: [
-            // ✅ UPDATED: hide timer entirely when completed
-            _isCompleted
-                ? const SizedBox()
-                : _isTimerStarted
-                ? widget.remaingTime == "00" || widget.remaingTime.isEmpty
-                      ? const SizedBox()
-                      : Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: black,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            child: CountdownTimer(
-                              minutes: (int.parse(widget.remaingTime) / 60)
-                                  .ceil(),
-                              textFontSize: 18.0,
-                              txtColor: white,
-                              fontFamily: productSans,
-                              onTimerComplete: () {
-                                _showCompletionDialog(context);
-                              },
-                            ),
-                          ),
+            const SizedBox(height: 4),
+
+            // ⏳ Timer below name
+            !_isCompleted
+                ? (_isTimerStarted &&
+                          widget.remaingTime != "00" &&
+                          widget.remaingTime.isNotEmpty)
+                      ? CountdownTimer2(
+                          // minutes: (int.parse(widget.remaingTime) / 60).ceil(),
+                          totalSeconds: calculateTimer(widget.startTime),
+                          textFontSize: 14.0,
+                          txtColor: Colors.white70,
+                          fontFamily: productSans,
+                          onTimerComplete: () {
+                            _showCompletionDialog(context);
+                          },
                         )
+                      : const SizedBox()
                 : const SizedBox(),
           ],
         ),
-        body: Stack(
-          children: [
-            SizedBox(
-              height: double.infinity,
-              width: double.infinity,
-              child: Image.asset(appBg, fit: BoxFit.fill),
-            ),
-            Column(
-              children: [
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('free_chat')
-                        .doc(widget.roomId)
-                        .collection(widget.subCollection)
-                        .orderBy(
-                          'dateTime',
-                          descending: true,
-                        ) // ensure server sort
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return circularProgress();
-                      }
-                      final chatDocs = snapshot.data?.docs ?? [];
 
-                      return ValueListenableBuilder<bool>(
-                        valueListenable: _isUploadingIcon,
-                        builder: (context, isUploading, child) {
-                          if (isUploading) {
-                            WidgetsBinding.instance.addPostFrameCallback(
-                              (_) => _scrollToBottom(),
-                            );
-                          }
-
-                          /// NOTE: Removed 24h filter so older days can show headers like "Yesterday", "21 Jan 2025"
-                          final List<ChatMessageModel> allChat = chatDocs
-                              .map((doc) => ChatMessageModel.fromDocument(doc))
-                              .toList();
-
-                          /// Already DESC by query, but re-ensure:
-                          allChat.sort(
-                            (a, b) => b.dateTime.compareTo(a.dateTime),
-                          );
-
-                          /// Build flattened entries (headers + messages)
-                          final entries = _buildEntriesWithHeaders(allChat);
-
-                          return ListView.builder(
-                            reverse: true,
-                            controller: _scrollController,
-                            itemCount:
-                                entries.length +
-                                ((isUploading && !_isCompleted) ? 1 : 0),
-                            itemBuilder: (ctx, index) {
-                              // With reverse:true latest is index 0.
-                              if (isUploading &&
-                                  !_isCompleted && // ✅ UPDATED: don't show uploading bubble if completed
-                                  index == 0) {
-                                return ValueListenableBuilder<String>(
-                                  valueListenable: _selectedImagePath,
-                                  builder: (context, localPath, _) {
-                                    return _uploadingImageBubble(localPath);
-                                  },
-                                );
-                              }
-
-                              final adjustedIndex =
-                                  (isUploading && !_isCompleted)
-                                  ? index - 1
-                                  : index;
-                              final entry = entries[adjustedIndex];
-
-                              if (entry.isHeader) {
-                                return _buildDateSeparator(entry.headerLabel!);
-                              }
-
-                              final message = entry.message!;
-                              _markMessageAsSeen(message);
-
-                              return MessageBubble(
-                                messageTime: message.dateTime,
-                                message: message.msg,
-                                isRead: message.isSeen,
-                                isMe: message.senderId == widget.senderId,
-                                isMedia: message.msgType == 'Media',
-                                msgType: message.msgType,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
+        // 🔴 End Chat button (top-right)
+        actions: [
+          if (!_isCompleted)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ElevatedButton(
+                onPressed: () {
+                  _showExitPopup();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-
-                /// Typing indicator listener (other user)
-                if (!_isCompleted) // ✅ UPDATED: hide typing on completed
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('free_chat')
-                        .doc(widget.roomId)
-                        .collection('status')
-                        .doc('typingStatus')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData || snapshot.data == null) {
-                        return const SizedBox();
-                      }
-                      final typingData =
-                          snapshot.data!.data() as Map<String, dynamic>?;
-                      final mkey = 'user_${widget.reciverId}';
-                      final isTyping = typingData?[mkey] == true;
-
-                      return isTyping
-                          ? MessageBubble(
-                              messageTime: Timestamp.now(),
-                              message: "typing...",
-                              isMe: false,
-                              isMedia: false,
-                              isRead: false,
-                              showTime: false,
-                              msgType: "text",
-                            )
-                          : const SizedBox();
-                    },
+                child: const Text(
+                  "End Chat",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: productSans,
+                    color: Colors.white,
                   ),
-
-                // ✅ UPDATED: Input bar only when NOT completed
-                _isCompleted ? const SizedBox() : _buildMessageInput(context),
-              ],
+                ),
+              ),
             ),
-          ],
-        ),
+        ],
+      ),
+
+      body: Stack(
+        children: [
+          SizedBox(
+            height: double.infinity,
+            width: double.infinity,
+            child: Image.asset(appBg, fit: BoxFit.fill),
+          ),
+          Column(
+            children: [
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('free_chat')
+                      .doc(widget.roomId)
+                      .collection(widget.subCollection)
+                      .orderBy(
+                        'dateTime',
+                        descending: true,
+                      ) // ensure server sort
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return circularProgress();
+                    }
+                    final chatDocs = snapshot.data?.docs ?? [];
+
+                    return ValueListenableBuilder<bool>(
+                      valueListenable: _isUploadingIcon,
+                      builder: (context, isUploading, child) {
+                        if (isUploading) {
+                          WidgetsBinding.instance.addPostFrameCallback(
+                            (_) => _scrollToBottom(),
+                          );
+                        }
+
+                        /// NOTE: Removed 24h filter so older days can show headers like "Yesterday", "21 Jan 2025"
+                        final List<ChatMessageModel> allChat = chatDocs
+                            .map((doc) => ChatMessageModel.fromDocument(doc))
+                            .toList();
+
+                        /// Already DESC by query, but re-ensure:
+                        allChat.sort(
+                          (a, b) => b.dateTime.compareTo(a.dateTime),
+                        );
+
+                        /// Build flattened entries (headers + messages)
+                        final entries = _buildEntriesWithHeaders(allChat);
+
+                        return ListView.builder(
+                          reverse: true,
+                          controller: _scrollController,
+                          itemCount:
+                              entries.length +
+                              ((isUploading && !_isCompleted) ? 1 : 0),
+                          itemBuilder: (ctx, index) {
+                            // With reverse:true latest is index 0.
+                            if (isUploading &&
+                                !_isCompleted && // ✅ UPDATED: don't show uploading bubble if completed
+                                index == 0) {
+                              return ValueListenableBuilder<String>(
+                                valueListenable: _selectedImagePath,
+                                builder: (context, localPath, _) {
+                                  return _uploadingImageBubble(localPath);
+                                },
+                              );
+                            }
+
+                            final adjustedIndex = (isUploading && !_isCompleted)
+                                ? index - 1
+                                : index;
+                            final entry = entries[adjustedIndex];
+
+                            if (entry.isHeader) {
+                              return _buildDateSeparator(entry.headerLabel!);
+                            }
+
+                            final message = entry.message!;
+                            _markMessageAsSeen(message);
+
+                            return MessageBubble(
+                              messageTime: message.dateTime,
+                              message: message.msg,
+                              isRead: message.isSeen,
+                              isMe: message.senderId == widget.senderId,
+                              isMedia: message.msgType == 'Media',
+                              msgType: message.msgType,
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              /// Typing indicator listener (other user)
+              if (!_isCompleted) // ✅ UPDATED: hide typing on completed
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('free_chat')
+                      .doc(widget.roomId)
+                      .collection('status')
+                      .doc('typingStatus')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data == null) {
+                      return const SizedBox();
+                    }
+                    final typingData =
+                        snapshot.data!.data() as Map<String, dynamic>?;
+                    final mkey = 'user_${widget.reciverId}';
+                    final isTyping = typingData?[mkey] == true;
+
+                    return isTyping
+                        ? MessageBubble(
+                            messageTime: Timestamp.now(),
+                            message: "typing...",
+                            isMe: false,
+                            isMedia: false,
+                            isRead: false,
+                            showTime: false,
+                            msgType: "text",
+                          )
+                        : const SizedBox();
+                  },
+                ),
+
+              // ✅ UPDATED: Input bar only when NOT completed
+              _isCompleted ? const SizedBox() : _buildMessageInput(context),
+            ],
+          ),
+        ],
       ),
     );
   }
