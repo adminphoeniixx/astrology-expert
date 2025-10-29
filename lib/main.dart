@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 import 'package:astro_partner_app/Screens/splesh_screen.dart';

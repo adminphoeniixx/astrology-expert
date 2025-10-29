@@ -2,13 +2,15 @@ import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
-import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+/// ----------------------------------------------
+/// ITEM PAYMENT VIEW (Card on list page)
+/// ----------------------------------------------
 class ItemPaymentView extends StatefulWidget {
   final EarningData earningData;
   const ItemPaymentView({super.key, required this.earningData});
@@ -22,6 +24,11 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
 
   @override
   Widget build(BuildContext context) {
+    final payoutStatus = widget.earningData.payoutStatus ?? '';
+    final payoutDate = widget.earningData.payoutDate ?? "Date";
+    final weekStart = widget.earningData.weekStart;
+    final weekEnd = widget.earningData.weekEnd;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -35,23 +42,23 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-        margin: const EdgeInsets.symmetric(horizontal: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(color: textLightColorThersery),
           borderRadius: BorderRadius.circular(16.0),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// Top Row: Date + Status Badge
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    widget.earningData.payoutDate ?? "Date",
+                    payoutDate,
                     style: const TextStyle(
                       fontSize: 16,
                       fontFamily: productSans,
@@ -59,126 +66,136 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                       color: white,
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color:
-                              (widget.earningData.payoutStatus?.toLowerCase() ==
-                                  "paid")
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        child: Text(
-                          widget.earningData.payoutStatus ?? "",
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontFamily: productSans,
-                            color:
-                                (widget.earningData.payoutStatus
-                                        ?.toLowerCase() ==
-                                    "paid")
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _statusBadge(payoutStatus),
                 ],
               ),
-              const SizedBox(height: 15),
+            ),
 
-              Text(
-                "Week - ${widget.earningData.weekNumber.toString()}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-              Text(
-                "Week Period - ${formatter.format(widget.earningData.weekStart!)} "
-                "to ${formatter.format(widget.earningData.weekEnd!)}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
+            _earningList("Week", "${widget.earningData.weekNumber ?? 0}"),
+            const SizedBox(height: 8),
 
-              Text(
-                "Total Commision - ₹${widget.earningData.totalCommission.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
+            _earningList(
+              "Week Period",
+              "${weekStart != null ? formatter.format(weekStart) : '---'}"
+                  " to ${weekEnd != null ? formatter.format(weekEnd) : '---'}",
+            ),
+            const SizedBox(height: 8),
 
-              Text(
-                "TDS Deducted - ₹${widget.earningData.totalTds.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
+            _earningList(
+              "Total Commission",
+              "₹${widget.earningData.totalCommission.toStringAsFixed(2)}",
+            ),
+            const SizedBox(height: 8),
 
-              const SizedBox(height: 12),
+            _earningList(
+              "TDS Deducted",
+              "₹${widget.earningData.totalTds.toStringAsFixed(2)}",
+            ),
+            const SizedBox(height: 8),
 
-              Text(
-                "Total Payable - ₹${widget.earningData.payableAmount.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
+            _earningList(
+              "Total Payable",
+              "₹${widget.earningData.payableAmount.toStringAsFixed(2)}",
+            ),
+            const SizedBox(height: 8),
 
-              const SizedBox(height: 12),
+            _earningList("UTR Number", widget.earningData.utr ?? "---"),
+            const SizedBox(height: 8),
 
-              Text(
-                "UTR Number - ${widget.earningData.utr ?? "---"}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Bank Name - ${widget.earningData.bankName ?? "---"}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: productSans,
-                  color: white,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
+            _earningList("Bank Name", widget.earningData.bankName ?? "---"),
+          ],
         ),
       ),
     );
   }
+
+  /// simple key-value row for ItemPaymentView
+  Widget _earningList(String title, String title2, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontFamily: productSans,
+              color: Colors.white70,
+            ),
+          ),
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                title2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: productSans,
+                  color: white,
+                  fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _statusBadge(String raw) {
+  final status = raw.trim().toLowerCase();
+
+  Color border;
+  Color fg;
+  String label;
+
+  if (status == 'paid') {
+    border = Colors.green;
+    // ignore: deprecated_member_use
+    fg = Colors.green;
+    label = 'PAID';
+  } else if (status == 'pending' || status == 'processing') {
+    border = Colors.orange;
+    // ignore: deprecated_member_use
+    fg = Colors.orange;
+    label = status.toUpperCase();
+  } else if (status == 'unpaid' ||
+      status == 'failed' ||
+      status == 'rejected' ||
+      status == 'cancelled' ||
+      status == 'canceled') {
+    border = Colors.red;
+    // ignore: deprecated_member_use
+    fg = Colors.red;
+    label = status.toUpperCase();
+  } else {
+    border = Colors.white24;
+    fg = Colors.white70;
+    label = raw.isEmpty ? 'UNKNOWN' : raw.toUpperCase();
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: border),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontFamily: productSans,
+        fontSize: 12.5,
+        color: fg,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
+    ),
+  );
 }
 
 AppBar secondryTabAppBar({String title = ''}) {
@@ -220,10 +237,11 @@ class OrdersTableScreen extends StatefulWidget {
 
 class _OrdersTableScreenState extends State<OrdersTableScreen> {
   final HomeController _homeController = Get.put(HomeController());
+
   @override
   void initState() {
-    _homeController.fetchEarningDetailsModelData(earningId: widget.earningId);
     super.initState();
+    _homeController.fetchEarningDetailsModelData(earningId: widget.earningId);
   }
 
   @override
@@ -242,428 +260,158 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
           Obx(() {
             if (_homeController.isEarningDetailsModelLoding.value) {
               return circularProgress();
-            } else {
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    ListView.separated(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 20),
-                      itemCount: _homeController
-                          .earningDetailsModel!
-                          .data!
-                          .earning!
-                          .transactions!
-                          .length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.symmetric(horizontal: 20),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: primaryColor),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 12,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Table(
-                                  columnWidths: const {
-                                    0: FlexColumnWidth(
-                                      2,
-                                    ), // Adjust these to control the width of each column
-                                    1: FlexColumnWidth(3),
-                                  },
-                                  children: [
-                                    TableRow(
-                                      children: [
-                                        const Text(
-                                          "Total Commision",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: productSans,
-                                            color: white,
-                                          ),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Text(
-                                            "₹${_homeController.earningDetailsModel!.data!.earning!.transactions![index].commission.toString()}",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontFamily: productSans,
-                                              color: white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    // const TableRow(
-                                    //   children: [
-                                    //     SizedBox(height: 8),
-                                    //     SizedBox(height: 8),
-                                    //   ],
-                                    // ),
-                                    // TableRow(
-                                    //   children: [
-                                    //     const Text(
-                                    //       "Total Discount",
-                                    //       style: TextStyle(
-                                    //         fontSize: 14,
-                                    //         fontFamily: productSans,
-                                    //         color: white,
-                                    //       ),
-                                    //     ),
-                                    //     Align(
-                                    //       alignment: Alignment.centerRight,
-                                    //       child: Text(
-                                    //         "${_homeController.earningDetailsModel!.data!.earning!.transactions![index].tdsPercentage.toString()}%",
-                                    //         style: const TextStyle(
-                                    //           fontSize: 14,
-                                    //           fontFamily: productSans,
-                                    //           color: white,
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ],
-                                    // ),
-                                    const TableRow(
-                                      children: [
-                                        SizedBox(height: 8),
-                                        SizedBox(height: 8),
-                                      ],
-                                    ),
+            }
 
-                                    TableRow(
-                                      children: [
-                                        const Text(
-                                          "Total Amount",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: productSans,
-                                            color: white,
-                                          ),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Text(
-                                            "₹${_homeController.earningDetailsModel!.data!.earning!.transactions![index].payableAmount ?? ""}",
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontFamily: productSans,
-                                              color: white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const TableRow(
-                                      children: [
-                                        SizedBox(height: 8),
-                                        SizedBox(height: 8),
-                                      ],
-                                    ),
+            final transactions =
+                _homeController
+                    .earningDetailsModel
+                    ?.data
+                    ?.earning
+                    ?.transactions ??
+                [];
 
-                                    TableRow(
-                                      children: [
-                                        const Text(
-                                          "Payout Status",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: productSans,
-                                            color:
-                                                white, // keep label consistent
-                                          ),
-                                        ),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Builder(
-                                            builder: (context) {
-                                              final status =
-                                                  _homeController
-                                                      .earningDetailsModel!
-                                                      .data!
-                                                      .earning!
-                                                      .transactions![index]
-                                                      .status ??
-                                                  "";
-
-                                              final statusColor =
-                                                  status.toLowerCase() == "paid"
-                                                  ? Colors.green
-                                                  : Colors.red;
-
-                                              return Container(
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  border: Border.all(
-                                                    color: statusColor,
-                                                  ),
-                                                ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 2,
-                                                      ),
-                                                  child: Text(
-                                                    status,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontFamily: productSans,
-                                                      color: statusColor,
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(top: 10, bottom: 20),
-                      itemCount: _homeController
-                          .earningDetailsModel!
-                          .data!
-                          .earning!
-                          .transactions!
-                          .length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 20),
-                      itemBuilder: (context, index) {
-                        return orderAmountItem(
-                          _homeController
-                              .earningDetailsModel!
-                              .data!
-                              .earning!
-                              .transactions![index]
-                              .sessionData!,
-                        );
-                      },
-                    ),
-                  ],
+            if (transactions.isEmpty) {
+              return Center(
+                child: text(
+                  "No sessions found",
+                  textColor: Colors.white70,
+                  fontFamily: productSans,
                 ),
               );
             }
+
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 30),
+                  ListView.separated(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: transactions.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final order = transactions[index];
+
+                      final sessionId = order.sessionData?.id?.toString() ?? '';
+                      final commission = (order.commission ?? '').toString();
+                      final totalAmount =
+                          order.sessionData?.order?.totalAmount?.toString() ??
+                          '0';
+                      final status = (order.status ?? '').toString();
+                      final sessionType = order.sessionData?.serviceName ?? '';
+                      final startTime =
+                          order.sessionData?.startTime?.toString() ?? '';
+                      final endTime =
+                          order.sessionData?.endTime?.toString() ?? '';
+                      final duration = calculateDuration(startTime, endTime);
+                      final subtotal =
+                          order.sessionData?.order?.totalAmount?.toString() ??
+                          '0';
+                      final payable =
+                          order.sessionData?.order?.payableAmount?.toString() ??
+                          '0';
+
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: primaryColor),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildRow("Session ID", "#$sessionId"),
+                            _buildRow("Total Commission", "₹$commission"),
+                            _buildRow("Total Amount", "₹$totalAmount"),
+
+                            // Payout status badge
+                            _buildRow(
+                              "Payout Status",
+                              null,
+                              trailing: _statusBadge(status),
+                            ),
+
+                            _buildRow("Session Type", sessionType),
+                            _buildRow("Session Start Time", startTime),
+                            _buildRow("Session End Time", endTime),
+
+                            _buildRow("Session Duration", duration),
+
+                            _buildRow("Subtotal", "₹$subtotal"),
+                            const Divider(color: Colors.white24, height: 24),
+                            _buildRow("Payable", "₹$payable", isBold: true),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
           }),
         ],
       ),
     );
   }
 
-  Column orderAmountItem(SessionDetailData orderData) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            border: Border.all(color: textLightColorSecondary),
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Table(
-                  columnWidths: const {
-                    0: FlexColumnWidth(
-                      2,
-                    ), // Adjust these to control the width of each column
-                    1: FlexColumnWidth(3),
-                  },
-                  children: [
-                    // TableRow(
-                    //   children: [
-                    //     const Text(
-                    //       "Session id",
-                    //       style: TextStyle(
-                    //         fontSize: 14,
-                    //         fontFamily: productSans,
-                    //         color: white,
-                    //       ),
-                    //     ),
-                    //     Align(
-                    //       alignment: Alignment.centerRight,
-                    //       child: Text(
-                    //         "#${orderData.orderId ?? ""}",
-                    //         style: const TextStyle(
-                    //           fontSize: 14,
-                    //           fontFamily: productSans,
-                    //           color: white,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
+  String calculateDuration(String start, String end) {
+    try {
+      final format = DateFormat("HH:mm:ss"); // 24-hour format with seconds
+      final startTime = format.parse(start);
+      final endTime = format.parse(end);
 
-                    // const TableRow(
-                    //   children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    // ),
-                    // TableRow(
-                    //   children: [
-                    //     const Text(
-                    //       "Session name",
-                    //       style: TextStyle(
-                    //         fontSize: 14,
-                    //         fontFamily: productSans,
-                    //         color: white,
-                    //       ),
-                    //     ),
-                    //     Align(
-                    //       alignment: Alignment.centerRight,
-                    //       child: Text(
-                    //         orderData.serviceName??"",
-                    //         style: const TextStyle(
-                    //           fontSize: 14,
-                    //           fontFamily: productSans,
-                    //           color: white,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                    // const TableRow(
-                    //   children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    // ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Session type",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            orderData.order!.name ?? "",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+      final diff = endTime.difference(startTime);
 
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Session time",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "${orderData.startTime ?? "0"}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+      final minutes = diff.inMinutes;
+      final seconds = diff.inSeconds % 60;
 
-                    const TableRow(
-                      children: [SizedBox(height: 8), SizedBox(height: 8)],
-                    ),
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Session Subtotal:",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: productSans,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "₹${orderData.order!.totalAmount ?? "0"}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: productSans,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const TableRow(
-                      children: [
-                        SizedBox(height: 8), // Add spacing between rows
-                        SizedBox(height: 8),
-                      ],
-                    ),
+      // ✅ Final readable output
+      if (minutes > 0) {
+        return "$minutes min ${seconds}s";
+      } else {
+        return "$seconds sec";
+      }
+    } catch (e) {
+      return "---";
+    }
+  }
 
-                    TableRow(
-                      children: [
-                        const Text(
-                          "Payable:",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: productSans,
-                            fontWeight: FontWeight.w600,
-                            color: white,
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "₹${orderData.order!.payableAmount ?? "0"}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontFamily: productSans,
-                              fontWeight: FontWeight.w600,
-                              color: white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+  Widget _buildRow(
+    String title,
+    String? value, {
+    bool isBold = false,
+    Widget? trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontFamily: productSans,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 15),
-      ],
+          if (trailing != null)
+            trailing
+          else
+            Text(
+              value ?? '',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isBold ? 15 : 14,
+                fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+                fontFamily: productSans,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

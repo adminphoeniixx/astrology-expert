@@ -165,17 +165,17 @@ class _SessionTabState extends State<SessionTab> {
                                 } else {
                                   return GestureDetector(
                                     onTap: () async {
-                                      // ✅ First check status BEFORE hitting API
-                                      if (_homeController
-                                              .sessionListData[index]
-                                              .status ==
-                                          "Completed") {
-                                        Get.snackbar(
-                                          "Session Closed",
-                                          "This session is already completed.",
-                                        ); // Optional
-                                        return;
-                                      }
+                                      // // ✅ First check status BEFORE hitting API
+                                      // if (_homeController
+                                      //         .sessionListData[index]
+                                      //         .status ==
+                                      //     "Completed") {
+                                      //   Get.snackbar(
+                                      //     "Session Closed",
+                                      //     "This session is already completed.",
+                                      //   ); // Optional
+                                      //   return;
+                                      // }
 
                                       // ✅ Safe to call API now
                                       switch (_homeController
@@ -191,6 +191,9 @@ class _SessionTabState extends State<SessionTab> {
                                               .then((value) {
                                                 Get.to(
                                                   FirebaseChatScreen(
+                                                    sessionStatus: _homeController
+                                                        .sessionListData[index]
+                                                        .status!,
                                                     customerName:
                                                         value
                                                             .session

@@ -15,6 +15,7 @@ class FreeFirebaseServiceRequest {
     required dynamic senderId,
     required dynamic mediaUrl,
     required dynamic customerName,
+    required bool isFirstMessage,
   }) async {
     final messageId = FirebaseFirestore.instance
         .collection('free_chat')
@@ -32,21 +33,37 @@ class FreeFirebaseServiceRequest {
           'msgType': 'Media',
           'receiverId': receiverId,
           'senderId': senderId,
-          'is_first_message': false,
+          'is_first_message': isFirstMessage,
           'msg': mediaUrl,
           'messageId': messageId, // Store the auto-generated message ID
         });
-    await FirebaseFirestore.instance
-        .collection('free_chat_session')
-        .doc('$roomId')
-        .set({
-          'created_at': Timestamp.now(), // ✅ Corrected
-          'receiverId': receiverId,
-          'customer_id': senderId,
-          'customer_name': customerName,
-          'main_created_at': Timestamp.now(),
-          'order_id': roomId, // Store the message ID if needed
-        }, SetOptions(merge: true));
+    if (isFirstMessage) {
+      await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc('$roomId')
+          .set({
+            'created_at': Timestamp.now(), // ✅ Corrected
+            'receiverId': receiverId,
+            'customer_id': senderId,
+            'customer_name': customerName,
+            'main_created_at': Timestamp.now(),
+            'is_new_session': false,
+            'is_new_session_time': DateTime.now(),
+            'order_id': roomId, // Store the message ID if needed
+          }, SetOptions(merge: true));
+    } else {
+      await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc('$roomId')
+          .set({
+            'created_at': Timestamp.now(), // ✅ Corrected
+            'receiverId': receiverId,
+            'customer_id': senderId,
+            'customer_name': customerName,
+            'main_created_at': Timestamp.now(),
+            'order_id': roomId, // Store the message ID if needed
+          }, SetOptions(merge: true));
+    }
   }
 
   static Future<void> sendTextMessage({
@@ -56,6 +73,7 @@ class FreeFirebaseServiceRequest {
     required dynamic receiverId,
     required dynamic senderId,
     required dynamic customerName,
+    required bool isFirstMessage,
   }) async {
     final messageId = FirebaseFirestore.instance
         .collection('free_chat')
@@ -74,23 +92,38 @@ class FreeFirebaseServiceRequest {
           'dateTime': Timestamp.now(), // ✅ Corrected
           'isSeen': false,
           'msgType': 'text',
-          'is_first_message': false,
+          'is_first_message': isFirstMessage,
           'senderId': senderId,
           'id': messageId, // Store the message ID if needed
         });
 
-    await FirebaseFirestore.instance
-        .collection('free_chat_session')
-        .doc('$roomId')
-        .set({
-          'created_at': Timestamp.now(), // ✅ Corrected
-          'receiverId': receiverId,
-          'customer_id': senderId,
-          'main_created_at': Timestamp.now(),
-
-          'customer_name': customerName,
-          'order_id': roomId, // Store the message ID if needed
-        }, SetOptions(merge: true));
+    if (isFirstMessage) {
+      await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc('$roomId')
+          .set({
+            'created_at': Timestamp.now(), // ✅ Corrected
+            'receiverId': receiverId,
+            'customer_id': senderId,
+            'main_created_at': Timestamp.now(),
+            'customer_name': customerName,
+            'is_new_session': false,
+            'is_new_session_time': DateTime.now(),
+            'order_id': roomId, // Store the message ID if needed
+          }, SetOptions(merge: true));
+    } else {
+      await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc('$roomId')
+          .set({
+            'created_at': Timestamp.now(), // ✅ Corrected
+            'receiverId': receiverId,
+            'customer_id': senderId,
+            'main_created_at': Timestamp.now(),
+            'customer_name': customerName,
+            'order_id': roomId, // Store the message ID if needed
+          }, SetOptions(merge: true));
+    }
   }
 
   static Future<void> markAsSeen({

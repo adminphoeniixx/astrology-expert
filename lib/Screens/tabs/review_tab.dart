@@ -96,7 +96,7 @@ class _ReviewTabState extends State<ReviewTab> {
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.only(top: 10),
+                            padding: const EdgeInsets.only(top: 20),
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount:

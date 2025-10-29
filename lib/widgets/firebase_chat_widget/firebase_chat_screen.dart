@@ -16,7 +16,20 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// Top-level helper to render either a date header or a message row
+class _ChatListEntry {
+  final String? headerLabel; // non-null when it's a date header
+  final ChatMessageModel? message; // non-null when it's a message
+
+  const _ChatListEntry.header(this.headerLabel) : message = null;
+  const _ChatListEntry.message(this.message) : headerLabel = null;
+
+  bool get isHeader => headerLabel != null;
+}
+
 class FirebaseChatScreen extends StatefulWidget {
+  final String sessionStatus;
+
   final String roomId;
   final String customerName;
   final String remaingTime;
@@ -25,6 +38,7 @@ class FirebaseChatScreen extends StatefulWidget {
   final int reciverId;
 
   const FirebaseChatScreen({
+    required this.sessionStatus,
     required this.customerName,
     required this.reciverId,
     required this.remaingTime,
@@ -56,6 +70,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   /// Typing state
   Timer? _typingTimer;
 
+  bool get _isCompleted => widget.sessionStatus == "Completed"; // ✅ UPDATED
+
   void _scrollToBottom() {
     // With reverse: true, bottom is offset 0.0
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,6 +86,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   }
 
   void _startTimer() {
+    if (_isCompleted) return; // ✅ UPDATED: no timer if completed
     if (!_isTimerStarted) {
       setState(() {
         _isTimerStarted = true;
@@ -78,27 +95,40 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   }
 
   Future<void> _sendMessage() async {
+    if (_isCompleted) return; // ✅ UPDATED: block send
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     _startTimer();
 
     // Stop typing as we’re sending the message now
     await setTypingStatus(false);
-
-    await FreeFirebaseServiceRequest.sendTextMessage(
-      customerName: widget.customerName,
-      message: text,
-      roomId: widget.roomId,
-      subCollection: widget.subCollection,
-      receiverId: widget.reciverId,
-      senderId: widget.senderId,
-    );
+    FirebaseFirestore.instance
+        .collection('free_chat_session')
+        .doc(widget.roomId)
+        .get()
+        .then((onValue) async {
+          final data = onValue.data() as Map<String, dynamic>;
+          print("###############free_chat_session#################");
+          print(data);
+          final String chatStatus = data['status'] ?? "";
+          final bool isNewSession = data['is_new_session'] ?? "";
+          await FreeFirebaseServiceRequest.sendTextMessage(
+            customerName: widget.customerName,
+            message: text,
+            roomId: widget.roomId,
+            subCollection: widget.subCollection,
+            receiverId: widget.reciverId,
+            senderId: widget.senderId,
+            isFirstMessage: isNewSession,
+          );
+        });
 
     _messageController.clear();
     _scrollToBottom();
   }
 
   Future<void> _sendMedia() async {
+    if (_isCompleted) return; // ✅ UPDATED: block media
     _startTimer();
 
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
@@ -134,14 +164,27 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           if (onValue.status == true &&
               (onValue.mediaUrl?.isNotEmpty ?? false)) {
             final url = onValue.mediaUrl!;
-            await FreeFirebaseServiceRequest.sendMediaMessage(
-              customerName: widget.customerName,
-              roomId: widget.roomId,
-              subCollection: widget.subCollection,
-              receiverId: widget.reciverId,
-              senderId: widget.senderId,
-              mediaUrl: url,
-            );
+
+            FirebaseFirestore.instance
+                .collection('free_chat_session')
+                .doc(widget.roomId)
+                .get()
+                .then((onValue) async {
+                  final data = onValue.data() as Map<String, dynamic>;
+                  print("###############free_chat_session#################");
+                  print(data);
+                  final String chatStatus = data['status'] ?? "";
+                  final bool isNewSession = data['is_new_session'] ?? "";
+                  await FreeFirebaseServiceRequest.sendMediaMessage(
+                    isFirstMessage: isNewSession,
+                    customerName: widget.customerName,
+                    roomId: widget.roomId,
+                    subCollection: widget.subCollection,
+                    receiverId: widget.reciverId,
+                    senderId: widget.senderId,
+                    mediaUrl: url,
+                  );
+                });
             localReset();
             _scrollToBottom();
           } else {
@@ -177,6 +220,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   }
 
   void _showCompletionDialog(BuildContext context) {
+    if (_isCompleted) return; // ✅ UPDATED: don't show on completed
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -242,6 +286,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   late StreamSubscription<DocumentSnapshot> subscription;
 
   Future<void> setTypingStatus(bool isTyping) async {
+    if (_isCompleted) return; // ✅ UPDATED: don't set typing on completed
     try {
       await FirebaseFirestore.instance
           .collection('free_chat')
@@ -257,6 +302,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   /// Call this from TextField.onChanged
   void _handleTyping(String value) {
+    if (_isCompleted) return; // ✅ UPDATED
     // When user types, set true immediately
     setTypingStatus(true);
 
@@ -277,21 +323,42 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   @override
   void initState() {
     super.initState();
-    FirebaseFirestore.instance
-        .collection('expert_chat_timers')
-        .doc("${widget.reciverId}_${widget.roomId}")
-        .snapshots()
-        .listen((snapshot) {
-          if (snapshot.exists && snapshot.data() != null) {
-            final data = snapshot.data() as Map<String, dynamic>;
-            final String chatStatus = data['chatStatus'] ?? "";
 
-            if (chatStatus == "end") {
-              _showExitPopup();
-            }
-          }
-        });
+    // Listen end signal -> show popup only if NOT completed
+    // FirebaseFirestore.instance
+    //     .collection('expert_chat_timers')
+    //     .doc("${widget.reciverId}_${widget.roomId}")
+    //     .snapshots()
+    //     .listen((snapshot) {
+    //   if (snapshot.exists && snapshot.data() != null) {
+    //     final data = snapshot.data() as Map<String, dynamic>;
+    //     final String chatStatus = data['chatStatus'] ?? "";
 
+    //     if (chatStatus == "end" && !_isCompleted) {
+    //       _showExitPopup(); // ✅ UPDATED guard
+    //     }
+    //   }
+    // });
+
+    // FirebaseFirestore.instance
+    //     .collection('free_chat_session')
+    //     .doc(widget.roomId)
+    //     .snapshots()
+    //     .listen((snapshot) {
+    //       if (snapshot.exists && snapshot.data() != null) {
+    //         final data = snapshot.data() as Map<String, dynamic>;
+    //         print("###############free_chat_session#################");
+    //         print(data);
+    //         final String chatStatus = data['status'] ?? "";
+    //         final bool isNewSession = data['is_new_session'] ?? "";
+    //         if (chatStatus == "Completed") {
+    //           print(chatStatus);
+    //           _showExitPopup();
+    //         }
+    //       }
+    //     });
+
+    // External session complete trigger -> keep as-is (will pop screens)
     statusStream = FirebaseFirestore.instance
         .collection('chat_status')
         .doc(widget.roomId)
@@ -342,13 +409,17 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   void dispose() {
     subscription.cancel();
     _typingTimer?.cancel();
-    setTypingStatus(false);
+    if (!_isCompleted) {
+      setTypingStatus(false); // ✅ UPDATED: avoid redundant write when completed
+    }
     _messageController.dispose();
     _messagefocusNode.dispose();
     super.dispose();
   }
 
   void _showExitPopup() {
+    if (_isCompleted) return; // ✅ UPDATED: don't show on completed
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -386,8 +457,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   )
                   .then((value) {
                     if (value.status == true) {
-                      Navigator.pop(context); // close dialog first
-                      Navigator.pop(context); // close dialog first
+                      Navigator.of(context).pop(true);
+                      Navigator.of(context).pop(true);
                     }
                   });
             },
@@ -398,12 +469,70 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     );
   }
 
+  // ------------------ NEW: Date header helpers ------------------
+
+  /// Month names for dd MMM yyyy without intl
+  static const List<String> _months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  /// Returns "Today", "Yesterday" or "dd MMM yyyy"
+  String _formatDateHeader(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final d = DateTime(dt.year, dt.month, dt.day);
+
+    if (d == today) return "Today";
+    if (d == yesterday) return "Yesterday";
+    return "${dt.day.toString().padLeft(2, '0')} ${_months[dt.month - 1]} ${dt.year}";
+  }
+
+  List<_ChatListEntry> _buildEntriesWithHeaders(
+    List<ChatMessageModel> sortedDesc,
+  ) {
+    final sortedAsc = List<ChatMessageModel>.from(sortedDesc.reversed);
+
+    final entries = <_ChatListEntry>[];
+    String? lastDateKey;
+
+    for (final m in sortedAsc) {
+      final dt = m.dateTime.toDate();
+      final dateKey = "${dt.year}-${dt.month}-${dt.day}";
+
+      if (lastDateKey != dateKey) {
+        entries.add(_ChatListEntry.header(_formatDateHeader(dt)));
+        lastDateKey = dateKey;
+      }
+      entries.add(_ChatListEntry.message(m));
+    }
+
+    return entries.reversed.toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
-        _showExitPopup(); // ✅ back दबाने पर popup खुलेगा
-        return false;
+        // ✅ UPDATED (Option C): if completed -> direct back, else show popup
+        if (_isCompleted) {
+          return true; // allow pop directly
+        } else {
+          _showExitPopup();
+          return false;
+        }
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF221d25),
@@ -423,15 +552,23 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             fontFamily: productSans,
           ),
           leading: GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop();
+            onTap: () async {
+              // ✅ Same logic as back press
+              if (_isCompleted) {
+                Navigator.of(context).pop();
+              } else {
+                _showExitPopup();
+              }
             },
             child: const Center(
               child: Icon(Icons.arrow_back_rounded, color: white),
             ),
           ),
           actions: [
-            _isTimerStarted
+            // ✅ UPDATED: hide timer entirely when completed
+            _isCompleted
+                ? const SizedBox()
+                : _isTimerStarted
                 ? widget.remaingTime == "00" || widget.remaingTime.isEmpty
                       ? const SizedBox()
                       : Container(
@@ -475,6 +612,10 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                         .collection('free_chat')
                         .doc(widget.roomId)
                         .collection(widget.subCollection)
+                        .orderBy(
+                          'dateTime',
+                          descending: true,
+                        ) // ensure server sort
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -491,38 +632,30 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                             );
                           }
 
-                          // Last 24 hours filter
-                          final DateTime now = DateTime.now();
-                          final DateTime cutoffDate = now.subtract(
-                            const Duration(days: 1),
-                          );
-
-                          final List<ChatMessageModel> recentChatDocs = chatDocs
-                              .where((doc) {
-                                final message = ChatMessageModel.fromDocument(
-                                  doc,
-                                );
-                                final messageDate = message.dateTime;
-                                return messageDate.toDate().isAfter(
-                                  cutoffDate,
-                                ); // Only recent
-                              })
+                          /// NOTE: Removed 24h filter so older days can show headers like "Yesterday", "21 Jan 2025"
+                          final List<ChatMessageModel> allChat = chatDocs
                               .map((doc) => ChatMessageModel.fromDocument(doc))
                               .toList();
 
-                          // Sort by dateTime desc so reverse: true works like chat
-                          recentChatDocs.sort(
+                          /// Already DESC by query, but re-ensure:
+                          allChat.sort(
                             (a, b) => b.dateTime.compareTo(a.dateTime),
                           );
+
+                          /// Build flattened entries (headers + messages)
+                          final entries = _buildEntriesWithHeaders(allChat);
 
                           return ListView.builder(
                             reverse: true,
                             controller: _scrollController,
                             itemCount:
-                                recentChatDocs.length + (isUploading ? 1 : 0),
+                                entries.length +
+                                ((isUploading && !_isCompleted) ? 1 : 0),
                             itemBuilder: (ctx, index) {
                               // With reverse:true latest is index 0.
-                              if (isUploading && index == 0) {
+                              if (isUploading &&
+                                  !_isCompleted && // ✅ UPDATED: don't show uploading bubble if completed
+                                  index == 0) {
                                 return ValueListenableBuilder<String>(
                                   valueListenable: _selectedImagePath,
                                   builder: (context, localPath, _) {
@@ -531,11 +664,17 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                                 );
                               }
 
-                              final adjustedIndex = isUploading
+                              final adjustedIndex =
+                                  (isUploading && !_isCompleted)
                                   ? index - 1
                                   : index;
-                              final message = recentChatDocs[adjustedIndex];
+                              final entry = entries[adjustedIndex];
 
+                              if (entry.isHeader) {
+                                return _buildDateSeparator(entry.headerLabel!);
+                              }
+
+                              final message = entry.message!;
                               _markMessageAsSeen(message);
 
                               return MessageBubble(
@@ -555,37 +694,39 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                 ),
 
                 /// Typing indicator listener (other user)
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('free_chat')
-                      .doc(widget.roomId)
-                      .collection('status')
-                      .doc('typingStatus')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data == null) {
-                      return const SizedBox();
-                    }
-                    final typingData =
-                        snapshot.data!.data() as Map<String, dynamic>?;
-                    final mkey = 'user_${widget.reciverId}';
-                    final isTyping = typingData?[mkey] == true;
+                if (!_isCompleted) // ✅ UPDATED: hide typing on completed
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('free_chat')
+                        .doc(widget.roomId)
+                        .collection('status')
+                        .doc('typingStatus')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data == null) {
+                        return const SizedBox();
+                      }
+                      final typingData =
+                          snapshot.data!.data() as Map<String, dynamic>?;
+                      final mkey = 'user_${widget.reciverId}';
+                      final isTyping = typingData?[mkey] == true;
 
-                    return isTyping
-                        ? MessageBubble(
-                            messageTime: Timestamp.now(),
-                            message: "typing...",
-                            isMe: false,
-                            isMedia: false,
-                            isRead: false,
-                            showTime: false,
-                            msgType: "text",
-                          )
-                        : const SizedBox();
-                  },
-                ),
+                      return isTyping
+                          ? MessageBubble(
+                              messageTime: Timestamp.now(),
+                              message: "typing...",
+                              isMe: false,
+                              isMedia: false,
+                              isRead: false,
+                              showTime: false,
+                              msgType: "text",
+                            )
+                          : const SizedBox();
+                    },
+                  ),
 
-                _buildMessageInput(context),
+                // ✅ UPDATED: Input bar only when NOT completed
+                _isCompleted ? const SizedBox() : _buildMessageInput(context),
               ],
             ),
           ],
@@ -603,13 +744,13 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.image, color: white),
-              onPressed: _sendMedia,
+              onPressed: _sendMedia, // will be ignored if completed
             ),
             Expanded(
               child: TextFormField(
                 controller: _messageController,
                 focusNode: _messagefocusNode,
-                onChanged: _handleTyping, // ✅ only when user types
+                onChanged: _handleTyping, // ✅ only when user types (guarded)
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "Type a message...",
@@ -635,11 +776,12 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                     vertical: 10.0,
                   ),
                 ),
+                readOnly: _isCompleted, // ✅ safety
               ),
             ),
             IconButton(
               icon: const Icon(Icons.send, color: white),
-              onPressed: _sendMessage,
+              onPressed: _sendMessage, // will be ignored if completed
             ),
           ],
         ),
@@ -723,6 +865,38 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Date separator chip
+  Widget _buildDateSeparator(String date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(color: Colors.white24, thickness: 1)),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.black38,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Text(
+              date,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontFamily: productSans,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          const Expanded(child: Divider(color: Colors.white24, thickness: 1)),
+        ],
       ),
     );
   }
