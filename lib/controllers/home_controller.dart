@@ -6,6 +6,8 @@ import 'package:astro_partner_app/model/review_list_model.dart';
 import 'package:astro_partner_app/model/seassion_chat_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
+import 'package:astro_partner_app/model/socket_detail_model.dart';
+import 'package:astro_partner_app/model/socket_verify_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_api_services.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
@@ -300,5 +302,43 @@ class HomeController extends GetxController {
     return endChatResponse;
   }
 
+  SocketDetailsModel? get socketDetailsModel => _socketDetailsModel;
+  SocketDetailsModel? _socketDetailsModel;
 
+  var isSocketDetailsModelLoding = false.obs;
+
+  Future<SocketDetailsModel> socketDetailsModelData() async {
+    try {
+      isSocketDetailsModelLoding(true);
+      _socketDetailsModel = await _webApiServices!.getSocketDetailsModel();
+    } on Failure catch (e) {
+      isSocketDetailsModelLoding(false);
+      _setFailure(e);
+    }
+    isSocketDetailsModelLoding(false);
+    return _socketDetailsModel!;
+  }
+
+  SocketVerifyModel? get socketVerifyModel => _socketVerifyModel;
+  SocketVerifyModel? _socketVerifyModel;
+
+  var isSocketVerifyModelLoding = false.obs;
+
+  Future<SocketVerifyModel> socketVerifyModelData({
+    required String socketId,
+    required String channelName,
+  }) async {
+    try {
+      isSocketVerifyModelLoding(true);
+      _socketVerifyModel = await _webApiServices!.getSocketVerifyModel(
+        socketId: socketId,
+        channelName: channelName,
+      );
+    } on Failure catch (e) {
+      isSocketVerifyModelLoding(false);
+      _setFailure(e);
+    }
+    isSocketVerifyModelLoding(false);
+    return _socketVerifyModel!;
+  }
 }

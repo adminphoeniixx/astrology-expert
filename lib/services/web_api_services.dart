@@ -15,6 +15,8 @@ import 'package:astro_partner_app/model/review_list_model.dart';
 import 'package:astro_partner_app/model/seassion_chat_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
+import 'package:astro_partner_app/model/socket_detail_model.dart';
+import 'package:astro_partner_app/model/socket_verify_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
@@ -1095,5 +1097,145 @@ class WebApiServices {
       _deleteAccount.requestStatus = RequestStatus.failure;
     }
     return _deleteAccount;
+  }
+
+  SocketDetailsModel _socketDetailsModel = SocketDetailsModel();
+
+  Future<SocketDetailsModel> getSocketDetailsModel() async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl3}socketi-details";
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {...(await authHeader()), "Content-Type": "application/json"},
+      );
+
+      print("########SocketDetailsModel#############");
+      print(url);
+      print("Headers: ${await authHeader()}");
+      print("Response: ${response.body}");
+      print("#########SocketDetailsModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _socketDetailsModel = SocketDetailsModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _socketDetailsModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _socketDetailsModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _socketDetailsModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "SocketDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "SocketDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "SocketDetailsModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "SocketDetailsModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    }
+
+    return _socketDetailsModel;
+  }
+
+  SocketVerifyModel _socketVerifyModel = SocketVerifyModel();
+
+  Future<SocketVerifyModel> getSocketVerifyModel({
+    required String socketId,
+    required String channelName,
+  }) async {
+    const String url = "${GetBaseUrl + GetDomainUrl2}pusher/auth";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({
+        "socket_id": socketId,
+        "channel_name": channelName,
+      });
+
+      print("########SocketVerifyModel#############");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########SocketVerifyModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _socketVerifyModel = SocketVerifyModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _socketVerifyModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _socketVerifyModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _socketVerifyModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "SocketVerifyModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "SocketVerifyModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "SocketVerifyModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "SocketVerifyModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _socketVerifyModel;
   }
 }

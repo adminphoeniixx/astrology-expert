@@ -10,6 +10,7 @@ import 'package:astro_partner_app/services/free_chat_service.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/msg_bubble.dart';
+import 'package:astro_partner_app/widgets/socket_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -581,7 +582,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         leadingWidth: 60,
         leading: GestureDetector(
           onTap: () {
-            _showExitPopup(); // back par popup hoga
+            Navigator.pop(context);
           },
           child: const Icon(Icons.arrow_back_rounded, color: white),
         ),
@@ -603,16 +604,43 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                 ? (_isTimerStarted &&
                           widget.remaingTime != "00" &&
                           widget.remaingTime.isNotEmpty)
-                      ? CountdownTimer2(
-                          // minutes: (int.parse(widget.remaingTime) / 60).ceil(),
-                          totalSeconds: calculateTimer(widget.startTime),
-                          textFontSize: 14.0,
-                          txtColor: Colors.white70,
-                          fontFamily: productSans,
-                          onTimerComplete: () {
-                            _showCompletionDialog(context);
+                      ? StreamBuilder<int>(
+                          stream: SocketService().timerStream,
+                          builder: (context, snapshot) {
+                            final seconds = snapshot.data ?? 0;
+
+                            final duration = Duration(seconds: seconds);
+                            final hours = duration.inHours.toString().padLeft(
+                              2,
+                              '0',
+                            );
+                            final minutes = (duration.inMinutes % 60)
+                                .toString()
+                                .padLeft(2, '0');
+                            final secs = (duration.inSeconds % 60)
+                                .toString()
+                                .padLeft(2, '0');
+
+                            return Text(
+                              "$hours:$minutes:$secs",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
                           },
                         )
+                      // CountdownTimer2(
+                      //     // minutes: (int.parse(widget.remaingTime) / 60).ceil(),
+                      //     totalSeconds: calculateTimer(widget.startTime),
+                      //     textFontSize: 14.0,
+                      //     txtColor: Colors.white70,
+                      //     fontFamily: productSans,
+                      //     onTimerComplete: () {
+                      //       _showCompletionDialog(context);
+                      //     },
+                      //   )
                       : const SizedBox()
                 : const SizedBox(),
           ],
