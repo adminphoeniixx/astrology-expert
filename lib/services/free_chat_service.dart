@@ -1,14 +1,21 @@
 import 'dart:io';
 
+import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/media_upload_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/get_instance.dart';
+
+final HomeController _homeController = Get.put(HomeController());
 
 class FreeFirebaseServiceRequest {
   // Method to mark a message as seen
   static Future<void> sendMediaMessage({
+    required dynamic sessionId,
+
     required dynamic roomId,
     required dynamic subCollection,
     required dynamic receiverId,
@@ -38,6 +45,10 @@ class FreeFirebaseServiceRequest {
           'messageId': messageId, // Store the auto-generated message ID
         });
     if (isFirstMessage) {
+      await _homeController.startTimerChatModelData(
+        sessionId: sessionId,
+        roomId: roomId,
+      );
       await FirebaseFirestore.instance
           .collection('free_chat_session')
           .doc('$roomId')
@@ -67,6 +78,8 @@ class FreeFirebaseServiceRequest {
   }
 
   static Future<void> sendTextMessage({
+    required dynamic sessionId,
+
     required dynamic message,
     required dynamic roomId,
     required dynamic subCollection,
@@ -98,6 +111,10 @@ class FreeFirebaseServiceRequest {
         });
 
     if (isFirstMessage) {
+      await _homeController.startTimerChatModelData(
+        sessionId: sessionId,
+        roomId: roomId,
+      );
       await FirebaseFirestore.instance
           .collection('free_chat_session')
           .doc('$roomId')

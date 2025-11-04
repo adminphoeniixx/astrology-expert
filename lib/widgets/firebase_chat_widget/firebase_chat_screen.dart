@@ -8,19 +8,17 @@ import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/chat_model.dart';
 import 'package:astro_partner_app/services/free_chat_service.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
-import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/msg_bubble.dart';
 import 'package:astro_partner_app/widgets/socket_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Top-level helper to render either a date header or a message row
+/// Internal list item that can be either a date header or a chat message
 class _ChatListEntry {
-  final String? headerLabel; // non-null when it's a date header
-  final ChatMessageModel? message; // non-null when it's a message
+  final String? headerLabel;
+  final ChatMessageModel? message;
 
   const _ChatListEntry.header(this.headerLabel) : message = null;
   const _ChatListEntry.message(this.message) : headerLabel = null;
@@ -32,13 +30,16 @@ class FirebaseChatScreen extends StatefulWidget {
   final String sessionStatus;
   final String startTime;
   final String roomId;
+  final String sessionId;
+
   final String customerName;
   final String remaingTime;
-  final String subCollection; // e.g., 'adb_bcd'
+  final String subCollection;
   final int senderId;
   final int reciverId;
 
   const FirebaseChatScreen({
+    required this.sessionId,
     required this.startTime,
     required this.sessionStatus,
     required this.customerName,
@@ -51,476 +52,34 @@ class FirebaseChatScreen extends StatefulWidget {
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _FirebaseChatScreenState createState() => _FirebaseChatScreenState();
+  State<FirebaseChatScreen> createState() => _FirebaseChatScreenState();
 }
 
 class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
-  final TextEditingController _messageController = TextEditingController();
   final HomeController _homeController = Get.put(HomeController());
 
-  final FocusNode _messagefocusNode = FocusNode();
+  final TextEditingController _messageController = TextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   /// Upload state
-  final ValueNotifier<double> _progress = ValueNotifier<double>(0.0);
-  final ValueNotifier<bool> _isUploadingIcon = ValueNotifier<bool>(false);
-  final ValueNotifier<String> _selectedImagePath = ValueNotifier<String>('');
+  final ValueNotifier<double> _uploadProgress = ValueNotifier<double>(0.0);
+  final ValueNotifier<bool> _isUploading = ValueNotifier<bool>(false);
+  final ValueNotifier<String> _localUploadPath = ValueNotifier<String>('');
 
-  final ScrollController _scrollController = ScrollController();
-  bool _isTimerStarted = false;
-
-  /// Typing state
+  /// Typing debounce
   Timer? _typingTimer;
 
-  bool get _isCompleted => widget.sessionStatus == "Completed"; // ✅ UPDATED
+  /// Live session flags (runtime)
+  bool _isCompleted = false; // current session completed
+  bool _isUserEndingChat = false; // prevent popup when user ends chat
+  bool _isExitPopupVisible = false; // avoid duplicate popups
+  bool _isCompletionPopupVisible = false; // avoid duplicate popups
+  bool _completionPopupShownOnce = false; // one-shot guard
 
-  void _scrollToBottom() {
-    // With reverse: true, bottom is offset 0.0
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _sessionSub;
 
-  int calculateTimer(String startTimeString) {
-    DateTime now = DateTime.now();
-
-    // Parse HH:mm:ss
-    List<String> parts = startTimeString.split(":");
-    int h = int.parse(parts[0]);
-    int m = int.parse(parts[1]);
-    int s = int.parse(parts[2]);
-
-    // Convert both times to total seconds since day start
-    int nowSeconds = now.hour * 3600 + now.minute * 60 + now.second;
-    int startSeconds = h * 3600 + m * 60 + s;
-
-    // Difference
-    int diff = nowSeconds - startSeconds;
-
-    // Handle previous day case (if negative)
-    if (diff < 0) diff += 24 * 3600;
-
-    return diff;
-  }
-
-  // int calculateTimer(String startTimeString) {
-  //   // Parse start time "HH:mm:ss"
-  //   DateTime now = DateTime.now();
-  //   List<String> parts = startTimeString.split(":");
-  //   DateTime startTime = DateTime(
-  //     now.year,
-  //     now.month,
-  //     now.day,
-  //     int.parse(parts[0]),
-  //     int.parse(parts[1]),
-  //     int.parse(parts[2]),
-  //   );
-
-  //   // Calculate difference
-  //   Duration diff = now.difference(startTime);
-
-  //   // Return seconds (ensure no negative)
-  //   return diff.inSeconds < 0 ? 0 : diff.inSeconds;
-  // }
-
-  void _startTimer() {
-    if (_isCompleted) return; // ✅ UPDATED: no timer if completed
-    if (!_isTimerStarted) {
-      setState(() {
-        _isTimerStarted = true;
-      });
-    }
-  }
-
-  Future<void> _sendMessage() async {
-    if (_isCompleted) return; // ✅ UPDATED: block send
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-    _startTimer();
-
-    // Stop typing as we’re sending the message now
-    await setTypingStatus(false);
-    FirebaseFirestore.instance
-        .collection('free_chat_session')
-        .doc(widget.roomId)
-        .get()
-        .then((onValue) async {
-          final data = onValue.data() as Map<String, dynamic>;
-          print("###############free_chat_session#################");
-          print(data);
-          final String chatStatus = data['status'] ?? "";
-          final bool isNewSession = data['is_new_session'] ?? "";
-          await FreeFirebaseServiceRequest.sendTextMessage(
-            customerName: widget.customerName,
-            message: text,
-            roomId: widget.roomId,
-            subCollection: widget.subCollection,
-            receiverId: widget.reciverId,
-            senderId: widget.senderId,
-            isFirstMessage: isNewSession,
-          );
-        });
-
-    _messageController.clear();
-    _scrollToBottom();
-  }
-
-  Future<void> _sendMedia() async {
-    if (_isCompleted) return; // ✅ UPDATED: block media
-    _startTimer();
-
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result == null || result.files.isEmpty) return;
-
-    final file = result.files.single;
-    if (file.path == null) {
-      Get.snackbar("Upload Media", "Invalid image path");
-      return;
-    }
-
-    _progress.value = 0.0;
-    _selectedImagePath.value = file.path!;
-    _isUploadingIcon.value = true;
-    _scrollToBottom();
-
-    final imageFile = File(file.path!);
-
-    await FreeFirebaseServiceRequest.uploadMedia(
-          file: imageFile,
-          onProgress: (p0) {
-            // p0 expected as 0.0..1.0
-            _progress.value = p0.clamp(0.0, 1.0);
-          },
-        )
-        .then((onValue) async {
-          _isUploadingIcon.value = false;
-          void localReset() {
-            _selectedImagePath.value = '';
-            _progress.value = 0.0;
-          }
-
-          if (onValue.status == true &&
-              (onValue.mediaUrl?.isNotEmpty ?? false)) {
-            final url = onValue.mediaUrl!;
-
-            FirebaseFirestore.instance
-                .collection('free_chat_session')
-                .doc(widget.roomId)
-                .get()
-                .then((onValue) async {
-                  final data = onValue.data() as Map<String, dynamic>;
-                  print("###############free_chat_session#################");
-                  print(data);
-                  final String chatStatus = data['status'] ?? "";
-                  final bool isNewSession = data['is_new_session'] ?? "";
-                  await FreeFirebaseServiceRequest.sendMediaMessage(
-                    isFirstMessage: isNewSession,
-                    customerName: widget.customerName,
-                    roomId: widget.roomId,
-                    subCollection: widget.subCollection,
-                    receiverId: widget.reciverId,
-                    senderId: widget.senderId,
-                    mediaUrl: url,
-                  );
-                });
-            localReset();
-            _scrollToBottom();
-          } else {
-            localReset();
-            Get.snackbar("Upload Media", onValue.message ?? "Upload failed");
-          }
-        })
-        .catchError((e) {
-          _isUploadingIcon.value = false;
-          _selectedImagePath.value = '';
-          _progress.value = 0.0;
-          Get.snackbar("Upload Media", "Error: $e");
-        });
-  }
-
-  Future<String> uploadImage(File image) async {
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child('chat_media')
-        .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-    await storageRef.putFile(image);
-    return await storageRef.getDownloadURL();
-  }
-
-  Future<void> _markMessageAsSeen(ChatMessageModel message) async {
-    if (!message.isSeen && message.receiverId == widget.senderId) {
-      await FreeFirebaseServiceRequest.markAsSeen(
-        msgId: message.id,
-        roomId: widget.roomId,
-        subCollection: widget.subCollection,
-      );
-    }
-  }
-
-  void _showCompletionDialog(BuildContext context) {
-    if (_isCompleted) return; // ✅ UPDATED: don't show on completed
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        // ignore: deprecated_member_use
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: AlertDialog(
-            backgroundColor: const Color(0xFF221d25),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceBetween,
-            title: text(
-              'Chat Complete',
-              fontSize: 18.0,
-              fontFamily: productSans,
-              fontWeight: FontWeight.w600,
-              textColor: white,
-            ),
-            content: text(
-              'The Chat has been completed.',
-              fontSize: 18.0,
-              fontFamily: productSans,
-              fontWeight: FontWeight.w500,
-              textColor: white,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: text(
-                  'Cancel',
-                  fontSize: 18.0,
-                  fontFamily: productSans,
-                  fontWeight: FontWeight.w500,
-                  textColor: white,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: text(
-                  'Ok',
-                  fontSize: 18.0,
-                  fontFamily: productSans,
-                  fontWeight: FontWeight.w500,
-                  textColor: white,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Stream<DocumentSnapshot>? statusStream;
-  late StreamSubscription<DocumentSnapshot> subscription;
-
-  Future<void> setTypingStatus(bool isTyping) async {
-    if (_isCompleted) return; // ✅ UPDATED: don't set typing on completed
-    try {
-      await FirebaseFirestore.instance
-          .collection('free_chat')
-          .doc(widget.roomId)
-          .collection('status')
-          .doc('typingStatus')
-          .set({"user_${widget.senderId}": isTyping}, SetOptions(merge: true));
-    } catch (e) {
-      // ignore: avoid_print
-      print("🔥 Error setting typing status: $e");
-    }
-  }
-
-  /// Call this from TextField.onChanged
-  void _handleTyping(String value) {
-    if (_isCompleted) return; // ✅ UPDATED
-    // When user types, set true immediately
-    setTypingStatus(true);
-
-    // reset debounce timer
-    _typingTimer?.cancel();
-    _typingTimer = Timer(const Duration(seconds: 2), () {
-      // After 2s of inactivity, set false
-      setTypingStatus(false);
-    });
-
-    // If user clears text fully, set false quickly
-    if (value.isEmpty) {
-      _typingTimer?.cancel();
-      setTypingStatus(false);
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    print("################calculateTimer#################");
-    print(widget.startTime);
-    print(DateTime.now());
-    int dd = calculateTimer(widget.startTime);
-    print(dd);
-
-    // Listen end signal -> show popup only if NOT completed
-    // FirebaseFirestore.instance
-    //     .collection('expert_chat_timers')
-    //     .doc("${widget.reciverId}_${widget.roomId}")
-    //     .snapshots()
-    //     .listen((snapshot) {
-    //   if (snapshot.exists && snapshot.data() != null) {
-    //     final data = snapshot.data() as Map<String, dynamic>;
-    //     final String chatStatus = data['chatStatus'] ?? "";
-
-    //     if (chatStatus == "end" && !_isCompleted) {
-    //       _showExitPopup(); // ✅ UPDATED guard
-    //     }
-    //   }
-    // });
-
-    // FirebaseFirestore.instance
-    //     .collection('free_chat_session')
-    //     .doc(widget.roomId)
-    //     .snapshots()
-    //     .listen((snapshot) {
-    //       if (snapshot.exists && snapshot.data() != null) {
-    //         final data = snapshot.data() as Map<String, dynamic>;
-    //         print("###############free_chat_session#################");
-    //         print(data);
-    //         final String chatStatus = data['status'] ?? "";
-    //         final bool isNewSession = data['is_new_session'] ?? "";
-    //         if (chatStatus == "Completed") {
-    //           print(chatStatus);
-    //           _showExitPopup();
-    //         }
-    //       }
-    //     });
-
-    // External session complete trigger -> keep as-is (will pop screens)
-    statusStream = FirebaseFirestore.instance
-        .collection('chat_status')
-        .doc(widget.roomId)
-        .snapshots();
-
-    subscription = statusStream!.listen((snapshot) {
-      if (snapshot.exists && snapshot.data() != null) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        final bool status = data['status'] == true;
-        if (status) {
-          Future.microtask(() {
-            showDialog(
-              // ignore: use_build_context_synchronously
-              context: context,
-              barrierDismissible: false,
-              builder: (BuildContext dialogContext) {
-                return AlertDialog(
-                  title: const Text(
-                    "Session Completed",
-                    style: TextStyle(fontFamily: productSans),
-                  ),
-                  content: const Text(
-                    "Your session has been completed successfully.",
-                    style: TextStyle(fontFamily: productSans),
-                  ),
-                  actions: [
-                    TextButton(
-                      child: const Text(
-                        "OK",
-                        style: TextStyle(fontFamily: productSans, color: black),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        Navigator.pop(dialogContext);
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          });
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    subscription.cancel();
-    _typingTimer?.cancel();
-    if (!_isCompleted) {
-      setTypingStatus(false); // ✅ UPDATED: avoid redundant write when completed
-    }
-    _messageController.dispose();
-    _messagefocusNode.dispose();
-    super.dispose();
-  }
-
-  void _showExitPopup() {
-    if (_isCompleted) return; // ✅ UPDATED: don't show on completed
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF221d25),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: text(
-          "Exit Chat?",
-          textColor: white,
-          fontSize: 18.0,
-          fontFamily: productSans,
-        ),
-        content: text(
-          "Do you really want to end this chat?",
-          textColor: white,
-          fontFamily: productSans,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: text(
-              "Cancel",
-              textColor: Colors.white70,
-              fontFamily: productSans,
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              await _homeController
-                  .endChat(
-                    customerId: widget.reciverId,
-                    durationSeconds: int.parse(widget.remaingTime),
-                    expertId: widget.senderId,
-                    notes: "Chat ended normally",
-                  )
-                  .then((value) {
-                    if (value.status == true) {
-                      Navigator.of(context).pop(true);
-                      Navigator.of(context).pop(true);
-                    }
-                  });
-            },
-            child: text("End Chat", textColor: white, fontFamily: productSans),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------ NEW: Date header helpers ------------------
-
-  /// Month names for dd MMM yyyy without intl
+  // ------------------ Date header helpers ------------------
   static const List<String> _months = [
     "Jan",
     "Feb",
@@ -536,43 +95,410 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     "Dec",
   ];
 
-  /// Returns "Today", "Yesterday" or "dd MMM yyyy"
   String _formatDateHeader(DateTime dt) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final d = DateTime(dt.year, dt.month, dt.day);
-
     if (d == today) return "Today";
     if (d == yesterday) return "Yesterday";
     return "${dt.day.toString().padLeft(2, '0')} ${_months[dt.month - 1]} ${dt.year}";
   }
 
   List<_ChatListEntry> _buildEntriesWithHeaders(
-    List<ChatMessageModel> sortedDesc,
+    List<ChatMessageModel> descSorted,
   ) {
-    final sortedAsc = List<ChatMessageModel>.from(sortedDesc.reversed);
-
+    // Build on ASC then reverse for reverse: true list
+    final asc = List<ChatMessageModel>.from(descSorted.reversed);
     final entries = <_ChatListEntry>[];
-    String? lastDateKey;
+    String? last;
 
-    for (final m in sortedAsc) {
+    for (final m in asc) {
       final dt = m.dateTime.toDate();
-      final dateKey = "${dt.year}-${dt.month}-${dt.day}";
-
-      if (lastDateKey != dateKey) {
+      final key = "${dt.year}-${dt.month}-${dt.day}";
+      if (last != key) {
         entries.add(_ChatListEntry.header(_formatDateHeader(dt)));
-        lastDateKey = dateKey;
+        last = key;
       }
       entries.add(_ChatListEntry.message(m));
     }
-
     return entries.reversed.toList();
   }
 
+  // ------------------ Utils ------------------
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0, // reverse: true, so bottom is offset 0
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  // ------------------ Firestore: session status listener ------------------
+  void _listenToSessionStatus() {
+    _sessionSub = FirebaseFirestore.instance
+        .collection('free_chat_session')
+        .doc(widget.roomId)
+        .snapshots()
+        .listen((snapshot) {
+          if (!mounted) return;
+          if (!snapshot.exists || snapshot.data() == null) return;
+
+          final data = snapshot.data()!;
+          final String chatStatus = (data['status'] ?? "") as String;
+          final bool isNewSession = data['is_new_session'] is bool
+              ? data['is_new_session'] as bool
+              : false;
+
+          // Debug
+          // print("📡 status: $chatStatus  is_new_session: $isNewSession  userEnding: $_isUserEndingChat");
+
+          // Only show completion popup if:
+          // 1) backend marked it completed
+          // 2) it's NOT a new session (prevents popup on first open)
+          // 3) the user didn't just manually end chat
+          if (chatStatus == "Completed" &&
+              !isNewSession &&
+              !_isUserEndingChat &&
+              !_completionPopupShownOnce) {
+            _completionPopupShownOnce = true;
+            setState(() => _isCompleted = true);
+            _showCompletedPopup();
+          }
+        });
+  }
+
+  // ------------------ Typing ------------------
+  Future<void> _setTyping(bool typing) async {
+    if (_isCompleted || !mounted) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('free_chat')
+          .doc(widget.roomId)
+          .collection('status')
+          .doc('typingStatus')
+          .set({"user_${widget.senderId}": typing}, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
+  void _onTypingChanged(String value) {
+    if (_isCompleted) return;
+    _setTyping(true);
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () => _setTyping(false));
+    if (value.isEmpty) {
+      _typingTimer?.cancel();
+      _setTyping(false);
+    }
+  }
+
+  // ------------------ Send text / media ------------------
+  Future<void> _sendMessage() async {
+    if (_isCompleted) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    await _setTyping(false);
+
+    final meta = await FirebaseFirestore.instance
+        .collection('free_chat_session')
+        .doc(widget.roomId)
+        .get();
+
+    if (!meta.exists || meta.data() == null) return;
+    final data = meta.data()!;
+    final String chatStatus = (data['status'] ?? "") as String;
+    final bool isNewSession = data['is_new_session'] is bool
+        ? data['is_new_session'] as bool
+        : false;
+
+    if (chatStatus == "Completed") {
+      if (!_isCompletionPopupVisible) _showCompletedPopup();
+      return;
+    }
+
+    await FreeFirebaseServiceRequest.sendTextMessage(
+      sessionId: widget.sessionId,
+      customerName: widget.customerName,
+      message: text,
+      roomId: widget.roomId,
+      subCollection: widget.subCollection,
+      receiverId: widget.reciverId,
+      senderId: widget.senderId,
+      isFirstMessage: isNewSession,
+    );
+
+    _messageController.clear();
+    _scrollToBottom();
+  }
+
+  Future<void> _sendMedia() async {
+    if (_isCompleted) return;
+
+    final picked = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (picked == null || picked.files.isEmpty) return;
+
+    final file = picked.files.single;
+    if (file.path == null) {
+      Get.snackbar("Upload Media", "Invalid image path");
+      return;
+    }
+
+    _uploadProgress.value = 0.0;
+    _localUploadPath.value = file.path!;
+    _isUploading.value = true;
+    _scrollToBottom();
+
+    final imageFile = File(file.path!);
+
+    await FreeFirebaseServiceRequest.uploadMedia(
+          file: imageFile,
+          onProgress: (p) => _uploadProgress.value = p.clamp(0.0, 1.0),
+        )
+        .then((resp) async {
+          _isUploading.value = false;
+
+          void reset() {
+            _localUploadPath.value = '';
+            _uploadProgress.value = 0.0;
+          }
+
+          if (resp.status == true && (resp.mediaUrl?.isNotEmpty ?? false)) {
+            final url = resp.mediaUrl!;
+
+            final meta = await FirebaseFirestore.instance
+                .collection('free_chat_session')
+                .doc(widget.roomId)
+                .get();
+
+            if (!meta.exists || meta.data() == null) {
+              reset();
+              return;
+            }
+
+            final data = meta.data()!;
+            final String chatStatus = (data['status'] ?? "") as String;
+            final bool isNewSession = data['is_new_session'] is bool
+                ? data['is_new_session'] as bool
+                : false;
+
+            if (chatStatus == "Completed") {
+              reset();
+              if (!_isCompletionPopupVisible) _showCompletedPopup();
+              return;
+            }
+
+            await FreeFirebaseServiceRequest.sendMediaMessage(
+              sessionId: widget.sessionId,
+              isFirstMessage: isNewSession,
+              customerName: widget.customerName,
+              roomId: widget.roomId,
+              subCollection: widget.subCollection,
+              receiverId: widget.reciverId,
+              senderId: widget.senderId,
+              mediaUrl: url,
+            );
+
+            reset();
+            _scrollToBottom();
+          } else {
+            reset();
+            Get.snackbar("Upload Media", resp.message ?? "Upload failed");
+          }
+        })
+        .catchError((e) {
+          _isUploading.value = false;
+          _localUploadPath.value = '';
+          _uploadProgress.value = 0.0;
+          Get.snackbar("Upload Media", "Error: $e");
+        });
+  }
+
+  Future<void> _markSeen(ChatMessageModel msg) async {
+    if (!msg.isSeen && msg.receiverId == widget.senderId) {
+      await FreeFirebaseServiceRequest.markAsSeen(
+        msgId: msg.id,
+        roomId: widget.roomId,
+        subCollection: widget.subCollection,
+      );
+    }
+  }
+
+  // ------------------ Popups / Loader ------------------
+  void _showLoader() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => circularProgress(),
+    );
+  }
+
+  void _showExitPopup() {
+    if (_isCompleted || _isExitPopupVisible || !mounted) return;
+
+    _isExitPopupVisible = true;
+
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF221d25),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          "Exit Chat?",
+          style: TextStyle(fontFamily: productSans, color: white),
+        ),
+        content: const Text(
+          "Do you really want to end this chat?",
+          style: TextStyle(fontFamily: productSans, color: white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _isExitPopupVisible = false;
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text(
+              "Cancel",
+              style: TextStyle(fontFamily: productSans, color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(); // close confirm
+              _showLoader();
+
+              try {
+                // prevent completed popup from our own update
+                _isUserEndingChat = true;
+                await _sessionSub?.cancel();
+
+                final result = await _homeController.endChat(
+                  customerId: widget.reciverId,
+                  durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
+                  expertId: widget.senderId,
+                  notes: "Chat ended by user",
+                );
+
+                if (!mounted) return;
+                Navigator.of(context, rootNavigator: true).pop(); // hide loader
+
+                if (result.status == true) {
+                  _isExitPopupVisible = false;
+                  Navigator.of(context).pop(true); // leave screen
+                } else {
+                  // restore listener if API failed
+                  _isUserEndingChat = false;
+                  _listenToSessionStatus();
+                  Get.snackbar("End Chat", "Failed to end chat. Try again.");
+                }
+              } catch (e) {
+                if (mounted) {
+                  _isUserEndingChat = false;
+                  _listenToSessionStatus();
+                  Navigator.of(context, rootNavigator: true).pop();
+                  Get.snackbar("End Chat", "Error: $e");
+                }
+              }
+            },
+            child: const Text(
+              "End Chat",
+              style: TextStyle(fontFamily: productSans, color: white),
+            ),
+          ),
+        ],
+      ),
+    ).then((_) => _isExitPopupVisible = false);
+  }
+
+  void _showCompletedPopup() {
+    if (_isCompletionPopupVisible || !mounted || _isCompleted) return;
+
+    _isCompletionPopupVisible = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF221d25),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text(
+          "Session Completed",
+          style: TextStyle(fontFamily: productSans, color: white),
+        ),
+        content: const Text(
+          "Your session has been completed successfully.",
+          style: TextStyle(fontFamily: productSans, color: white),
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              "OK",
+              style: TextStyle(fontFamily: productSans, color: white),
+            ),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(); // close popup
+              _showLoader();
+
+              try {
+                final result = await _homeController.endChat(
+                  customerId: widget.reciverId,
+                  durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
+                  expertId: widget.senderId,
+                  notes: "Chat ended normally",
+                );
+
+                if (!mounted) return;
+                Navigator.of(context, rootNavigator: true).pop(); // hide loader
+
+                if (result.status == true) {
+                  Navigator.of(context).pop(true); // leave screen
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  Get.snackbar("End Chat", "Error: $e");
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    ).then((_) => _isCompletionPopupVisible = false);
+  }
+
+  // ------------------ Lifecycle ------------------
+  @override
+  void initState() {
+    super.initState();
+    _isCompleted = widget.sessionStatus == "Completed";
+    _listenToSessionStatus();
+  }
+
+  @override
+  void dispose() {
+    _typingTimer?.cancel();
+    if (!_isCompleted) {
+      _setTyping(false);
+    }
+    _sessionSub?.cancel();
+
+    _messageController.dispose();
+    _messageFocusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
-    // ignore: deprecated_member_use
     return Scaffold(
       backgroundColor: const Color(0xFF221d25),
       appBar: AppBar(
@@ -581,80 +507,51 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         centerTitle: true,
         leadingWidth: 60,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
+          onTap: () => Navigator.pop(context),
           child: const Icon(Icons.arrow_back_rounded, color: white),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            text(
+            Text(
               widget.customerName,
-              fontSize: 18.0,
-              textColor: white,
-              fontWeight: FontWeight.w600,
-              fontFamily: productSans,
+              style: const TextStyle(
+                fontSize: 18.0,
+                color: white,
+                fontWeight: FontWeight.w600,
+                fontFamily: productSans,
+              ),
             ),
             const SizedBox(height: 4),
-
-            // ⏳ Timer below name
-            !_isCompleted
-                ? (_isTimerStarted &&
-                          widget.remaingTime != "00" &&
-                          widget.remaingTime.isNotEmpty)
-                      ? StreamBuilder<int>(
-                          stream: SocketService().timerStream,
-                          builder: (context, snapshot) {
-                            final seconds = snapshot.data ?? 0;
-
-                            final duration = Duration(seconds: seconds);
-                            final hours = duration.inHours.toString().padLeft(
-                              2,
-                              '0',
-                            );
-                            final minutes = (duration.inMinutes % 60)
-                                .toString()
-                                .padLeft(2, '0');
-                            final secs = (duration.inSeconds % 60)
-                                .toString()
-                                .padLeft(2, '0');
-
-                            return Text(
-                              "$hours:$minutes:$secs",
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        )
-                      // CountdownTimer2(
-                      //     // minutes: (int.parse(widget.remaingTime) / 60).ceil(),
-                      //     totalSeconds: calculateTimer(widget.startTime),
-                      //     textFontSize: 14.0,
-                      //     txtColor: Colors.white70,
-                      //     fontFamily: productSans,
-                      //     onTimerComplete: () {
-                      //       _showCompletionDialog(context);
-                      //     },
-                      //   )
-                      : const SizedBox()
-                : const SizedBox(),
+            // Session timer from your SocketService (if needed)
+            if (!_isCompleted)
+              StreamBuilder<int>(
+                stream: SocketService().timerStream,
+                builder: (context, snapshot) {
+                  final seconds = snapshot.data ?? 0;
+                  final d = Duration(seconds: seconds);
+                  final h = d.inHours.toString().padLeft(2, '0');
+                  final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+                  final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+                  return Text(
+                    "$h:$m:$s",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      fontFamily: productSans,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
           ],
         ),
-
-        // 🔴 End Chat button (top-right)
         actions: [
           if (!_isCompleted)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: ElevatedButton(
-                onPressed: () {
-                  _showExitPopup();
-                },
+                onPressed: _showExitPopup,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   padding: const EdgeInsets.symmetric(
@@ -677,93 +574,88 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             ),
         ],
       ),
-
       body: Stack(
         children: [
+          // background
           SizedBox(
             height: double.infinity,
             width: double.infinity,
             child: Image.asset(appBg, fit: BoxFit.fill),
           ),
+
           Column(
             children: [
+              // Chat messages
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('free_chat')
                       .doc(widget.roomId)
                       .collection(widget.subCollection)
-                      .orderBy(
-                        'dateTime',
-                        descending: true,
-                      ) // ensure server sort
+                      .orderBy('dateTime', descending: true)
                       .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
                       return circularProgress();
                     }
-                    final chatDocs = snapshot.data?.docs ?? [];
+                    final docs = snap.data?.docs ?? [];
 
                     return ValueListenableBuilder<bool>(
-                      valueListenable: _isUploadingIcon,
-                      builder: (context, isUploading, child) {
-                        if (isUploading) {
+                      valueListenable: _isUploading,
+                      builder: (context, uploading, _) {
+                        if (uploading) {
                           WidgetsBinding.instance.addPostFrameCallback(
                             (_) => _scrollToBottom(),
                           );
                         }
 
-                        /// NOTE: Removed 24h filter so older days can show headers like "Yesterday", "21 Jan 2025"
-                        final List<ChatMessageModel> allChat = chatDocs
-                            .map((doc) => ChatMessageModel.fromDocument(doc))
-                            .toList();
+                        final List<ChatMessageModel> all =
+                            docs
+                                .map((d) => ChatMessageModel.fromDocument(d))
+                                .toList()
+                              ..sort(
+                                (a, b) => b.dateTime.compareTo(a.dateTime),
+                              );
 
-                        /// Already DESC by query, but re-ensure:
-                        allChat.sort(
-                          (a, b) => b.dateTime.compareTo(a.dateTime),
-                        );
+                        final entries = _buildEntriesWithHeaders(all);
 
-                        /// Build flattened entries (headers + messages)
-                        final entries = _buildEntriesWithHeaders(allChat);
+                        final itemCount =
+                            entries.length +
+                            ((uploading && !_isCompleted) ? 1 : 0);
 
                         return ListView.builder(
                           reverse: true,
                           controller: _scrollController,
-                          itemCount:
-                              entries.length +
-                              ((isUploading && !_isCompleted) ? 1 : 0),
+                          itemCount: itemCount,
                           itemBuilder: (ctx, index) {
-                            // With reverse:true latest is index 0.
-                            if (isUploading &&
-                                !_isCompleted && // ✅ UPDATED: don't show uploading bubble if completed
-                                index == 0) {
+                            // uploading bubble placeholder at top (since reverse = true)
+                            if (uploading && !_isCompleted && index == 0) {
                               return ValueListenableBuilder<String>(
-                                valueListenable: _selectedImagePath,
-                                builder: (context, localPath, _) {
-                                  return _uploadingImageBubble(localPath);
-                                },
+                                valueListenable: _localUploadPath,
+                                builder: (context, path, _) =>
+                                    _uploadingBubble(path),
                               );
                             }
 
-                            final adjustedIndex = (isUploading && !_isCompleted)
+                            final adj = (uploading && !_isCompleted)
                                 ? index - 1
                                 : index;
-                            final entry = entries[adjustedIndex];
+                            final entry = entries[adj];
 
                             if (entry.isHeader) {
-                              return _buildDateSeparator(entry.headerLabel!);
+                              return _dateChip(entry.headerLabel!);
                             }
 
-                            final message = entry.message!;
-                            _markMessageAsSeen(message);
+                            final msg = entry.message!;
+                            _markSeen(msg);
 
                             return MessageBubble(
-                              messageTime: message.dateTime,
-                              message: message.msg,
-                              isRead: message.isSeen,
-                              isMe: message.senderId == widget.senderId,
-                              isMedia: message.msgType == 'Media',
-                              msgType: message.msgType,
+                              messageTime: msg.dateTime,
+                              message: msg.msg,
+                              isRead: msg.isSeen,
+                              isMe: msg.senderId == widget.senderId,
+                              isMedia: msg.msgType == 'Media',
+                              msgType: msg.msgType,
                             );
                           },
                         );
@@ -773,8 +665,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                 ),
               ),
 
-              /// Typing indicator listener (other user)
-              if (!_isCompleted) // ✅ UPDATED: hide typing on completed
+              // Typing indicator (other user)
+              if (!_isCompleted)
                 StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('free_chat')
@@ -782,15 +674,12 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                       .collection('status')
                       .doc('typingStatus')
                       .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data == null) {
-                      return const SizedBox();
-                    }
-                    final typingData =
-                        snapshot.data!.data() as Map<String, dynamic>?;
-                    final mkey = 'user_${widget.reciverId}';
-                    final isTyping = typingData?[mkey] == true;
-
+                  builder: (context, s) {
+                    if (!s.hasData || s.data == null)
+                      return const SizedBox.shrink();
+                    final data = s.data!.data() as Map<String, dynamic>?;
+                    final key = 'user_${widget.reciverId}';
+                    final isTyping = data?[key] == true;
                     return isTyping
                         ? MessageBubble(
                             messageTime: Timestamp.now(),
@@ -801,12 +690,12 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                             showTime: false,
                             msgType: "text",
                           )
-                        : const SizedBox();
+                        : const SizedBox.shrink();
                   },
                 ),
 
-              // ✅ UPDATED: Input bar only when NOT completed
-              _isCompleted ? const SizedBox() : _buildMessageInput(context),
+              // Input
+              _isCompleted ? const SizedBox.shrink() : _inputBar(),
             ],
           ),
         ],
@@ -814,7 +703,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     );
   }
 
-  Widget _buildMessageInput(BuildContext context) {
+  Widget _inputBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       color: Colors.transparent,
@@ -823,13 +712,13 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.image, color: white),
-              onPressed: _sendMedia, // will be ignored if completed
+              onPressed: _sendMedia,
             ),
             Expanded(
               child: TextFormField(
                 controller: _messageController,
-                focusNode: _messagefocusNode,
-                onChanged: _handleTyping, // ✅ only when user types (guarded)
+                focusNode: _messageFocusNode,
+                onChanged: _onTypingChanged,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: "Type a message...",
@@ -855,12 +744,12 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                     vertical: 10.0,
                   ),
                 ),
-                readOnly: _isCompleted, // ✅ safety
+                readOnly: _isCompleted,
               ),
             ),
             IconButton(
               icon: const Icon(Icons.send, color: white),
-              onPressed: _sendMessage, // will be ignored if completed
+              onPressed: _sendMessage,
             ),
           ],
         ),
@@ -868,19 +757,19 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     );
   }
 
-  /// WhatsApp-style uploading image bubble (right aligned)
-  Widget _uploadingImageBubble(String localPath) {
+  /// Right-aligned uploading placeholder bubble with progress
+  Widget _uploadingBubble(String localPath) {
     return ListTile(
       title: Align(
         alignment: Alignment.centerRight,
         child: Container(
           decoration: const BoxDecoration(
+            color: primaryColor,
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(16),
               topRight: Radius.circular(16),
               topLeft: Radius.circular(16),
             ),
-            color: primaryColor,
           ),
           padding: const EdgeInsets.all(8),
           child: ConstrainedBox(
@@ -890,7 +779,6 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  /// Image preview (local)
                   AspectRatio(
                     aspectRatio: 4 / 3,
                     child:
@@ -903,14 +791,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                             ),
                           ),
                   ),
-
-                  /// Dim overlay while uploading
-                  Container(color: primaryColor),
-
-                  /// Circular progress + % text
+                  // dim overlay
+                  Container(color: primaryColor.withOpacity(0.35)),
                   ValueListenableBuilder<double>(
-                    valueListenable: _progress,
-                    builder: (context, p, _) {
+                    valueListenable: _uploadProgress,
+                    builder: (_, p, __) {
                       final percent = (p * 100).clamp(0, 100).toInt();
                       return Column(
                         mainAxisSize: MainAxisSize.min,
@@ -948,8 +833,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     );
   }
 
-  /// Date separator chip
-  Widget _buildDateSeparator(String date) {
+  Widget _dateChip(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -964,7 +848,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Text(
-              date,
+              text,
               style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 12,

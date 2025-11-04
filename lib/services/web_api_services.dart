@@ -17,6 +17,7 @@ import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/socket_detail_model.dart';
 import 'package:astro_partner_app/model/socket_verify_model.dart';
+import 'package:astro_partner_app/model/start_timer_chat_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
@@ -1105,7 +1106,7 @@ class WebApiServices {
     try {
       String url = "${GetBaseUrl + GetDomainUrl3}socketi-details";
 
-      final response = await http.get(
+      final response = await http.post(
         Uri.parse(url),
         headers: {...(await authHeader()), "Content-Type": "application/json"},
       );
@@ -1237,5 +1238,80 @@ class WebApiServices {
     }
 
     return _socketVerifyModel;
+  }
+
+  StartTimerChatModel _startTimerChatModel = StartTimerChatModel();
+
+  Future<StartTimerChatModel> getStartTimerChatModel({
+    required String sessionId,
+    required String roomId,
+  }) async {
+    const String url = "${GetBaseUrl + GetDomainUrl2}v1/session-timers/start";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({"session_id": sessionId, "room_id": roomId});
+
+      print("########StartTimerChatModel#############");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########StartTimerChatModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _startTimerChatModel = StartTimerChatModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _startTimerChatModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _startTimerChatModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _startTimerChatModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "StartTimerChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "StartTimerChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "StartTimerChatModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "StartTimerChatModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _startTimerChatModel;
   }
 }

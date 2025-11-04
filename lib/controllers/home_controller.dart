@@ -8,6 +8,7 @@ import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/socket_detail_model.dart';
 import 'package:astro_partner_app/model/socket_verify_model.dart';
+import 'package:astro_partner_app/model/start_timer_chat_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_api_services.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
@@ -340,5 +341,28 @@ class HomeController extends GetxController {
     }
     isSocketVerifyModelLoding(false);
     return _socketVerifyModel!;
+  }
+
+  StartTimerChatModel? get startTimerChatModel => _startTimerChatModel;
+  StartTimerChatModel? _startTimerChatModel;
+
+  var isStartTimerChatModelLoding = false.obs;
+
+  Future<StartTimerChatModel> startTimerChatModelData({
+    required String sessionId,
+    required String roomId,
+  }) async {
+    try {
+      isStartTimerChatModelLoding(true);
+      _startTimerChatModel = await _webApiServices!.getStartTimerChatModel(
+        sessionId: sessionId,
+        roomId: roomId,
+      );
+    } on Failure catch (e) {
+      isStartTimerChatModelLoding(false);
+      _setFailure(e);
+    }
+    isStartTimerChatModelLoding(false);
+    return _startTimerChatModel!;
   }
 }
