@@ -15,7 +15,6 @@ class FreeFirebaseServiceRequest {
   // Method to mark a message as seen
   static Future<void> sendMediaMessage({
     required dynamic sessionId,
-
     required dynamic roomId,
     required dynamic subCollection,
     required dynamic receiverId,
@@ -45,10 +44,14 @@ class FreeFirebaseServiceRequest {
           'messageId': messageId, // Store the auto-generated message ID
         });
     if (isFirstMessage) {
+      print("#############StartTimerChatModel##################");
+
       await _homeController.startTimerChatModelData(
         sessionId: sessionId,
         roomId: roomId,
       );
+      print("#############StartTimerChatModel##################");
+
       await FirebaseFirestore.instance
           .collection('free_chat_session')
           .doc('$roomId')
@@ -61,6 +64,7 @@ class FreeFirebaseServiceRequest {
             'is_new_session': false,
             'is_new_session_time': DateTime.now(),
             'order_id': roomId, // Store the message ID if needed
+            'session_id': sessionId,
           }, SetOptions(merge: true));
     } else {
       await FirebaseFirestore.instance
@@ -73,6 +77,7 @@ class FreeFirebaseServiceRequest {
             'customer_name': customerName,
             'main_created_at': Timestamp.now(),
             'order_id': roomId, // Store the message ID if needed
+            'session_id': sessionId,
           }, SetOptions(merge: true));
     }
   }
@@ -111,10 +116,14 @@ class FreeFirebaseServiceRequest {
         });
 
     if (isFirstMessage) {
+      print("#############StartTimerChatModel##################");
+
       await _homeController.startTimerChatModelData(
         sessionId: sessionId,
         roomId: roomId,
       );
+      print("#############StartTimerChatModel##################");
+
       await FirebaseFirestore.instance
           .collection('free_chat_session')
           .doc('$roomId')
@@ -127,6 +136,7 @@ class FreeFirebaseServiceRequest {
             'is_new_session': false,
             'is_new_session_time': DateTime.now(),
             'order_id': roomId, // Store the message ID if needed
+            'session_id': sessionId,
           }, SetOptions(merge: true));
     } else {
       await FirebaseFirestore.instance
@@ -139,6 +149,7 @@ class FreeFirebaseServiceRequest {
             'main_created_at': Timestamp.now(),
             'customer_name': customerName,
             'order_id': roomId, // Store the message ID if needed
+            'session_id': sessionId,
           }, SetOptions(merge: true));
     }
   }

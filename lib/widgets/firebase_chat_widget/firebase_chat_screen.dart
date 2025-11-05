@@ -149,26 +149,36 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           if (!mounted) return;
           if (!snapshot.exists || snapshot.data() == null) return;
 
-          final data = snapshot.data()!;
-          final String chatStatus = (data['status'] ?? "") as String;
-          final bool isNewSession = data['is_new_session'] is bool
-              ? data['is_new_session'] as bool
-              : false;
+          // final data = snapshot.data()!;
+          // final String chatStatus = (data['status'] ?? "") as String;
+          // final bool isNewSession = data['is_new_session'] is bool
+          //     ? data['is_new_session'] as bool
+          //     : false;
 
           // Debug
-          // print("📡 status: $chatStatus  is_new_session: $isNewSession  userEnding: $_isUserEndingChat");
+          print(
+            "📡 status: ${snapshot.data()!['session_id']} session_id ${widget.sessionId} is_new_session: ${snapshot.data()!['is_new_session']}  userEnding: $_isUserEndingChat",
+          );
 
-          // Only show completion popup if:
-          // 1) backend marked it completed
-          // 2) it's NOT a new session (prevents popup on first open)
-          // 3) the user didn't just manually end chat
-          if (chatStatus == "Completed" &&
-              !isNewSession &&
-              !_isUserEndingChat &&
-              !_completionPopupShownOnce) {
-            _completionPopupShownOnce = true;
-            setState(() => _isCompleted = true);
+          // if (_isUserEndingChat && chatStatus == "Completed") return;
+          if (snapshot.data()!['status'] == "Completed" &&
+              snapshot.data()!['session_id'] == widget.sessionId) {
+            // _completionPopupShownOnce = true;
+            // _isCompleted = true;
+            // print(
+            //   "📡 status: $chatStatus  is_new_session: $isNewSession  userEnding: $_isUserEndingChat",
+            // );
             _showCompletedPopup();
+            // return;
+            //   if (chatStatus == "Completed"
+            //   //&&
+            //       // !isNewSession &&
+            //       // !_isUserEndingChat &&
+            //       //!_completionPopupShownOnce
+            //       ) {
+            //     _completionPopupShownOnce = true;
+            //     //  setState(() => _isCompleted = true);
+            //     _showCompletedPopup();
           }
         });
   }
@@ -176,14 +186,13 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   // ------------------ Typing ------------------
   Future<void> _setTyping(bool typing) async {
     if (_isCompleted || !mounted) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('free_chat')
-          .doc(widget.roomId)
-          .collection('status')
-          .doc('typingStatus')
-          .set({"user_${widget.senderId}": typing}, SetOptions(merge: true));
-    } catch (_) {}
+
+    await FirebaseFirestore.instance
+        .collection('free_chat')
+        .doc(widget.roomId)
+        .collection('status')
+        .doc('typingStatus')
+        .set({"user_${widget.senderId}": typing}, SetOptions(merge: true));
   }
 
   void _onTypingChanged(String value) {
@@ -347,73 +356,85 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF221d25),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          "Exit Chat?",
-          style: TextStyle(fontFamily: productSans, color: white),
-        ),
-        content: const Text(
-          "Do you really want to end this chat?",
-          style: TextStyle(fontFamily: productSans, color: white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _isExitPopupVisible = false;
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text(
-              "Cancel",
-              style: TextStyle(fontFamily: productSans, color: Colors.white70),
-            ),
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false, // Disable back button
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              Navigator.of(dialogContext).pop(); // close confirm
-              _showLoader();
-
-              try {
-                // prevent completed popup from our own update
-                _isUserEndingChat = true;
-                await _sessionSub?.cancel();
-
-                final result = await _homeController.endChat(
-                  customerId: widget.reciverId,
-                  durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
-                  expertId: widget.senderId,
-                  notes: "Chat ended by user",
-                );
-
-                if (!mounted) return;
-                Navigator.of(context, rootNavigator: true).pop(); // hide loader
-
-                if (result.status == true) {
-                  _isExitPopupVisible = false;
-                  Navigator.of(context).pop(true); // leave screen
-                } else {
-                  // restore listener if API failed
-                  _isUserEndingChat = false;
-                  _listenToSessionStatus();
-                  Get.snackbar("End Chat", "Failed to end chat. Try again.");
-                }
-              } catch (e) {
-                if (mounted) {
-                  _isUserEndingChat = false;
-                  _listenToSessionStatus();
-                  Navigator.of(context, rootNavigator: true).pop();
-                  Get.snackbar("End Chat", "Error: $e");
-                }
-              }
-            },
-            child: const Text(
-              "End Chat",
-              style: TextStyle(fontFamily: productSans, color: white),
-            ),
+          title: const Text(
+            "Exit Chat?",
+            style: TextStyle(fontFamily: productSans, color: white),
           ),
-        ],
+          content: const Text(
+            "Do you really want to end this chat?",
+            style: TextStyle(fontFamily: productSans, color: white),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _isExitPopupVisible = false;
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text(
+                "Cancel",
+                style: TextStyle(
+                  fontFamily: productSans,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // close confirm
+                _showLoader();
+
+                try {
+                  // prevent completed popup from our own update
+                  _isUserEndingChat = true;
+                  await _sessionSub?.cancel();
+
+                  final result = await _homeController.endChat(
+                    customerId: widget.reciverId,
+                    durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
+                    expertId: widget.senderId,
+                    notes: "Chat ended by user",
+                  );
+
+                  if (!mounted) return;
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pop(); // hide loader
+
+                  if (result.status == true) {
+                    SocketService().dispose();
+                    _isExitPopupVisible = false;
+                    Navigator.of(context).pop(true); // leave screen
+                  } else {
+                    // restore listener if API failed
+                    _isUserEndingChat = false;
+                    _listenToSessionStatus();
+                    Get.snackbar("End Chat", "Failed to end chat. Try again.");
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    _isUserEndingChat = false;
+                    _listenToSessionStatus();
+                    Navigator.of(context, rootNavigator: true).pop();
+                    Get.snackbar("End Chat", "Error: $e");
+                  }
+                }
+              },
+              child: const Text(
+                "End Chat",
+                style: TextStyle(fontFamily: productSans, color: white),
+              ),
+            ),
+          ],
+        ),
       ),
     ).then((_) => _isExitPopupVisible = false);
   }
@@ -425,51 +446,60 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF221d25),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          "Session Completed",
-          style: TextStyle(fontFamily: productSans, color: white),
-        ),
-        content: const Text(
-          "Your session has been completed successfully.",
-          style: TextStyle(fontFamily: productSans, color: white),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "OK",
-              style: TextStyle(fontFamily: productSans, color: white),
-            ),
-            onPressed: () async {
-              Navigator.of(dialogContext).pop(); // close popup
-              _showLoader();
-
-              try {
-                final result = await _homeController.endChat(
-                  customerId: widget.reciverId,
-                  durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
-                  expertId: widget.senderId,
-                  notes: "Chat ended normally",
-                );
-
-                if (!mounted) return;
-                Navigator.of(context, rootNavigator: true).pop(); // hide loader
-
-                if (result.status == true) {
-                  Navigator.of(context).pop(true); // leave screen
-                }
-              } catch (e) {
-                if (mounted) {
-                  Navigator.of(context, rootNavigator: true).pop();
-                  Get.snackbar("End Chat", "Error: $e");
-                }
-              }
-            },
+      barrierDismissible: false, // prevent tap-outside dismissal
+      // ignore: deprecated_member_use
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false, // Disable back button
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
+          title: const Text(
+            "Session Completed",
+            style: TextStyle(fontFamily: productSans, color: white),
+          ),
+          content: const Text(
+            "Your session has been completed successfully.",
+            style: TextStyle(fontFamily: productSans, color: white),
+          ),
+          actions: [
+            TextButton(
+              child: const Text(
+                "OK",
+                style: TextStyle(fontFamily: productSans, color: white),
+              ),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // close popup
+                _showLoader();
+
+                try {
+                  final result = await _homeController.endChat(
+                    customerId: widget.reciverId,
+                    durationSeconds: int.tryParse(widget.remaingTime) ?? 0,
+                    expertId: widget.senderId,
+                    notes: "Chat ended normally",
+                  );
+                  if (!mounted) return;
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pop(); // hide loader
+
+                  if (result.status == true) {
+                    SocketService().dispose();
+                    Navigator.of(context).pop(true); // leave screen
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                    Get.snackbar("End Chat", "Error: $e");
+                  }
+                }
+              },
+            ),
+          ],
+        ),
       ),
     ).then((_) => _isCompletionPopupVisible = false);
   }
@@ -479,7 +509,9 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   void initState() {
     super.initState();
     _isCompleted = widget.sessionStatus == "Completed";
-    _listenToSessionStatus();
+    if (!_isCompleted) {
+      _listenToSessionStatus();
+    }
   }
 
   @override
@@ -523,7 +555,6 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            // Session timer from your SocketService (if needed)
             if (!_isCompleted)
               StreamBuilder<int>(
                 stream: SocketService().timerStream,
@@ -533,6 +564,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   final h = d.inHours.toString().padLeft(2, '0');
                   final m = (d.inMinutes % 60).toString().padLeft(2, '0');
                   final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+
                   return Text(
                     "$h:$m:$s",
                     style: const TextStyle(

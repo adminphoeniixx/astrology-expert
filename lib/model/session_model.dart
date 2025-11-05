@@ -13,9 +13,9 @@ String sessionsModelToJson(SessionsModel data) => json.encode(data.toJson());
 
 class SessionsModel {
   bool? success;
-  String? message;
+  dynamic message;
   Data? data;
-  String? currencySymbol;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
   SessionsModel({
@@ -48,7 +48,7 @@ class Data {
   DateTime? todayDate;
   List<ServiceType>? serviceTypes;
   ServiceCounts? serviceCounts;
-  String? currentFilter;
+  dynamic currentFilter;
 
   Data({
     this.sessions,
@@ -99,19 +99,19 @@ class Data {
 }
 
 class Product {
-  int? id;
-  String? name;
-  String? description;
-  String? price;
-  String? sellingPrice;
+  dynamic id;
+  dynamic name;
+  dynamic description;
+  dynamic price;
+  dynamic sellingPrice;
   dynamic image;
   dynamic status;
-  int? categoryId;
+  dynamic categoryId;
   DateTime? createdAt;
   DateTime? updatedAt;
-  int? taxGroup;
-  String? priceInDolor;
-  String? sellingPriceInDolar;
+  dynamic taxGroup;
+  dynamic priceInDolor;
+  dynamic sellingPriceInDolar;
 
   Product({
     this.id,
@@ -136,7 +136,7 @@ class Product {
     price: json["price"],
     sellingPrice: json["selling_price"],
     image: json["image"],
-    status:json["status"],
+    status: json["status"],
     categoryId: json["category_id"],
     createdAt: json["created_at"] == null
         ? null
@@ -167,11 +167,11 @@ class Product {
 }
 
 class ServiceCounts {
-  int? the1;
-  int? the2;
-  int? the3;
-  int? the4;
-  int? all;
+  dynamic the1;
+  dynamic the2;
+  dynamic the3;
+  dynamic the4;
+  dynamic all;
 
   ServiceCounts({this.the1, this.the2, this.the3, this.the4, this.all});
 
@@ -194,7 +194,7 @@ class ServiceCounts {
 
 class ServiceType {
   dynamic id;
-  String? name;
+  dynamic name;
 
   ServiceType({this.id, this.name});
 
@@ -206,10 +206,10 @@ class ServiceType {
 
 class Sessions {
   List<SessionsData>? data;
-  int? currentPage;
-  int? lastPage;
-  int? perPage;
-  int? total;
+  dynamic currentPage;
+  dynamic lastPage;
+  dynamic perPage;
+  dynamic total;
   dynamic nextPageUrl;
   dynamic prevPageUrl;
 
@@ -226,7 +226,9 @@ class Sessions {
   factory Sessions.fromJson(Map<String, dynamic> json) => Sessions(
     data: json["data"] == null
         ? []
-        : List<SessionsData>.from(json["data"]!.map((x) => SessionsData.fromJson(x))),
+        : List<SessionsData>.from(
+            json["data"]!.map((x) => SessionsData.fromJson(x)),
+          ),
     currentPage: json["current_page"],
     lastPage: json["last_page"],
     perPage: json["per_page"],
@@ -250,27 +252,27 @@ class Sessions {
 
 class SessionsData {
   dynamic orderId;
-  String? roomId;
+  dynamic roomId;
   dynamic token;
-  int? userId;
-  int? customerId;
-  int? expertId;
+  dynamic userId;
+  dynamic customerId;
+  dynamic expertId;
   DateTime? date;
   DateTime? startDate;
-  String? startTime;
+  dynamic startTime;
   dynamic endTime;
-  String? status;
-  int? serviceType;
-  String? customerName;
-  String? serviceName;
-  String? astrologerName;
-  String? astrologerImage;
+  dynamic status;
+  dynamic serviceType;
+  dynamic customerName;
+  dynamic serviceName;
+  dynamic astrologerName;
+  dynamic astrologerImage;
   dynamic preferLanguage;
   dynamic sessionTime;
   dynamic notes;
   DateTime? updatedAt;
   DateTime? createdAt;
-  String? id;
+  dynamic id;
   dynamic orderType;
 
   SessionsData({
@@ -408,10 +410,10 @@ class Slots {
 }
 
 class Afternoon {
-  int? slotId;
-  String? name;
-  String? startTime;
-  String? endTime;
+  dynamic slotId;
+  dynamic name;
+  dynamic startTime;
+  dynamic endTime;
   dynamic period;
   dynamic status;
 
