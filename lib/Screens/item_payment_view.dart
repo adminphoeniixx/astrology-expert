@@ -25,7 +25,11 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
   @override
   Widget build(BuildContext context) {
     final payoutStatus = widget.earningData.payoutStatus ?? '';
-    final payoutDate = widget.earningData.payoutDate ?? "Date";
+    final payoutDateString = widget.earningData.payoutDate;
+    final payoutDate = payoutDateString != null && payoutDateString.isNotEmpty
+        ? DateTime.parse(payoutDateString)
+        : null;
+
     final weekStart = widget.earningData.weekStart;
     final weekEnd = widget.earningData.weekEnd;
 
@@ -58,7 +62,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    payoutDate,
+                    payoutDate != null ? formatter.format(payoutDate) : "---",
                     style: const TextStyle(
                       fontSize: 16,
                       fontFamily: productSans,
@@ -66,6 +70,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                       color: white,
                     ),
                   ),
+
                   _statusBadge(payoutStatus),
                 ],
               ),
@@ -297,7 +302,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                       final totalAmount =
                           order.sessionData?.order?.totalAmount?.toString() ??
                           '0';
-                      final status = (order.status ?? '').toString();
+                      // final status = (order.status ?? '').toString();
                       final sessionType = order.sessionData?.serviceName ?? '';
                       final startTime =
                           order.sessionData?.startTime?.toString() ?? '';
@@ -324,13 +329,12 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                             _buildRow("Total Commission", "₹$commission"),
                             _buildRow("Total Amount", "₹$totalAmount"),
 
-                            // Payout status badge
-                            _buildRow(
-                              "Payout Status",
-                              null,
-                              trailing: _statusBadge(status),
-                            ),
-
+                            // // Payout status badge
+                            // _buildRow(
+                            //   "Payout Status",
+                            //   null,
+                            //   trailing: _statusBadge(status),
+                            // ),
                             _buildRow("Session Type", sessionType),
                             _buildRow("Session Start Time", startTime),
                             _buildRow("Session End Time", endTime),

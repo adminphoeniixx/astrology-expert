@@ -6,6 +6,7 @@ import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/chat_model.dart';
+import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/free_chat_service.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/msg_bubble.dart';
@@ -14,6 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 /// Internal list item that can be either a date header or a chat message
 class _ChatListEntry {
@@ -75,9 +77,9 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   bool _isUserEndingChat = false; // prevent popup when user ends chat
   bool _isExitPopupVisible = false; // avoid duplicate popups
   bool _isCompletionPopupVisible = false; // avoid duplicate popups
-  bool _completionPopupShownOnce = false; // one-shot guard
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _sessionSub;
+  final DateFormat formatter = DateFormat("dd MMM yyyy");
 
   // ------------------ Date header helpers ------------------
   static const List<String> _months = [
@@ -528,6 +530,75 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     super.dispose();
   }
 
+  void _showCustomerDetails(User data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF221d25),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          "About ${data.name}",
+          maxLines: 1, // or remove if you want multiline
+          overflow: TextOverflow.ellipsis, // shows "..." for too long text
+          style: const TextStyle(fontFamily: productSans, color: white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow("Name", data.name),
+            const SizedBox(height: 6),
+            _detailRow(
+              "Birth Date",
+              formatter.format(DateTime.parse(data.birthday)),
+            ),
+            const SizedBox(height: 6),
+            _detailRow("Birth Time", data.birthTime ?? ""),
+            const SizedBox(height: 6),
+
+            _detailRow("Birth Time Accuracy", data.birthTimeAccuracy ?? ""),
+
+            const SizedBox(height: 6),
+            _detailRow("Birth Place", data.birthPlace),
+            // const SizedBox(height: 6),
+            // _detailRow("Mobile", data.mobile),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              "Close",
+              style: TextStyle(color: Colors.red, fontFamily: productSans),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String title, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "$title:",
+          style: const TextStyle(
+            color: Colors.white70,
+            fontFamily: productSans,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: white, fontFamily: productSans),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
@@ -545,14 +616,42 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              widget.customerName,
-              style: const TextStyle(
-                fontSize: 18.0,
-                color: white,
-                fontWeight: FontWeight.w600,
-                fontFamily: productSans,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.customerName,
+                  style: const TextStyle(
+                    fontSize: 18.0,
+                    color: white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: productSans,
+                  ),
+                ),
+                // if (!_isCompleted)
+                IconButton(
+                  icon: const Icon(Icons.info_outline, color: white),
+                  onPressed: () async {
+                    await _homeController
+                        .fetchSessionDetailsData(sessionId: widget.sessionId)
+                        .then((value) {
+                          if (value.success == true && value.data != null) {
+                            _showCustomerDetails(value.data!.user!);
+                          } else {
+                            Get.snackbar(
+                              'Data Not Found',
+                              'Session details could not be loaded.',
+                              snackPosition: SnackPosition.TOP,
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 2),
+                            );
+                          }
+                        });
+                  }, // function to show details
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             if (!_isCompleted)
@@ -707,8 +806,9 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                       .doc('typingStatus')
                       .snapshots(),
                   builder: (context, s) {
-                    if (!s.hasData || s.data == null)
+                    if (!s.hasData || s.data == null) {
                       return const SizedBox.shrink();
+                    }
                     final data = s.data!.data() as Map<String, dynamic>?;
                     final key = 'user_${widget.reciverId}';
                     final isTyping = data?[key] == true;

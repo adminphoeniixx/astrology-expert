@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:astro_partner_app/constants/colors_const.dart';
+import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -49,7 +48,8 @@ class _CallingFreePageState extends State<CallingFreePage> {
   bool _videoEnabled = true;
   bool _audioMuted = false;
   int? _remoteUid;
-  File? _selectedImage;
+  // File? _selectedImage;
+  bool _speakerOn = false;
 
   @override
   void initState() {
@@ -130,6 +130,14 @@ class _CallingFreePageState extends State<CallingFreePage> {
     }
   }
 
+  Future<void> _toggleSpeaker() async {
+    if (_engine == null) return;
+    setState(() {
+      _speakerOn = !_speakerOn;
+    });
+    await _engine!.setEnableSpeakerphone(_speakerOn);
+  }
+
   Future<void> _endCall() async {
     await _engine?.leaveChannel();
     await _engine?.release();
@@ -162,14 +170,14 @@ class _CallingFreePageState extends State<CallingFreePage> {
     await _engine!.switchCamera();
   }
 
-  Future<void> _uploadImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
-      debugPrint("🖼️ Selected image: ${_selectedImage!.path}");
-      Get.snackbar("Image Selected", "Path: ${_selectedImage!.path}");
-    }
-  }
+  // Future<void> _uploadImage() async {
+  //   final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+  //   if (picked != null) {
+  //     setState(() => _selectedImage = File(picked.path));
+  //     debugPrint("🖼️ Selected image: ${_selectedImage!.path}");
+  //     Get.snackbar("Image Selected", "Path: ${_selectedImage!.path}");
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -232,12 +240,12 @@ class _CallingFreePageState extends State<CallingFreePage> {
                                 horizontal: 16,
                                 vertical: 4,
                               ),
-                              child: const CountdownTimer(
+                              child: CountdownTimer(
                                 txtColor: black,
-                                minutes: 1,
+                                minutes: widget.remaingTime,
                                 textFontSize: 18.0,
-                                // onTimerComplete: () =>
-                                //  _showCompletionDialog(context),
+                                onTimerComplete: () =>
+                                    _showCompletionDialog(context),
                               ),
                             ),
                     ],
@@ -336,7 +344,8 @@ class _CallingFreePageState extends State<CallingFreePage> {
                                     txtColor: black,
                                     minutes: widget.remaingTime,
                                     textFontSize: 18.0,
-                                    onTimerComplete: () => _endCall(),
+                                    onTimerComplete: () =>
+                                        _showCompletionDialog(context),
                                   ),
                                 ),
                         ],
@@ -402,11 +411,25 @@ class _CallingFreePageState extends State<CallingFreePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.0),
                           ),
-                          heroTag: "_imageUpload",
-                          backgroundColor: white,
-                          onPressed: _uploadImage,
-                          child: const Icon(Icons.image, color: black),
+                          heroTag: "_toggleSpeaker",
+                          backgroundColor: _speakerOn ? white : Colors.grey,
+                          onPressed: _toggleSpeaker,
+                          child: Icon(
+                            _speakerOn ? Icons.volume_up : Icons.volume_off,
+                            color: black,
+                          ),
                         ),
+
+                        // const SizedBox(width: 15),
+                        // FloatingActionButton(
+                        //   shape: RoundedRectangleBorder(
+                        //     borderRadius: BorderRadius.circular(28.0),
+                        //   ),
+                        //   heroTag: "_imageUpload",
+                        //   backgroundColor: white,
+                        //   onPressed: _uploadImage,
+                        //   child: const Icon(Icons.image, color: black),
+                        // ),
                       ],
                     ),
                   ],
@@ -418,5 +441,38 @@ class _CallingFreePageState extends State<CallingFreePage> {
       ),
     );
   }
-}
 
+  void _showCompletionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: text(
+            'Call Complete',
+            fontSize: 18.0,
+            fontFamily: productSans,
+            fontWeight: FontWeight.w600,
+          ),
+          content: text(
+            'The call has been completed.',
+            fontFamily: productSans,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _endCall();
+              },
+              child: text('Ok', fontFamily: productSans),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

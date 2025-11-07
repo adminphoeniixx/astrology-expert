@@ -166,85 +166,115 @@ class _SessionTabState extends State<SessionTab> {
                                 } else {
                                   return GestureDetector(
                                     onTap: () async {
-                                      _showLoader(); // Show loader before starting calls
+                                      print(
+                                        "@@@@@@@@@@@@@@@@serviceType@@@@@@@@@@@@@@@@@@@@@@@",
+                                      );
+                                      print(
+                                        _homeController
+                                            .sessionListData[index]
+                                            .serviceType!,
+                                      );
+                                      print(
+                                        "@@@@@@@@@@@@@@@@serviceType@@@@@@@@@@@@@@@@@@@@@@@",
+                                      );
 
-                                      final sessionId = _homeController
+                                      switch (_homeController
                                           .sessionListData[index]
-                                          .id!;
-                                      final session = _homeController
-                                          .sessionListData[index];
+                                          .serviceType!) {
+                                        case 1:
+                                          _showLoader(); // Show loader before starting calls
 
-                                      final value = await _homeController
-                                          .fetchSessionChatModelData(
-                                            sessionId: sessionId,
-                                          );
+                                          final sessionId = _homeController
+                                              .sessionListData[index]
+                                              .id!;
+                                          final session = _homeController
+                                              .sessionListData[index];
 
-                                      final socketDetails =
-                                          await _homeController
-                                              .socketDetailsModelData();
+                                          final value = await _homeController
+                                              .fetchSessionChatModelData(
+                                                sessionId: sessionId,
+                                              );
 
-                                      final socketVerify = await _homeController
-                                          .socketVerifyModelData(
-                                            socketId: "1234.5678",
-                                            channelName:
+                                          final socketDetails =
+                                              await _homeController
+                                                  .socketDetailsModelData();
+
+                                          final socketVerify =
+                                              await _homeController
+                                                  .socketVerifyModelData(
+                                                    socketId: "1234.5678",
+                                                    channelName:
+                                                        value.session?.roomId
+                                                            ?.toString() ??
+                                                        "",
+                                                  );
+
+                                          await SocketService().connect(
+                                            appKey:
+                                                socketDetails.soketi?.key ?? "",
+                                            authEndpoint: Uri.parse(
+                                              "https://vedamroots.com/api/pusher/auth",
+                                            ),
+                                            bearerToken:
+                                                socketVerify.auth ?? "",
+                                            host:
+                                                socketDetails.soketi?.host ??
+                                                "",
+                                            port:
+                                                int.tryParse(
+                                                  socketDetails.soketi?.port ??
+                                                      "0",
+                                                ) ??
+                                                0,
+                                            roomId:
                                                 value.session?.roomId
                                                     ?.toString() ??
                                                 "",
+                                            useTLS: false,
                                           );
 
-                                      await SocketService().connect(
-                                        appKey: socketDetails.soketi?.key ?? "",
-                                        authEndpoint: Uri.parse(
-                                          "https://vedamroots.com/api/pusher/auth",
-                                        ),
-                                        bearerToken: socketVerify.auth ?? "",
-                                        host: socketDetails.soketi?.host ?? "",
-                                        port:
-                                            int.tryParse(
-                                              socketDetails.soketi?.port ?? "0",
-                                            ) ??
-                                            0,
-                                        roomId:
-                                            value.session?.roomId?.toString() ??
-                                            "",
-                                        useTLS: false,
-                                      );
+                                          Navigator.pop(context); // Hide loader
 
-                                      Navigator.pop(context); // Hide loader
-
-                                      // Navigate to chat screen
-                                      Get.to(
-                                        FirebaseChatScreen(
-                                          sessionId: sessionId,
-                                          startTime: session.startTime ?? "",
-                                          sessionStatus: session.status ?? "",
-                                          customerName:
-                                              value.session?.customerName ?? "",
-                                          remaingTime:
-                                              value.pricing?.remainingSeconds
-                                                  ?.toString() ??
-                                              "0",
-                                          reciverId:
-                                              int.tryParse(
-                                                value.session?.customerId
-                                                        ?.toString() ??
-                                                    "0",
-                                              ) ??
-                                              0,
-                                          senderId:
-                                              int.tryParse(
-                                                value.session?.expertId
-                                                        ?.toString() ??
-                                                    "0",
-                                              ) ??
-                                              0,
-                                          roomId:
-                                              value.session?.roomId
-                                                  ?.toString() ??
-                                              "",
-                                          subCollection: 'messages',
-                                        ),
-                                      );
+                                          // Navigate to chat screen
+                                          Get.to(
+                                            FirebaseChatScreen(
+                                              sessionId: sessionId,
+                                              startTime:
+                                                  session.startTime ?? "",
+                                              sessionStatus:
+                                                  session.status ?? "",
+                                              customerName:
+                                                  value.session?.customerName ??
+                                                  "",
+                                              remaingTime:
+                                                  value
+                                                      .pricing
+                                                      ?.remainingSeconds
+                                                      ?.toString() ??
+                                                  "0",
+                                              reciverId:
+                                                  int.tryParse(
+                                                    value.session?.customerId
+                                                            ?.toString() ??
+                                                        "0",
+                                                  ) ??
+                                                  0,
+                                              senderId:
+                                                  int.tryParse(
+                                                    value.session?.expertId
+                                                            ?.toString() ??
+                                                        "0",
+                                                  ) ??
+                                                  0,
+                                              roomId:
+                                                  value.session?.roomId
+                                                      ?.toString() ??
+                                                  "",
+                                              subCollection: 'messages',
+                                            ),
+                                          );
+                                          break;
+                                      }
                                     },
                                     child: sessionItemsWidget(index),
                                   );
