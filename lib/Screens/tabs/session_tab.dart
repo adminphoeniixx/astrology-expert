@@ -708,7 +708,7 @@ class _SessionTabState extends State<SessionTab> {
                         } else {
                           Get.snackbar(
                             'Data Not Found',
-                            'Session details could not be loaded.',
+                            'Customer details could not be loaded.',
                             snackPosition: SnackPosition.TOP,
                             backgroundColor: Colors.redAccent,
                             colorText: Colors.white,
@@ -1106,23 +1106,17 @@ class _SessionTabState extends State<SessionTab> {
                 ),
                 const SizedBox(height: 20),
 
-                // Order info
-                //  _detailRow("Order Date:", formatDate(details.date)),
-                //  _detailRow("Session Time:", details.sessionTime ?? "NA"),
-
-                // const Divider(color: Colors.white30, height: 30),
-
                 // // Customer info
                 _detailRow("Customer Name:", details.customerName ?? ""),
-                _detailRow("Customer Gender:", ""),
+                // _detailRow("Customer Gender:", ""),
                 _detailRow("Date Of Birth:", formatDate(data.birthday)),
-                _detailRow("Birth Time:", data.birthTime ?? ""),
+                _detailRow("Birth Time:", data.birthTime ?? "--"),
                 _detailRow(
                   "Birth Date Accuracy:",
                   data.birthTimeAccuracy ?? "",
                 ),
-                _detailRow("Place Of Birth:", data.birthPlace ?? ""),
-                const SizedBox(height: 50),
+                _detailRow("Place Of Birth:", data.birthPlace ?? "--"),
+                const SizedBox(height: 20),
               ],
             ),
           ),

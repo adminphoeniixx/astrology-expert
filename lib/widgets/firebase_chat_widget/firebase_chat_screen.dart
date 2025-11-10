@@ -16,6 +16,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Internal list item that can be either a date header or a chat message
 class _ChatListEntry {
@@ -248,9 +249,135 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     _scrollToBottom();
   }
 
+  // Future<void> _sendMedia() async {
+  //   if (_isCompleted) return;
+
+  //   final picked = await FilePicker.platform.pickFiles(type: FileType.image);
+  //   if (picked == null || picked.files.isEmpty) return;
+
+  //   final file = picked.files.single;
+  //   if (file.path == null) {
+  //     Get.snackbar("Upload Media", "Invalid image path");
+  //     return;
+  //   }
+
+  //   _uploadProgress.value = 0.0;
+  //   _localUploadPath.value = file.path!;
+  //   _isUploading.value = true;
+  //   _scrollToBottom();
+
+  //   final imageFile = File(file.path!);
+
+  //   await FreeFirebaseServiceRequest.uploadMedia(
+  //         file: imageFile,
+  //         onProgress: (p) => _uploadProgress.value = p.clamp(0.0, 1.0),
+  //       )
+  //       .then((resp) async {
+  //         _isUploading.value = false;
+
+  //         void reset() {
+  //           _localUploadPath.value = '';
+  //           _uploadProgress.value = 0.0;
+  //         }
+
+  //         if (resp.status == true && (resp.mediaUrl?.isNotEmpty ?? false)) {
+  //           final url = resp.mediaUrl!;
+
+  //           final meta = await FirebaseFirestore.instance
+  //               .collection('free_chat_session')
+  //               .doc(widget.roomId)
+  //               .get();
+
+  //           if (!meta.exists || meta.data() == null) {
+  //             reset();
+  //             return;
+  //           }
+
+  //           final data = meta.data()!;
+  //           final String chatStatus = (data['status'] ?? "") as String;
+  //           final bool isNewSession = data['is_new_session'] is bool
+  //               ? data['is_new_session'] as bool
+  //               : false;
+
+  //           if (chatStatus == "Completed") {
+  //             reset();
+  //             if (!_isCompletionPopupVisible) _showCompletedPopup();
+  //             return;
+  //           }
+
+  //           await FreeFirebaseServiceRequest.sendMediaMessage(
+  //             sessionId: widget.sessionId,
+  //             isFirstMessage: isNewSession,
+  //             customerName: widget.customerName,
+  //             roomId: widget.roomId,
+  //             subCollection: widget.subCollection,
+  //             receiverId: widget.reciverId,
+  //             senderId: widget.senderId,
+  //             mediaUrl: url,
+  //           );
+
+  //           reset();
+  //           _scrollToBottom();
+  //         } else {
+  //           reset();
+  //           Get.snackbar("Upload Media", resp.message ?? "Upload failed");
+  //         }
+  //       })
+  //       .catchError((e) {
+  //         _isUploading.value = false;
+  //         _localUploadPath.value = '';
+  //         _uploadProgress.value = 0.0;
+  //         Get.snackbar("Upload Media", "Error: $e");
+  //       });
+  // }
   Future<void> _sendMedia() async {
     if (_isCompleted) return;
 
+    // ✅ Step 1: Check permission
+    PermissionStatus status;
+    if (Platform.isAndroid) {
+      if (await Permission.photos.isGranted ||
+          await Permission.storage.isGranted) {
+        status = PermissionStatus.granted;
+      } else {
+        // For Android 13+ `photos` permission, for older versions use `storage`
+        status = await Permission.photos.request();
+        if (status.isDenied) {
+          status = await Permission.storage.request();
+        }
+      }
+    } else {
+      // iOS photo library permission
+      status = await Permission.photos.request();
+    }
+
+    // ✅ Step 2: Handle denied / permanently denied states
+    if (status.isDenied) {
+      Get.snackbar(
+        "Permission Required",
+        "Please allow media access to send images.",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      return;
+    }
+
+    if (status.isPermanentlyDenied) {
+      Get.snackbar(
+        "Permission Denied",
+        "Please enable storage permission from Settings.",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+      await openAppSettings();
+      return;
+    }
+
+    // ✅ Step 3: Open file picker
     final picked = await FilePicker.platform.pickFiles(type: FileType.image);
     if (picked == null || picked.files.isEmpty) return;
 
@@ -267,6 +394,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
     final imageFile = File(file.path!);
 
+    // ✅ Step 4: Upload file
     await FreeFirebaseServiceRequest.uploadMedia(
           file: imageFile,
           onProgress: (p) => _uploadProgress.value = p.clamp(0.0, 1.0),
@@ -537,7 +665,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         backgroundColor: const Color(0xFF221d25),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
-          "About ${data.name}",
+          "About ${data.name ?? "--"}",
           maxLines: 1, // or remove if you want multiline
           overflow: TextOverflow.ellipsis, // shows "..." for too long text
           style: const TextStyle(fontFamily: productSans, color: white),
@@ -546,20 +674,20 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _detailRow("Name", data.name),
+            _detailRow("Name", data.name ?? "--"),
             const SizedBox(height: 6),
             _detailRow(
               "Birth Date",
-              formatter.format(DateTime.parse(data.birthday)),
+              formatter.format(DateTime.parse(data.birthday ?? "--")),
             ),
             const SizedBox(height: 6),
-            _detailRow("Birth Time", data.birthTime ?? ""),
+            _detailRow("Birth Time", data.birthTime ?? "--"),
             const SizedBox(height: 6),
 
-            _detailRow("Birth Time Accuracy", data.birthTimeAccuracy ?? ""),
+            _detailRow("Birth Time Accuracy", data.birthTimeAccuracy ?? "--"),
 
             const SizedBox(height: 6),
-            _detailRow("Birth Place", data.birthPlace),
+            _detailRow("Birth Place", data.birthPlace ?? "--"),
             // const SizedBox(height: 6),
             // _detailRow("Mobile", data.mobile),
           ],
@@ -577,7 +705,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     );
   }
 
-  Widget _detailRow(String title, String value) {
+  Widget _detailRow(dynamic title, dynamic value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -604,106 +732,119 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF221d25),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF221d25),
-        elevation: 1,
-        centerTitle: true,
-        leadingWidth: 60,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.arrow_back_rounded, color: white),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  widget.customerName,
-                  style: const TextStyle(
-                    fontSize: 18.0,
-                    color: white,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: productSans,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(65), // 👈 custom height
+        child: AppBar(
+          backgroundColor: const Color(0xFF221d25),
+          elevation: 1,
+          centerTitle: true,
+          leadingWidth: 60,
+          leading: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.customerName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: productSans,
+                      ),
+                    ),
+                  ),
+                  //  const SizedBox(width: 4),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: () async {
+                      await _homeController
+                          .fetchSessionDetailsData(sessionId: widget.sessionId)
+                          .then((value) {
+                            if (value.success == true && value.data != null) {
+                              _showCustomerDetails(value.data!.user!);
+                            } else {
+                              Get.snackbar(
+                                'Data Not Found',
+                                'Customer details could not be loaded.',
+                                snackPosition: SnackPosition.TOP,
+                                backgroundColor: Colors.redAccent,
+                                colorText: Colors.white,
+                                duration: const Duration(seconds: 2),
+                              );
+                            }
+                          });
+                    },
+                  ),
+                ],
+              ),
+              // const SizedBox(height: 4),
+              if (!_isCompleted)
+                StreamBuilder<int>(
+                  stream: SocketService().timerStream,
+                  builder: (context, snapshot) {
+                    final seconds = snapshot.data ?? 0;
+                    final d = Duration(seconds: seconds);
+                    final h = d.inHours.toString().padLeft(2, '0');
+                    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+                    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+
+                    return Text(
+                      "$h:$m:$s",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                        fontFamily: productSans,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+          actions: [
+            if (!_isCompleted)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: ElevatedButton(
+                  onPressed: _showExitPopup,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    "End Chat",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: productSans,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                // if (!_isCompleted)
-                IconButton(
-                  icon: const Icon(Icons.info_outline, color: white),
-                  onPressed: () async {
-                    await _homeController
-                        .fetchSessionDetailsData(sessionId: widget.sessionId)
-                        .then((value) {
-                          if (value.success == true && value.data != null) {
-                            _showCustomerDetails(value.data!.user!);
-                          } else {
-                            Get.snackbar(
-                              'Data Not Found',
-                              'Session details could not be loaded.',
-                              snackPosition: SnackPosition.TOP,
-                              backgroundColor: Colors.redAccent,
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 2),
-                            );
-                          }
-                        });
-                  }, // function to show details
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            if (!_isCompleted)
-              StreamBuilder<int>(
-                stream: SocketService().timerStream,
-                builder: (context, snapshot) {
-                  final seconds = snapshot.data ?? 0;
-                  final d = Duration(seconds: seconds);
-                  final h = d.inHours.toString().padLeft(2, '0');
-                  final m = (d.inMinutes % 60).toString().padLeft(2, '0');
-                  final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-
-                  return Text(
-                    "$h:$m:$s",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                      fontFamily: productSans,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  );
-                },
               ),
           ],
         ),
-        actions: [
-          if (!_isCompleted)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: ElevatedButton(
-                onPressed: _showExitPopup,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  "End Chat",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: productSans,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
       body: Stack(
         children: [
