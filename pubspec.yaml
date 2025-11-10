@@ -2,7 +2,7 @@ name: astro_partner_app
 description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.1+9
+version: 1.0.1+10
 
 environment:
   sdk: ^3.9.2
@@ -50,6 +50,7 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   flutter_callkit_incoming: ^3.0.0
   dart_pusher_channels: ^1.2.3
+  path_provider: ^2.1.5
 
 icons_launcher:
   image_path: "assets/images/lunch_icon.png"

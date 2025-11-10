@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Internal list item that can be either a date header or a chat message
 class _ChatListEntry {
@@ -331,131 +332,166 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   //       });
   // }
   Future<void> _sendMedia() async {
-    if (_isCompleted) return;
+    print("🟢 Step 0: Starting _sendMedia()...");
 
-    // ✅ Step 1: Check permission
+    if (_isCompleted) {
+      print("⚠️ Chat completed. Aborting.");
+      return;
+    }
+
+    // ✅ Step 1: Permission check
     PermissionStatus status;
+    print("🟢 Step 1: Checking permission...");
+
     if (Platform.isAndroid) {
       if (await Permission.photos.isGranted ||
-          await Permission.storage.isGranted) {
+          await Permission.storage.isGranted ||
+          await Permission.mediaLibrary.isGranted) {
         status = PermissionStatus.granted;
       } else {
-        // For Android 13+ `photos` permission, for older versions use `storage`
+        print("🔄 Requesting Android permission...");
         status = await Permission.photos.request();
-        if (status.isDenied) {
-          status = await Permission.storage.request();
-        }
+        if (status.isDenied) status = await Permission.storage.request();
       }
     } else {
-      // iOS photo library permission
+      print("🔄 Requesting iOS photo permission...");
       status = await Permission.photos.request();
     }
 
-    // ✅ Step 2: Handle denied / permanently denied states
+    print("📋 Permission status: $status");
+
     if (status.isDenied) {
-      Get.snackbar(
-        "Permission Required",
-        "Please allow media access to send images.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
+      print("❌ Permission denied");
+      Get.snackbar("Permission Required", "Please allow media access.");
       return;
     }
 
     if (status.isPermanentlyDenied) {
-      Get.snackbar(
-        "Permission Denied",
-        "Please enable storage permission from Settings.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      print("🚫 Permission permanently denied");
       await openAppSettings();
       return;
     }
 
-    // ✅ Step 3: Open file picker
-    final picked = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (picked == null || picked.files.isEmpty) return;
+    // ✅ Step 2: File picker
+    print("🟢 Step 2: Opening FilePicker...");
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+      withData: true, // <-- ensures bytes are available if no path
+    );
 
-    final file = picked.files.single;
-    if (file.path == null) {
-      Get.snackbar("Upload Media", "Invalid image path");
+    if (picked == null || picked.files.isEmpty) {
+      print("⚠️ No file selected.");
       return;
     }
 
+    final file = picked.files.single;
+    print("📁 File name: ${file.name}");
+    print("📂 File path: ${file.path}");
+    print("📦 File bytes: ${file.bytes != null}");
+
+    // ✅ Step 3: Path or bytes check
+    File? imageFile;
+    if (file.path != null) {
+      imageFile = File(file.path!);
+    } else if (file.bytes != null) {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = "${tempDir.path}/${file.name}";
+      imageFile = await File(tempPath).writeAsBytes(file.bytes!);
+      print("📄 Created temp file: $tempPath");
+    } else {
+      print("❌ No valid path or bytes found.");
+      Get.snackbar("Upload Media", "Unable to read selected image.");
+      return;
+    }
+
+    // ✅ Step 4: Upload setup
     _uploadProgress.value = 0.0;
-    _localUploadPath.value = file.path!;
+    _localUploadPath.value = imageFile.path;
     _isUploading.value = true;
     _scrollToBottom();
 
-    final imageFile = File(file.path!);
+    print("🚀 Upload starting: ${imageFile.path}");
 
-    // ✅ Step 4: Upload file
-    await FreeFirebaseServiceRequest.uploadMedia(
-          file: imageFile,
-          onProgress: (p) => _uploadProgress.value = p.clamp(0.0, 1.0),
-        )
-        .then((resp) async {
-          _isUploading.value = false;
+    try {
+      final resp = await FreeFirebaseServiceRequest.uploadMedia(
+        file: imageFile,
+        onProgress: (p) {
+          final progress = p.clamp(0.0, 1.0);
+          _uploadProgress.value = progress;
+          print("⬆️ Upload progress: ${(progress * 100).toStringAsFixed(2)}%");
+        },
+      );
 
-          void reset() {
-            _localUploadPath.value = '';
-            _uploadProgress.value = 0.0;
-          }
+      _isUploading.value = false;
+      print(
+        "✅ Upload response -> status: ${resp.status}, url: ${resp.mediaUrl}, message: ${resp.message}",
+      );
 
-          if (resp.status == true && (resp.mediaUrl?.isNotEmpty ?? false)) {
-            final url = resp.mediaUrl!;
+      void reset() {
+        print("🔁 Resetting local upload state...");
+        _localUploadPath.value = '';
+        _uploadProgress.value = 0.0;
+      }
 
-            final meta = await FirebaseFirestore.instance
-                .collection('free_chat_session')
-                .doc(widget.roomId)
-                .get();
+      if (resp.status == true && (resp.mediaUrl?.isNotEmpty ?? false)) {
+        final url = resp.mediaUrl!;
+        print("🌐 Uploaded URL: $url");
 
-            if (!meta.exists || meta.data() == null) {
-              reset();
-              return;
-            }
+        final meta = await FirebaseFirestore.instance
+            .collection('free_chat_session')
+            .doc(widget.roomId)
+            .get();
 
-            final data = meta.data()!;
-            final String chatStatus = (data['status'] ?? "") as String;
-            final bool isNewSession = data['is_new_session'] is bool
-                ? data['is_new_session'] as bool
-                : false;
+        print("📄 Firestore meta fetched: ${meta.exists}");
 
-            if (chatStatus == "Completed") {
-              reset();
-              if (!_isCompletionPopupVisible) _showCompletedPopup();
-              return;
-            }
+        if (!meta.exists || meta.data() == null) {
+          reset();
+          return;
+        }
 
-            await FreeFirebaseServiceRequest.sendMediaMessage(
-              sessionId: widget.sessionId,
-              isFirstMessage: isNewSession,
-              customerName: widget.customerName,
-              roomId: widget.roomId,
-              subCollection: widget.subCollection,
-              receiverId: widget.reciverId,
-              senderId: widget.senderId,
-              mediaUrl: url,
-            );
+        final data = meta.data()!;
+        final chatStatus = (data['status'] ?? "") as String;
+        final isNewSession =
+            data['is_new_session'] is bool && (data['is_new_session'] as bool);
 
-            reset();
-            _scrollToBottom();
-          } else {
-            reset();
-            Get.snackbar("Upload Media", resp.message ?? "Upload failed");
-          }
-        })
-        .catchError((e) {
-          _isUploading.value = false;
-          _localUploadPath.value = '';
-          _uploadProgress.value = 0.0;
-          Get.snackbar("Upload Media", "Error: $e");
-        });
+        print("💬 Chat status: $chatStatus | isNewSession: $isNewSession");
+
+        if (chatStatus == "Completed") {
+          print("⚠️ Chat already completed.");
+          reset();
+          if (!_isCompletionPopupVisible) _showCompletedPopup();
+          return;
+        }
+
+        await FreeFirebaseServiceRequest.sendMediaMessage(
+          sessionId: widget.sessionId,
+          isFirstMessage: isNewSession,
+          customerName: widget.customerName,
+          roomId: widget.roomId,
+          subCollection: widget.subCollection,
+          receiverId: widget.reciverId,
+          senderId: widget.senderId,
+          mediaUrl: url,
+        );
+
+        print("✅ Media message sent successfully.");
+        reset();
+        _scrollToBottom();
+      } else {
+        print("❌ Upload failed: ${resp.message}");
+        reset();
+        Get.snackbar("Upload Media", resp.message ?? "Upload failed");
+      }
+    } catch (e) {
+      print("🔥 Upload error: $e");
+      _isUploading.value = false;
+      _localUploadPath.value = '';
+      _uploadProgress.value = 0.0;
+      Get.snackbar("Upload Media", "Error: $e");
+    }
+
+    print("🏁 _sendMedia() finished.");
   }
 
   Future<void> _markSeen(ChatMessageModel msg) async {
@@ -1065,6 +1101,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                           ),
                   ),
                   // dim overlay
+                  // ignore: deprecated_member_use
                   Container(color: primaryColor.withOpacity(0.35)),
                   ValueListenableBuilder<double>(
                     valueListenable: _uploadProgress,

@@ -178,6 +178,7 @@ class FreeFirebaseServiceRequest {
     // Set the authorization header
     dio.options.headers = await authHeader();
     print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
+    print(await authHeader());
     print(apiUrl);
     print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
 
@@ -200,9 +201,9 @@ class FreeFirebaseServiceRequest {
         },
       );
 
-      print("##########MEDIA UPLOAD###########");
+      print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
       print(response.data);
-      print("##########MEDIA UPLOAD###########");
+      print("!!!!!!!!!!!!!!!!!uploadMedia!!!!!!!!!!!!!!!!!!!!!");
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Parse response data to UploadResponse
         return MediaUploadModel.fromJson(response.data);
