@@ -1,53 +1,51 @@
 // To parse this JSON data, do
 //
-//     final signUpModel = signUpModelFromJson(jsonString);
+//     final callerUserInfoModel = callerUserInfoModelFromJson(jsonString);
 
 import 'dart:convert';
 
 import 'package:astro_partner_app/utils/enum.dart';
 
-SignUpModel signUpModelFromJson(String str) =>
-    SignUpModel.fromJson(json.decode(str));
+CallerUserInfoModel callerUserInfoModelFromJson(String str) =>
+    CallerUserInfoModel.fromJson(json.decode(str));
 
-String signUpModelToJson(SignUpModel data) => json.encode(data.toJson());
+String callerUserInfoModelToJson(CallerUserInfoModel data) =>
+    json.encode(data.toJson());
 
-class SignUpModel {
+class CallerUserInfoModel {
   bool? status;
   dynamic message;
-  Expert? expert;
-  dynamic accessToken;
-  dynamic newRegistration;
-
+  CallerUserInfo? user;
+  dynamic currencySymbol;
   RequestStatus requestStatus;
 
-  SignUpModel({
+  CallerUserInfoModel({
     this.status,
     this.message,
-    this.expert,
-    this.accessToken,
-    this.newRegistration,
-
+    this.user,
+    this.currencySymbol,
     this.requestStatus = RequestStatus.initial,
   });
 
-  factory SignUpModel.fromJson(Map<String, dynamic> json) => SignUpModel(
-    status: json["status"],
-    message: json["message"],
-    expert: json["expert"] == null ? null : Expert.fromJson(json["expert"]),
-    accessToken: json["access_token"],
-    newRegistration: json['new_register'],
-  );
+  factory CallerUserInfoModel.fromJson(Map<String, dynamic> json) =>
+      CallerUserInfoModel(
+        status: json["status"],
+        message: json["message"],
+        user: json["user"] == null
+            ? null
+            : CallerUserInfo.fromJson(json["user"]),
+        currencySymbol: json["currency_symbol"],
+      );
 
   Map<String, dynamic> toJson() => {
     "status": status,
     "message": message,
-    "expert": expert?.toJson(),
-    "access_token": accessToken,
-    "new_register": newRegistration,
+    "user": user?.toJson(),
+    "currency_symbol": currencySymbol,
   };
 }
 
-class Expert {
+class CallerUserInfo {
   dynamic id;
   dynamic role;
   dynamic name;
@@ -66,7 +64,7 @@ class Expert {
   dynamic deviceToken;
   dynamic gender;
   dynamic city;
-  dynamic birthday;
+  DateTime? birthday;
   dynamic code;
   dynamic emailOtp;
   dynamic isEmailVerified;
@@ -84,7 +82,7 @@ class Expert {
   dynamic deletedAt;
   dynamic twoFactorConfirmedAt;
   dynamic otp;
-  double? rating;
+  dynamic rating;
   dynamic description;
   dynamic slotCharges;
   dynamic audioRecordingCharges;
@@ -97,9 +95,15 @@ class Expert {
   dynamic birthPlace;
   dynamic birthTimeAccuracy;
   dynamic availableForPaidChat;
+  dynamic currentChatStatus;
+  dynamic adharCard;
+  dynamic panCard;
+  dynamic bankName;
+  dynamic availableForCall;
+  dynamic availableForChat;
   dynamic profilePhotoUrl;
 
-  Expert({
+  CallerUserInfo({
     this.id,
     this.role,
     this.name,
@@ -149,10 +153,16 @@ class Expert {
     this.birthPlace,
     this.birthTimeAccuracy,
     this.availableForPaidChat,
+    this.currentChatStatus,
+    this.adharCard,
+    this.panCard,
+    this.bankName,
+    this.availableForCall,
+    this.availableForChat,
     this.profilePhotoUrl,
   });
 
-  factory Expert.fromJson(Map<String, dynamic> json) => Expert(
+  factory CallerUserInfo.fromJson(Map<String, dynamic> json) => CallerUserInfo(
     id: json["id"],
     role: json["role"],
     name: json["name"],
@@ -175,7 +185,9 @@ class Expert {
     deviceToken: json["device_token"],
     gender: json["gender"],
     city: json["city"],
-    birthday: json["birthday"],
+    birthday: json["birthday"] == null
+        ? null
+        : DateTime.parse(json["birthday"]),
     code: json["code"],
     emailOtp: json["email_otp"],
     isEmailVerified: json["is_email_verified"],
@@ -193,7 +205,7 @@ class Expert {
     deletedAt: json["deleted_at"],
     twoFactorConfirmedAt: json["two_factor_confirmed_at"],
     otp: json["otp"],
-    rating: json["rating"]?.toDouble(),
+    rating: json["rating"],
     description: json["description"],
     slotCharges: json["slot_charges"],
     audioRecordingCharges: json["audio_recording_charges"],
@@ -206,6 +218,12 @@ class Expert {
     birthPlace: json["birth_place"],
     birthTimeAccuracy: json["birth_time_accuracy"],
     availableForPaidChat: json["available_for_paid_chat"],
+    currentChatStatus: json["current_chat_status"],
+    adharCard: json["adhar_card"],
+    panCard: json["pan_card"],
+    bankName: json["bank_name"],
+    availableForCall: json["available_for_call"],
+    availableForChat: json["available_for_chat"],
     profilePhotoUrl: json["profile_photo_url"],
   );
 
@@ -228,7 +246,8 @@ class Expert {
     "device_token": deviceToken,
     "gender": gender,
     "city": city,
-    "birthday": birthday,
+    "birthday":
+        "${birthday!.year.toString().padLeft(4, '0')}-${birthday!.month.toString().padLeft(2, '0')}-${birthday!.day.toString().padLeft(2, '0')}",
     "code": code,
     "email_otp": emailOtp,
     "is_email_verified": isEmailVerified,
@@ -259,6 +278,12 @@ class Expert {
     "birth_place": birthPlace,
     "birth_time_accuracy": birthTimeAccuracy,
     "available_for_paid_chat": availableForPaidChat,
+    "current_chat_status": currentChatStatus,
+    "adhar_card": adharCard,
+    "pan_card": panCard,
+    "bank_name": bankName,
+    "available_for_call": availableForCall,
+    "available_for_chat": availableForChat,
     "profile_photo_url": profilePhotoUrl,
   };
 }

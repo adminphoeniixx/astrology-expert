@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:astro_partner_app/Screens/auth/register_screen.dart';
 import 'package:astro_partner_app/Screens/home_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
@@ -65,6 +65,30 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.dispose();
   }
 
+  // void onSubmit() async {
+  //   if (pinCode.isEmpty) {
+  //     showToast(context, msg: ENTER_OTP);
+  //     return;
+  //   }
+
+  //   try {
+  //     final value = await _userController.fetchVerifyOtp(
+  //       context: context,
+  //       otp: pinCode,
+  //       mobile: widget.phoneNumber,
+  //     );
+
+  //     if (value.status!) {
+  //       goToHomePage(value, const MyHomePage());
+  //     } else {
+  //       showToast(context, msg: value.message!);
+  //     }
+  //   } catch (e) {
+  //     debugPrint("Error: $e");
+  //     showToast(context, msg: "Something went wrong. Please try again.");
+  //   }
+  // }
+
   void onSubmit() async {
     if (pinCode.isEmpty) {
       showToast(context, msg: ENTER_OTP);
@@ -78,13 +102,23 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         mobile: widget.phoneNumber,
       );
 
-      if (value.status!) {
-        goToHomePage(value, const MyHomePage());
+      if (value.status == true) {
+        // ✅ OTP verified successfully
+        await _userController.getUserProfile();
+
+        if (value.newRegistration == true) {
+          // 🔹 New user — go to registration screen
+          changeScreenReplacement(context, const RegisterScreen());
+        } else {
+          // 🔹 Existing user — go to home page
+          goToHomePage(value, const MyHomePage());
+        }
       } else {
-        showToast(context, msg: value.message!);
+        // ❌ Wrong OTP or verification failed
+        showToast(context, msg: value.message ?? "Invalid OTP");
       }
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("❌ Error verifying OTP: $e");
       showToast(context, msg: "Something went wrong. Please try again.");
     }
   }

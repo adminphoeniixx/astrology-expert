@@ -3,6 +3,7 @@ import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/controllers/user_controller.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/helper/screen_navigator.dart';
@@ -28,6 +29,41 @@ class _AccountTabState extends State<AccountTab> {
     'Delete account',
   ];
   final UserController _userController = Get.put(UserController());
+  final HomeController _homeController = Get.put(HomeController());
+  @override
+  void initState() {
+    _loadProfileData();
+    super.initState();
+  }
+
+  bool isChatOnline = false;
+  bool isCallOnline = false;
+  Future<void> _loadProfileData() async {
+    try {
+      await _userController.getUserProfile();
+
+      final profile = _userController.getprofile?.data;
+
+      // Safely extract both chat and call availability from profile
+      final chatAvailable = profile?.availableForChat ?? "no";
+      final callAvailable = profile?.availableForCall ?? "no";
+
+      // Normalize values (trim + lowercase)
+      final chatNormalized = chatAvailable.trim().toLowerCase();
+      final callNormalized = callAvailable.trim().toLowerCase();
+
+      setState(() {
+        isChatOnline = chatNormalized == "yes";
+        isCallOnline = callNormalized == "yes";
+      });
+
+      debugPrint(
+        "✅ Loaded profile → Chat: '$chatAvailable' → $isChatOnline | Call: '$callAvailable' → $isCallOnline",
+      );
+    } catch (e) {
+      debugPrint("❌ Error loading profile: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +85,8 @@ class _AccountTabState extends State<AccountTab> {
                     const SizedBox(height: 30),
 
                     bankDetailsBox(_userController.getprofile!.data!),
+                    const SizedBox(height: 30),
+                    statusUpdateBox(),
                     const SizedBox(height: 30),
 
                     /// ✅ Drawer Options
@@ -207,6 +245,196 @@ class _AccountTabState extends State<AccountTab> {
               color: white,
               fontFamily: productSans,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget statusUpdateBox() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF221d25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+
+          // 🔹 Chat availability
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline, color: Colors.white70),
+                  SizedBox(width: 8),
+                  Text(
+                    "Chat",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: productSans,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Switch(
+                    value: isChatOnline,
+                    onChanged: (val) async {
+                      setState(() => isChatOnline = val);
+
+                      final available = val ? "Yes" : "No";
+                      try {
+                        await _homeController.chatOnOffModelData(
+                          available: available,
+                        );
+
+                        await _userController.getUserProfile();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: val
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            content: Text(
+                              val
+                                  ? 'You are now Available for chat'
+                                  : 'You are now Not Available for chat',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontFamily: productSans,
+                              ),
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      } catch (e) {
+                        setState(() => isChatOnline = !val);
+                        debugPrint("❌ Error updating chat status: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Text(
+                              "Failed to update chat availability",
+                              style: TextStyle(fontFamily: productSans),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    activeColor: Colors.greenAccent,
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: Colors.white24,
+                  ),
+                  Text(
+                    isChatOnline ? "Available" : "Not Available",
+                    style: TextStyle(
+                      color: isChatOnline
+                          ? Colors.greenAccent
+                          : Colors.redAccent,
+                      fontSize: 10,
+                      fontFamily: productSans,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 🔹 Call availability
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.call_outlined, color: Colors.white70),
+                  SizedBox(width: 8),
+                  Text(
+                    "Call",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: productSans,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  Switch(
+                    value: isCallOnline,
+                    onChanged: (val) async {
+                      setState(() => isCallOnline = val);
+
+                      final available = val ? "Yes" : "No";
+                      try {
+                        await _homeController.callOnOffModelData(
+                          available: available,
+                        );
+
+                        await _userController.getUserProfile();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: val
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            content: Text(
+                              val
+                                  ? 'You are now Available for call'
+                                  : 'You are now Not Available for call',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontFamily: productSans,
+                              ),
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      } catch (e) {
+                        setState(() => isCallOnline = !val);
+                        debugPrint("❌ Error updating call status: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Text(
+                              "Failed to update call availability",
+                              style: TextStyle(fontFamily: productSans),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    activeColor: Colors.greenAccent,
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: Colors.white24,
+                  ),
+                  Text(
+                    isCallOnline ? "Available" : "Not Available",
+                    style: TextStyle(
+                      color: isCallOnline
+                          ? Colors.greenAccent
+                          : Colors.redAccent,
+                      fontSize: 10,
+                      fontFamily: productSans,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

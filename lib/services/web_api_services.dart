@@ -8,6 +8,7 @@ import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/model/api_response.dart';
 import 'package:astro_partner_app/model/auth/getprofile_model.dart';
 import 'package:astro_partner_app/model/auth/sinup_model.dart';
+import 'package:astro_partner_app/model/callerUserInfo_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
@@ -43,6 +44,83 @@ class WebApiServices {
 
   SessionDetailsModel _sessionDetailsModel = SessionDetailsModel();
   EarningListModel _earningListModel = EarningListModel();
+
+  SignUpModel _signUpModel2 = SignUpModel();
+
+  Future<SignUpModel> getRegisterWithOtp({
+    required String mobile,
+    required String name,
+    required String email,
+    required String gender,
+
+    required String screen,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl}register";
+      // Fetch FCM token
+      dynamic request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll({
+        'mobile_number': mobile,
+        'screen': screen,
+        'name': name,
+        'email': email,
+        'gender': gender,
+      });
+      http.StreamedResponse response = await request.send();
+      print("!!!!!!!!!!!!!!!!!getRegisterWithOtp!!!!!!!!!!!!!!!!!!");
+      print({
+        'mobile_number': mobile,
+        'screen': screen,
+        'name': name,
+        'email': email,
+        'gender': gender,
+      });
+      dynamic responseData = await response.stream.bytesToString();
+      print(responseData);
+      if (response.statusCode == httpsCode_200 ||
+          response.statusCode == httpsCode_201) {
+        _signUpModel2 = SignUpModel.fromJson(jsonDecode(responseData));
+        _signUpModel2.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == httpsCode_404 ||
+          response.statusCode == httpsCode_401) {
+        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
+        _signUpModel2.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == httpsCode_500) {
+        _signUpModel2.requestStatus = RequestStatus.server;
+      }
+    } on Error catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "getRegisterWithOtp",
+        code: 401,
+        userId: userId,
+        message: e.toString(),
+      );
+      _signUpModel2.requestStatus = RequestStatus.unauthorized;
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "getRegisterWithOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "getRegisterWithOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "getRegisterWithOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    }
+    return _signUpModel2;
+  }
+
   Future<ApiResponse> getResendOtp({required String mobile}) async {
     // Fetch FCM token
     // final fcmToken = await _fetchFcmToken();
@@ -1313,5 +1391,286 @@ class WebApiServices {
     }
 
     return _startTimerChatModel;
+  }
+
+  GetProfileModel _expertOnOffModel = GetProfileModel();
+
+  Future<GetProfileModel> getExpertOnOffModel({
+    required String available,
+  }) async {
+    const String url = "${GetBaseUrl + GetDomainUrl2}update-free-chat-status";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({"available_for_free_chat": available});
+
+      print("#############_expertOnOffModel##################");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_expertOnOffModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _expertOnOffModel = GetProfileModel.fromJson(jsonDecode(response.body));
+        _expertOnOffModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _expertOnOffModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _expertOnOffModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_expertOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_expertOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_expertOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_expertOnOffModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _expertOnOffModel;
+  }
+
+  CallerUserInfoModel _userInfoModel = CallerUserInfoModel();
+
+  Future<CallerUserInfoModel> getuserInfoModel({
+    required dynamic userId,
+  }) async {
+    String url = "${GetBaseUrl + GetDomainUrl2}get-user?id=$userId";
+    // final headers = await authHeader();
+
+    try {
+      print("#############_userInfoModel##################");
+      print("URL: $url");
+      //  print("Headers: $headers");
+
+      // ✅ Make POST request
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_userInfoModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _userInfoModel = CallerUserInfoModel.fromJson(
+          jsonDecode(response.body),
+        );
+        _userInfoModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _userInfoModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _userInfoModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_userInfoModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_userInfoModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_userInfoModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_userInfoModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _userInfoModel;
+  }
+
+  GetProfileModel _callOnOffModel = GetProfileModel();
+
+  Future<GetProfileModel> getCallOnOffModel({required String available}) async {
+    const String url = "${GetBaseUrl + GetDomainUrl2}update-call-status";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({"available_for_call": available});
+
+      print("#############_callOnOffModel##################");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_callOnOffModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _callOnOffModel = GetProfileModel.fromJson(jsonDecode(response.body));
+        _callOnOffModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _callOnOffModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _callOnOffModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_callOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_callOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_callOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_expertOnOffModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _callOnOffModel;
+  }
+
+  GetProfileModel _chatOnOffModel = GetProfileModel();
+
+  Future<GetProfileModel> getChatOnOffModel({required String available}) async {
+    const String url = "${GetBaseUrl + GetDomainUrl2}update-chat-status";
+    final headers = await authHeader();
+
+    try {
+      // ✅ Request body
+      final body = jsonEncode({"available_for_chat": available});
+
+      print("#############_chatOnOffModel##################");
+      print("URL: $url");
+      print("Headers: $headers");
+      print("Body: $body");
+
+      // ✅ Make POST request
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_chatOnOffModel############");
+
+      // ✅ Parse response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _chatOnOffModel = GetProfileModel.fromJson(jsonDecode(response.body));
+        _chatOnOffModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _chatOnOffModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _chatOnOffModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "_chatOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "_chatOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "_chatOnOffModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_chatOnOffModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _chatOnOffModel;
   }
 }

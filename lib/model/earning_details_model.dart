@@ -143,12 +143,19 @@ class Earning {
 
 class Transaction {
   DateTime? date;
-  double? commission;
+  dynamic commission;
   double? tds;
   dynamic tdsPercentage;
   double? payableAmount;
   dynamic serviceSessionId;
   dynamic status;
+  dynamic serviceTypeLabel;
+  DateTime? sessionDate;
+  dynamic sessionDurationMin;
+  dynamic sessionDurationSec;
+  dynamic sessionCharge;
+  dynamic sessionCurrency;
+  dynamic customerName;
   SessionDetailData? sessionData;
 
   Transaction({
@@ -159,17 +166,33 @@ class Transaction {
     this.payableAmount,
     this.serviceSessionId,
     this.status,
+    this.serviceTypeLabel,
+    this.sessionDate,
+    this.sessionDurationMin,
+    this.sessionDurationSec,
+    this.sessionCharge,
+    this.sessionCurrency,
+    this.customerName,
     this.sessionData,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
     date: json["date"] == null ? null : DateTime.parse(json["date"]),
-    commission: json["commission"]?.toDouble(),
+    commission: json["commission"],
     tds: json["tds"]?.toDouble(),
     tdsPercentage: json["tds_percentage"],
     payableAmount: json["payable_amount"]?.toDouble(),
     serviceSessionId: json["service_session_id"],
     status: json["status"],
+    serviceTypeLabel: json["service_type_label"],
+    sessionDate: json["session_date"] == null
+        ? null
+        : DateTime.parse(json["session_date"]),
+    sessionDurationMin: json["session_duration_min"],
+    sessionDurationSec: json["session_duration_sec"],
+    sessionCharge: json["session_charge"],
+    sessionCurrency: json["session_currency"],
+    customerName: json["customer_name"],
     sessionData: json["session_data"] == null
         ? null
         : SessionDetailData.fromJson(json["session_data"]),
@@ -183,6 +206,14 @@ class Transaction {
     "payable_amount": payableAmount,
     "service_session_id": serviceSessionId,
     "status": status,
+    "service_type_label": serviceTypeLabel,
+    "session_date":
+        "${sessionDate!.year.toString().padLeft(4, '0')}-${sessionDate!.month.toString().padLeft(2, '0')}-${sessionDate!.day.toString().padLeft(2, '0')}",
+    "session_duration_min": sessionDurationMin,
+    "session_duration_sec": sessionDurationSec,
+    "session_charge": sessionCharge,
+    "session_currency": sessionCurrency,
+    "customer_name": customerName,
     "session_data": sessionData?.toJson(),
   };
 }
@@ -210,17 +241,18 @@ class SessionDetailData {
     this.order,
   });
 
-  factory SessionDetailData.fromJson(Map<String, dynamic> json) => SessionDetailData(
-    id: json["id"],
-    orderId: json["order_id"],
-    customerName: json["customer_name"],
-    serviceName: json["service_name"],
-    astrologerName: json["astrologer_name"],
-    startTime: json["start_time"],
-    endTime: json["end_time"],
-    date: json["date"] == null ? null : DateTime.parse(json["date"]),
-    order: json["order"] == null ? null : Order.fromJson(json["order"]),
-  );
+  factory SessionDetailData.fromJson(Map<String, dynamic> json) =>
+      SessionDetailData(
+        id: json["id"],
+        orderId: json["order_id"],
+        customerName: json["customer_name"],
+        serviceName: json["service_name"],
+        astrologerName: json["astrologer_name"],
+        startTime: json["start_time"],
+        endTime: json["end_time"],
+        date: json["date"] == null ? null : DateTime.parse(json["date"]),
+        order: json["order"] == null ? null : Order.fromJson(json["order"]),
+      );
 
   Map<String, dynamic> toJson() => {
     "id": id,

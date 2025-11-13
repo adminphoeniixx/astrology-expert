@@ -181,10 +181,13 @@ Future<void> checkAndNavigationCallingPage() async {
     final agoraToken = extra['agora_token']?.toString() ?? '';
     final callerName = extra['caller_name']?.toString() ?? 'Unknown Caller';
     final callerImage = extra['caller_image']?.toString() ?? '';
+    final callerId = extra['caller_id']?.toString() ?? '';
+
     final dynamic userIdExpert = await BasePrefs.readData(userId);
 
     Get.to(
       CallingFreePage(
+        callerId: callerId,
         remaingTime: remaingTime,
         userImageUrl: callerImage,
         callType: 0, // 0 = audio, 1 = video
@@ -195,15 +198,6 @@ Future<void> checkAndNavigationCallingPage() async {
         userName: callerName,
       ),
     );
-
-    //     Get.to(
-    //       const FirebaseChatScreen(
-    //         reciverId: 1,
-    //         roomId: "chat_expertId_userId",
-    //         senderId: 2,
-    //         subCollection: 'messages',
-    //       ),
-    //     );
   } else {
     await FlutterCallkitIncoming.endAllCalls();
   }

@@ -84,6 +84,32 @@ class UserController extends GetxController {
     _failure = failure;
   }
 
+  var isRegisterOtpLoding = false.obs;
+  Future<SignUpModel> getRegisterWithOtp({
+    required String mobile,
+    required String name,
+    required String email,
+    required String gender,
+
+    required String screen,
+  }) async {
+    try {
+      isRegisterOtpLoding(true); // Obtain shared preferences.
+      _signUpModel = await _webApiServices!.getRegisterWithOtp(
+        gender: gender,
+        email: email,
+        mobile: mobile,
+        name: name,
+        screen: screen,
+      );
+    } on Failure catch (e) {
+      isRegisterOtpLoding(false); // Obtain shared preferences.
+      _setFailure(e);
+    }
+    isRegisterOtpLoding(true); // Obtain shared preferences.
+    return _signUpModel!;
+  }
+
   var isVerifyOtpLoding = false.obs;
 
   Future<SignUpModel> fetchVerifyOtp({

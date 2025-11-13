@@ -25,10 +25,6 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
   @override
   Widget build(BuildContext context) {
     final payoutStatus = widget.earningData.payoutStatus ?? '';
-    final payoutDateString = widget.earningData.payoutDate;
-    final payoutDate = payoutDateString != null && payoutDateString.isNotEmpty
-        ? DateTime.parse(payoutDateString)
-        : null;
 
     final weekStart = widget.earningData.weekStart;
     final weekEnd = widget.earningData.weekEnd;
@@ -62,7 +58,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    payoutDate != null ? formatter.format(payoutDate) : "---",
+                    formatter.format(widget.earningData.createdAt!),
                     style: const TextStyle(
                       fontSize: 16,
                       fontFamily: productSans,
@@ -84,7 +80,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
             _earningList(
               "Week Period",
               "${weekStart != null ? formatter.format(weekStart) : '---'}"
-                  " to ${weekEnd != null ? formatter.format(weekEnd) : '---'}",
+                  " - ${weekEnd != null ? formatter.format(weekEnd) : '---'}",
             ),
             const SizedBox(height: 8),
 
@@ -117,10 +113,46 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
   }
 
   /// simple key-value row for ItemPaymentView
+  //   Widget _earningList(String title, String title2, {bool bold = false}) {
+  //     return Padding(
+  //       padding: const EdgeInsets.symmetric(horizontal: 10),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           Text(
+  //             title,
+  //             style: const TextStyle(
+  //               fontSize: 14,
+  //               fontFamily: productSans,
+  //               color: Colors.white70,
+  //             ),
+  //           ),
+  //           Flexible(
+  //             child: Align(
+  //               alignment: Alignment.centerRight,
+  //               child: Text(
+  //                 title2,
+  //                 overflow: TextOverflow.ellipsis,
+  //                 style: TextStyle(
+  //                   fontSize: 14,
+  //                   fontFamily: productSans,
+  //                   color: white,
+  //                   fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  // }
+
   Widget _earningList(String title, String title2, {bool bold = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
@@ -131,18 +163,19 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
               color: Colors.white70,
             ),
           ),
-          Flexible(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                title2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: productSans,
-                  color: white,
-                  fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-                ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title2,
+              textAlign: TextAlign.end,
+              softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.visible,
+              style: TextStyle(
+                fontSize: 14,
+                fontFamily: productSans,
+                color: white,
+                fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
@@ -150,81 +183,57 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
       ),
     );
   }
-}
 
-Widget _statusBadge(String raw) {
-  final status = raw.trim().toLowerCase();
+  Widget _statusBadge(String raw) {
+    final status = raw.trim().toLowerCase();
 
-  Color border;
-  Color fg;
-  String label;
+    Color border;
+    Color fg;
+    String label;
 
-  if (status == 'paid') {
-    border = Colors.green;
-    // ignore: deprecated_member_use
-    fg = Colors.green;
-    label = 'PAID';
-  } else if (status == 'pending' || status == 'processing') {
-    border = Colors.orange;
-    // ignore: deprecated_member_use
-    fg = Colors.orange;
-    label = status.toUpperCase();
-  } else if (status == 'unpaid' ||
-      status == 'failed' ||
-      status == 'rejected' ||
-      status == 'cancelled' ||
-      status == 'canceled') {
-    border = Colors.red;
-    // ignore: deprecated_member_use
-    fg = Colors.red;
-    label = status.toUpperCase();
-  } else {
-    border = Colors.white24;
-    fg = Colors.white70;
-    label = raw.isEmpty ? 'UNKNOWN' : raw.toUpperCase();
-  }
+    if (status == 'paid') {
+      border = Colors.green;
+      // ignore: deprecated_member_use
+      fg = Colors.green;
+      label = 'PAID';
+    } else if (status == 'pending' || status == 'processing') {
+      border = Colors.orange;
+      // ignore: deprecated_member_use
+      fg = Colors.orange;
+      label = status.toUpperCase();
+    } else if (status == 'unpaid' ||
+        status == 'failed' ||
+        status == 'rejected' ||
+        status == 'cancelled' ||
+        status == 'canceled') {
+      border = Colors.red;
+      // ignore: deprecated_member_use
+      fg = Colors.red;
+      label = status.toUpperCase();
+    } else {
+      border = Colors.white24;
+      fg = Colors.white70;
+      label = raw.isEmpty ? 'UNKNOWN' : raw.toUpperCase();
+    }
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: border),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        fontFamily: productSans,
-        fontSize: 12.5,
-        color: fg,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.3,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
       ),
-    ),
-  );
-}
-
-AppBar secondryTabAppBar({String title = ''}) {
-  return AppBar(
-    backgroundColor: const Color(0xFF221d25),
-    leadingWidth: 30,
-    toolbarHeight: 60,
-    shadowColor: const Color(0xFF221d25),
-    elevation: 0,
-    iconTheme: const IconThemeData(color: white),
-    centerTitle: true,
-    title: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        text(
-          title,
-          fontSize: 16.0,
-          textColor: white,
-          fontWeight: FontWeight.w600,
+      child: Text(
+        label,
+        style: TextStyle(
           fontFamily: productSans,
+          fontSize: 12.5,
+          color: fg,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class OrdersTableScreen extends StatefulWidget {
@@ -242,6 +251,7 @@ class OrdersTableScreen extends StatefulWidget {
 
 class _OrdersTableScreenState extends State<OrdersTableScreen> {
   final HomeController _homeController = Get.put(HomeController());
+  final DateFormat formatter = DateFormat("dd MMM yyyy");
 
   @override
   void initState() {
@@ -252,9 +262,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: secondryTabAppBar(
-        title: "Sessions of Date - ${widget.orderDate}",
-      ),
+      appBar: secondryTabAppBar(title: "Earning Details"),
       body: Stack(
         children: [
           SizedBox(
@@ -299,16 +307,13 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
 
                       final sessionId = order.sessionData?.id?.toString() ?? '';
                       final commission = (order.commission ?? '').toString();
-                      final totalAmount =
-                          order.sessionData?.order?.totalAmount?.toString() ??
-                          '0';
-                      // final status = (order.status ?? '').toString();
+
                       final sessionType = order.sessionData?.serviceName ?? '';
                       final startTime =
                           order.sessionData?.startTime?.toString() ?? '';
                       final endTime =
                           order.sessionData?.endTime?.toString() ?? '';
-                      final duration = calculateDuration(startTime, endTime);
+
                       final subtotal =
                           order.sessionData?.order?.totalAmount?.toString() ??
                           '0';
@@ -325,21 +330,27 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         ),
                         child: Column(
                           children: [
-                            _buildRow("Session ID", "#$sessionId"),
-                            _buildRow("Total Commission", "₹$commission"),
-                            _buildRow("Total Amount", "₹$totalAmount"),
+                            _buildRow(
+                              "Date",
+                              formatter.format(order.sessionDate!),
+                            ),
 
-                            // // Payout status badge
-                            // _buildRow(
-                            //   "Payout Status",
-                            //   null,
-                            //   trailing: _statusBadge(status),
-                            // ),
+                            _buildRow("Session ID", "#$sessionId"),
+                            _buildRow(
+                              "Customer name",
+                              order.customerName ?? "",
+                            ),
+
+                            _buildRow("Total Earning", "₹$commission"),
+
                             _buildRow("Session Type", sessionType),
                             _buildRow("Session Start Time", startTime),
                             _buildRow("Session End Time", endTime),
 
-                            _buildRow("Session Duration", duration),
+                            _buildRow(
+                              "Session Duration",
+                              "${order.sessionDurationMin.toString()} min",
+                            ),
 
                             _buildRow("Subtotal", "₹$subtotal"),
                             const Divider(color: Colors.white24, height: 24),
@@ -418,4 +429,28 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
       ),
     );
   }
+}
+
+AppBar secondryTabAppBar({String title = ''}) {
+  return AppBar(
+    backgroundColor: const Color(0xFF221d25),
+    leadingWidth: 30,
+    toolbarHeight: 60,
+    shadowColor: const Color(0xFF221d25),
+    elevation: 0,
+    iconTheme: const IconThemeData(color: white),
+    centerTitle: true,
+    title: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        text(
+          title,
+          fontSize: 16.0,
+          textColor: white,
+          fontWeight: FontWeight.w600,
+          fontFamily: productSans,
+        ),
+      ],
+    ),
+  );
 }

@@ -1,10 +1,13 @@
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
+import 'package:astro_partner_app/controllers/home_controller.dart';
+import 'package:astro_partner_app/model/callerUserInfo_model.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -20,6 +23,8 @@ class CallingFreePage extends StatefulWidget {
   final String userName;
   final String? userImageUrl;
   final int userId;
+  final String callerId;
+
   final int remaingTime;
   final String appId;
   final String token;
@@ -28,6 +33,7 @@ class CallingFreePage extends StatefulWidget {
   const CallingFreePage({
     super.key,
     required this.remaingTime,
+    required this.callerId,
     required this.callType,
     required this.userName,
     required this.userId,
@@ -50,6 +56,8 @@ class _CallingFreePageState extends State<CallingFreePage> {
   int? _remoteUid;
   // File? _selectedImage;
   bool _speakerOn = false;
+  final DateFormat formatter = DateFormat("dd MMM yyyy");
+  final HomeController _homeController = Get.put(HomeController());
 
   @override
   void initState() {
@@ -187,6 +195,71 @@ class _CallingFreePageState extends State<CallingFreePage> {
     super.dispose();
   }
 
+  void _showCustomerDetails(CallerUserInfo data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF221d25),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          "About ${data.name ?? "--"}",
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontFamily: productSans, color: white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow("Name", data.name ?? "--"),
+            const SizedBox(height: 6),
+            _detailRow(
+              "Birth Date",
+              (data.birthday != null) ? formatter.format(data.birthday!) : "--",
+            ),
+            const SizedBox(height: 6),
+            _detailRow("Birth Time", data.birthTime ?? "--"),
+            const SizedBox(height: 6),
+            _detailRow("Birth Time Accuracy", data.birthTimeAccuracy ?? "--"),
+            const SizedBox(height: 6),
+            _detailRow("Birth Place", data.birthPlace ?? "--"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              "Close",
+              style: TextStyle(color: Colors.red, fontFamily: productSans),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(dynamic title, dynamic value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "$title:",
+          style: const TextStyle(
+            color: Colors.white70,
+            fontFamily: productSans,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: white, fontFamily: productSans),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _remoteVideo() {
     if (_remoteUid != null && _engineInitialized) {
       return AgoraVideoView(
@@ -217,12 +290,47 @@ class _CallingFreePageState extends State<CallingFreePage> {
                         ), // If image is available, load from network
                       ),
                       const SizedBox(height: 16),
-                      text(
-                        widget.userName,
-                        fontSize: 28.0,
-                        textColor: white,
-                        fontWeight: FontWeight.w600,
-                        isCentered: true,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          text(
+                            widget.userName,
+                            fontSize: 28.0,
+                            textColor: white,
+                            fontWeight: FontWeight.w600,
+                            isCentered: true,
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.info_outline,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              await _homeController
+                                  .userInfoModelData(userId: widget.callerId)
+                                  .then((value) {
+                                    if (value.status == true &&
+                                        value.user != null) {
+                                      _showCustomerDetails(value.user!);
+                                    } else {
+                                      Get.snackbar(
+                                        'Data Not Found',
+                                        'Customer details could not be loaded.',
+                                        snackPosition: SnackPosition.TOP,
+                                        backgroundColor: Colors.redAccent,
+                                        colorText: Colors.white,
+                                        duration: const Duration(seconds: 2),
+                                      );
+                                    }
+                                  });
+                            },
+                          ),
+                        ],
                       ),
                       _remoteUid == null
                           ? text(
@@ -315,12 +423,48 @@ class _CallingFreePageState extends State<CallingFreePage> {
                                 : null,
                           ),
                           const SizedBox(height: 16),
-                          text(
-                            widget.userName,
-                            fontSize: 28.0,
-                            textColor: white,
-                            fontWeight: FontWeight.w600,
-                            isCentered: true,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              text(
+                                widget.userName,
+                                fontSize: 28.0,
+                                textColor: white,
+                                fontWeight: FontWeight.w600,
+                                isCentered: true,
+                              ),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(
+                                  Icons.info_outline,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                onPressed: () async {
+                                  final response = await _homeController
+                                      .userInfoModelData(
+                                        userId: widget.callerId,
+                                      );
+
+                                  if (response.status == true &&
+                                      response.user != null) {
+                                    _showCustomerDetails(response.user!);
+                                  } else {
+                                    Get.snackbar(
+                                      'Data Not Found',
+                                      'Customer details could not be loaded.',
+                                      snackPosition: SnackPosition.TOP,
+                                      backgroundColor: Colors.redAccent,
+                                      colorText: Colors.white,
+                                      duration: const Duration(seconds: 2),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
 

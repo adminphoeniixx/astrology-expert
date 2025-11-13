@@ -7,7 +7,7 @@ import 'package:astro_partner_app/Screens/tabs/review_tab.dart';
 import 'package:astro_partner_app/Screens/tabs/session_tab.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
-import 'package:astro_partner_app/constants/images_const.dart';
+import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/controllers/user_controller.dart';
 
 import 'package:astro_partner_app/widgets/app_widget.dart';
@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MyHomePage extends StatefulWidget {
   final TabItem tabItem;
@@ -29,8 +30,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   StreamSubscription? _sub;
   GlobalKey bottomNavigationKey = GlobalKey();
-  final UserController _userController = Get.put(UserController());
+  final HomeController _homeController = Get.put(HomeController());
 
+  final UserController _userController = Get.put(UserController());
   final _navigatorKeys = {
     // TabItem.homeTab: GlobalKey<NavigatorState>(),
     TabItem.sessionsTab: GlobalKey<NavigatorState>(),
@@ -41,13 +43,35 @@ class _MyHomePageState extends State<MyHomePage> {
   dynamic userIdValue;
   @override
   void initState() {
-    _userController.getUserProfile();
-
+    _loadProfileData();
     setState(() {
       selectedIndex = widget.tabItem;
     });
 
     super.initState();
+  }
+
+  bool isOnline = false; // initial switch state
+
+  Future<void> _loadProfileData() async {
+    try {
+      await _userController.getUserProfile();
+      final availableValue =
+          _userController.getprofile?.data?.availableForFreeChat ?? "no";
+
+      // ✅ Normalize the string (removes spaces and handles any case)
+      final normalized = availableValue.trim().toLowerCase();
+
+      setState(() {
+        isOnline = normalized == "yes";
+      });
+
+      debugPrint(
+        "✅ Loaded availability: '$availableValue' → normalized: '$normalized' → isOnline: $isOnline",
+      );
+    } catch (e) {
+      debugPrint("❌ Error loading profile: $e");
+    }
   }
 
   @override
@@ -155,108 +179,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  AppBar seconderyAppbarWithSearch({required String title}) {
-    return AppBar(
-      backgroundColor: const Color(0xFF221d25),
-      shadowColor: const Color(0xFF221d25),
-      leadingWidth: 0,
-      elevation: 0,
-      toolbarHeight: 115,
-      titleSpacing: 0,
-      centerTitle: true,
-      title: Column(
-        children: [
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: text(
-                  "Products",
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w500,
-                  textColor: white,
-                ),
-              ),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      //  changeScreen(context, const AstroMoney());
-                    },
-                    child: SvgPicture.asset(
-                      walletIconSvg,
-                      color: white,
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                  // const SizedBox(width: 16),
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     changeScreen(context, const NotificationPage());
-                  //   },
-                  //   child: SvgPicture.asset(
-                  //     notificationIcon,
-                  //     color: black,
-                  //     height: 20,
-                  //     width: 20,
-                  //   ),
-                  // ),
-                  const SizedBox(width: 20),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: GestureDetector(
-                onTap: () {
-                  // showSearch(
-                  //   context: context,
-                  //   delegate: ProductSearchDelegate(),
-                  // );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: textColorSecondary),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SizedBox(
-                    width: MediaQuery.sizeOf(context).width,
-                    height: 40,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 150),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const SizedBox(width: 10),
-                          SvgPicture.asset(searchIcon),
-                          const SizedBox(width: 10),
-                          text(
-                            "Search Products...",
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w300,
-                            textColor: textColorSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   AppBar secondryTabAppBar({String title = ''}) {
     return AppBar(
       backgroundColor: const Color(0xFF221d25),
@@ -299,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  AppBar profileTabAppBar({BuildContext? context}) {
+  AppBar profileTabAppBar() {
     return AppBar(
       backgroundColor: const Color(0xFF221d25),
       leadingWidth: 0,
@@ -309,57 +231,146 @@ class _MyHomePageState extends State<MyHomePage> {
       titleSpacing: 0.0,
       title: Obx(() {
         if (_userController.isGetProfileModelLoding.value) {
-          return const SizedBox();
-        } else {
+          // 🔹 Show shimmer while loading
           return Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // SizedBox(
-                //     height: 48,
-                //     width: 48,
-                //     child: SvgPicture.asset(profileIcon,
-                //         color: textColorPrimary)),
-                // const SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    text(
-                      _userController.getprofile!.data!.name ?? "",
-                      fontSize: 16.0,
-                      fontFamily: productSans,
-                      fontWeight: FontWeight.w500,
-                      textColor: white,
-                    ),
-                    text(
-                      _userController.getprofile!.data!.email ?? "",
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w400,
-                      textColor: white,
-                      fontFamily: productSans,
-                    ),
-                    text(
-                      _userController.getprofile!.data!.mobile ?? "",
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: productSans,
-                      textColor: white,
-                    ),
-                  ],
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[700]!,
+                  highlightColor: Colors.grey[500]!,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(width: 120, height: 16, color: Colors.white),
+                      const SizedBox(height: 6),
+                      Container(width: 180, height: 14, color: Colors.white),
+                      const SizedBox(height: 6),
+                      Container(width: 100, height: 14, color: Colors.white),
+                    ],
+                  ),
                 ),
-                // const Spacer(),
-                // GestureDetector(
-                //   onTap: () {
-                //     Get.to(const EditProfile());
-                //   },
-                //   child: SvgPicture.asset(edit2Icon, color: white),
-                // ),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[700]!,
+                  highlightColor: Colors.grey[500]!,
+                  child: Column(
+                    children: [
+                      Container(width: 40, height: 20, color: Colors.white),
+                      const SizedBox(height: 4),
+                      Container(width: 60, height: 10, color: Colors.white),
+                    ],
+                  ),
+                ),
               ],
             ),
           );
         }
+
+        // 🔹 When data is loaded
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// 👤 Left Side: Profile Info
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  text(
+                    _userController.getprofile!.data!.name ?? "",
+                    fontSize: 16.0,
+                    fontFamily: productSans,
+                    fontWeight: FontWeight.w500,
+                    textColor: white,
+                  ),
+                  text(
+                    _userController.getprofile!.data!.email ?? "",
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w400,
+                    textColor: white,
+                    fontFamily: productSans,
+                  ),
+                  text(
+                    _userController.getprofile!.data!.mobile ?? "",
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: productSans,
+                    textColor: white,
+                  ),
+                ],
+              ),
+
+              /// 🔘 Right Side: Switch + Status
+              Column(
+                children: [
+                  Switch(
+                    value: isOnline,
+                    onChanged: (val) async {
+                      setState(() {
+                        isOnline = val;
+                      });
+
+                      final available = val ? "Yes" : "No";
+                      try {
+                        await _homeController.expertOnOffModelData(
+                          available: available,
+                        );
+
+                        // ✅ Refresh user profile after API success
+                        await _userController.getUserProfile();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: val
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            content: Text(
+                              val
+                                  ? 'You are now Available for chat'
+                                  : 'You are now Not Available for chat',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontFamily: productSans,
+                              ),
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      } catch (e) {
+                        setState(() => isOnline = !val); // rollback on error
+                        debugPrint("❌ Error updating status: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Text(
+                              "Failed to update availability",
+                              style: TextStyle(fontFamily: productSans),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    activeColor: Colors.greenAccent,
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: Colors.white24,
+                  ),
+
+                  Text(
+                    isOnline ? "Available" : "Not Available",
+                    style: TextStyle(
+                      color: isOnline ? Colors.greenAccent : Colors.redAccent,
+                      fontSize: 10,
+                      fontFamily: productSans,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       }),
     );
   }

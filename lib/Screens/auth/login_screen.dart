@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:astro_partner_app/Screens/auth/otp_screen.dart';
+import 'package:astro_partner_app/Screens/auth/register_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/user_controller.dart';
@@ -27,13 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
   // final LoaderController _loaderController = Get.put(LoaderController());
   TextEditingController mobileController = TextEditingController();
   String phoneNumber = "";
-
-  @override
-  void initState() {
-    print("!!!!!!!!!3!!!!!!!!!!");
-
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -121,6 +115,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       context,
                                       OTPVerifyScreen(phoneNumber: phoneNumber),
                                     );
+                                  // } else if (loginModel.status == false) {
+                                  //   changeScreen(
+                                  //     context,
+                                  //     const RegisterScreen(),
+                                  //   );
                                   } else {
                                     showToast(context, msg: loginModel.message);
                                   }

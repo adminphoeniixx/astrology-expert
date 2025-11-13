@@ -97,6 +97,8 @@ class ProfileData {
   dynamic panCard;
   dynamic adharCard;
   dynamic bankName;
+  dynamic availableForCall;
+  dynamic availableForChat;
   dynamic profilePhotoUrl;
 
   ProfileData({
@@ -153,6 +155,8 @@ class ProfileData {
     this.panCard,
     this.adharCard,
     this.bankName,
+    this.availableForCall,
+    this.availableForChat,
     this.profilePhotoUrl,
   });
 
@@ -216,6 +220,8 @@ class ProfileData {
     panCard: json["pan_card"],
     adharCard: json["adhar_card"],
     bankName: json["bank_name"],
+    availableForCall: json["available_for_call"],
+    availableForChat: json["available_for_chat"],
     profilePhotoUrl: json["profile_photo_url"],
   );
 
@@ -274,6 +280,8 @@ class ProfileData {
     "pan_card": panCard,
     "adhar_card": adharCard,
     "bank_name": bankName,
+    "available_for_call": availableForCall,
+    "available_for_chat": availableForChat,
     "profile_photo_url": profilePhotoUrl,
   };
 }

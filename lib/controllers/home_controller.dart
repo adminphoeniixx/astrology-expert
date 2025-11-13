@@ -1,4 +1,6 @@
 import 'package:astro_partner_app/model/api_response.dart';
+import 'package:astro_partner_app/model/auth/getprofile_model.dart';
+import 'package:astro_partner_app/model/callerUserInfo_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
@@ -364,5 +366,87 @@ class HomeController extends GetxController {
     }
     isStartTimerChatModelLoding(false);
     return _startTimerChatModel!;
+  }
+
+  GetProfileModel? get expertOnOffModel => _expertOnOffModel;
+  GetProfileModel? _expertOnOffModel;
+
+  var isexpertOnOffModelLoding = false.obs;
+
+  Future<GetProfileModel> expertOnOffModelData({
+    required String available,
+  }) async {
+    try {
+      isexpertOnOffModelLoding(true);
+      _expertOnOffModel = await _webApiServices!.getExpertOnOffModel(
+        available: available,
+      );
+    } on Failure catch (e) {
+      isexpertOnOffModelLoding(false);
+      _setFailure(e);
+    }
+    isexpertOnOffModelLoding(false);
+    return _expertOnOffModel!;
+  }
+
+  CallerUserInfoModel? get userInfoModel => _userInfoModel;
+  CallerUserInfoModel? _userInfoModel;
+
+  var isuserInfoModelLoding = false.obs;
+
+  Future<CallerUserInfoModel> userInfoModelData({
+    required dynamic userId,
+  }) async {
+    try {
+      isuserInfoModelLoding(true);
+      _userInfoModel = await _webApiServices!.getuserInfoModel(userId: userId);
+    } on Failure catch (e) {
+      isuserInfoModelLoding(false);
+      _setFailure(e);
+    }
+    isuserInfoModelLoding(false);
+    return _userInfoModel!;
+  }
+
+  GetProfileModel? get callOnOffModel => _callOnOffModel;
+  GetProfileModel? _callOnOffModel;
+
+  var iscallOnOffModelLoding = false.obs;
+
+  Future<GetProfileModel> callOnOffModelData({
+    required String available,
+  }) async {
+    try {
+      iscallOnOffModelLoding(true);
+      _callOnOffModel = await _webApiServices!.getCallOnOffModel(
+        available: available,
+      );
+    } on Failure catch (e) {
+      iscallOnOffModelLoding(false);
+      _setFailure(e);
+    }
+    iscallOnOffModelLoding(false);
+    return _callOnOffModel!;
+  }
+
+  GetProfileModel? get chatOnOffModel => _chatOnOffModel;
+  GetProfileModel? _chatOnOffModel;
+
+  var ischatOnOffModelLoding = false.obs;
+
+  Future<GetProfileModel> chatOnOffModelData({
+    required String available,
+  }) async {
+    try {
+      ischatOnOffModelLoding(true);
+      _chatOnOffModel = await _webApiServices!.getChatOnOffModel(
+        available: available,
+      );
+    } on Failure catch (e) {
+      ischatOnOffModelLoding(false);
+      _setFailure(e);
+    }
+    ischatOnOffModelLoding(false);
+    return _chatOnOffModel!;
   }
 }
