@@ -185,11 +185,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   setState(() {
                                     checkFormValidation = true;
                                   });
+
                                   if (_formKey.currentState!.validate()) {
                                     try {
-                                      setState(() {
-                                        isLoading = true;
-                                      });
+                                      setState(() => isLoading = true);
+
                                       _userController.setOtpStatus(
                                         OtpFor.signUp,
                                       );
@@ -197,42 +197,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           await _userController
                                               .getRegisterWithOtp(
                                                 email: emailController.text,
-                                                mobile: mobileController.text,
+                                                mobile: phoneNumber,
                                                 name: nameController.text,
                                                 gender: genderController.text,
-
-                                                screen: 'register',
                                               );
+
+                                      // Stop loader
                                       _loaderController.setLoadingStatus(false);
-                                      if (signUpModel.status!) {
+
+                                      // Prevent crash: safe null check
+                                      if (signUpModel.status == true) {
                                         changeScreen(
                                           context,
                                           OTPVerifyScreen(
                                             phoneNumber: phoneNumber,
                                           ),
                                         );
-                                        setState(() {
-                                          isLoading = false;
-                                        });
                                       } else {
                                         showToast(
                                           context,
-                                          msg: signUpModel.message,
+                                          msg:
+                                              signUpModel.message ??
+                                              "Something went wrong",
                                         );
-                                        setState(() {
-                                          isLoading = false;
-                                        });
                                       }
                                     } catch (e) {
-                                      print(e.toString());
-                                      setState(() {
-                                        isLoading = false;
-                                      });
+                                      print("ERROR: $e");
                                     } finally {
+                                      setState(() => isLoading = false);
                                       _loaderController.setLoadingStatus(false);
-                                      setState(() {
-                                        isLoading = false;
-                                      });
                                     }
                                   } else {
                                     showToast(

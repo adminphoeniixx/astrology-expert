@@ -6,6 +6,7 @@ import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/chat_model.dart';
+import 'package:astro_partner_app/model/partner_info_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/free_chat_service.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
@@ -212,11 +213,13 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   // ------------------ Send text / media ------------------
   Future<void> _sendMessage() async {
-    if (_isCompleted) return;
+    print("!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!");
+    // if (_isCompleted) return;
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    // if (text.isEmpty) return;
 
-    await _setTyping(false);
+    // await _setTyping(false);
+    print("!!!!!!!!!!!!!!!!2!!!!!!!!!!!!!!!!!");
 
     final meta = await FirebaseFirestore.instance
         .collection('free_chat_session')
@@ -332,8 +335,6 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   //       });
   // }
   Future<void> _sendMedia() async {
-    print("🟢 Step 0: Starting _sendMedia()...");
-
     if (_isCompleted) {
       print("⚠️ Chat completed. Aborting.");
       return;
@@ -694,7 +695,26 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     super.dispose();
   }
 
-  void _showCustomerDetails(User data) {
+  String _formatDate(dynamic value) {
+    if (value == null) return "--";
+
+    if (value is DateTime) {
+      return formatter.format(value);
+    }
+
+    // If value is String → try parsing it
+    if (value is String) {
+      try {
+        return formatter.format(DateTime.parse(value));
+      } catch (e) {
+        return value; // return as-is if parsing fails
+      }
+    }
+
+    return "--";
+  }
+
+  void _showCustomerDetails(User data, PartnerData? data2) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -702,8 +722,8 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           "About ${data.name ?? "--"}",
-          maxLines: 1, // or remove if you want multiline
-          overflow: TextOverflow.ellipsis, // shows "..." for too long text
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontFamily: productSans, color: white),
         ),
         content: Column(
@@ -714,18 +734,47 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             const SizedBox(height: 6),
             _detailRow(
               "Birth Date",
-              formatter.format(DateTime.parse(data.birthday ?? "--")),
+              (data.birthday != null) ? _formatDate(data.birthday!) : "--",
             ),
             const SizedBox(height: 6),
             _detailRow("Birth Time", data.birthTime ?? "--"),
             const SizedBox(height: 6),
-
             _detailRow("Birth Time Accuracy", data.birthTimeAccuracy ?? "--"),
-
             const SizedBox(height: 6),
             _detailRow("Birth Place", data.birthPlace ?? "--"),
-            // const SizedBox(height: 6),
-            // _detailRow("Mobile", data.mobile),
+            const SizedBox(height: 14),
+
+            // ---------- PARTNER SECTION CHECK --------------
+            if (data2 != null) ...[
+              const Text(
+                "Partner Details",
+                style: TextStyle(
+                  fontFamily: productSans,
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _detailRow("Name", data2.partnerName ?? "--"),
+              const SizedBox(height: 6),
+              _detailRow(
+                "Birth Date",
+                (data2.partnerDateOfBirth != null)
+                    ? _formatDate(data2.partnerDateOfBirth!)
+                    : "--",
+              ),
+              const SizedBox(height: 6),
+              _detailRow("Birth Time", data2.partnerBirthTime ?? "--"),
+              const SizedBox(height: 6),
+              _detailRow(
+                "Birth Time Accuracy",
+                data2.birthPartnerAccuracy ?? "--",
+              ),
+              const SizedBox(height: 6),
+              _detailRow("Birth Place", data2.partnerPlaceOfBirth ?? "--"),
+            ],
           ],
         ),
         actions: [
@@ -809,22 +858,27 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                       size: 20,
                     ),
                     onPressed: () async {
-                      await _homeController
-                          .fetchSessionDetailsData(sessionId: widget.sessionId)
-                          .then((value) {
-                            if (value.success == true && value.data != null) {
-                              _showCustomerDetails(value.data!.user!);
-                            } else {
-                              Get.snackbar(
-                                'Data Not Found',
-                                'Customer details could not be loaded.',
-                                snackPosition: SnackPosition.TOP,
-                                backgroundColor: Colors.redAccent,
-                                colorText: Colors.white,
-                                duration: const Duration(seconds: 2),
-                              );
-                            }
-                          });
+                      final userResponse = await _homeController
+                          .fetchSessionDetailsData(sessionId: widget.sessionId);
+                      final partnerResponse = await _homeController
+                          .parterInfoModelData(userId2: widget.reciverId);
+
+                      if (userResponse.success == true &&
+                          userResponse.data != null) {
+                        _showCustomerDetails(
+                          userResponse.data!.user!,
+                          partnerResponse.data!, // <-- pass partner model here
+                        );
+                      } else {
+                        Get.snackbar(
+                          'Data Not Found',
+                          'Details could not be loaded.',
+                          snackPosition: SnackPosition.TOP,
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
+                      }
                     },
                   ),
                 ],

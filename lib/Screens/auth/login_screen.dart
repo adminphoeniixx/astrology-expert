@@ -115,11 +115,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       context,
                                       OTPVerifyScreen(phoneNumber: phoneNumber),
                                     );
-                                  // } else if (loginModel.status == false) {
-                                  //   changeScreen(
-                                  //     context,
-                                  //     const RegisterScreen(),
-                                  //   );
+                                  } else if (loginModel.status == false) {
+                                    changeScreen(
+                                      context,
+                                      const RegisterScreen(),
+                                    );
                                   } else {
                                     showToast(context, msg: loginModel.message);
                                   }

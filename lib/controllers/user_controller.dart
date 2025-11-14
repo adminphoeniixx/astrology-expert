@@ -91,7 +91,6 @@ class UserController extends GetxController {
     required String email,
     required String gender,
 
-    required String screen,
   }) async {
     try {
       isRegisterOtpLoding(true); // Obtain shared preferences.
@@ -100,7 +99,6 @@ class UserController extends GetxController {
         email: email,
         mobile: mobile,
         name: name,
-        screen: screen,
       );
     } on Failure catch (e) {
       isRegisterOtpLoding(false); // Obtain shared preferences.

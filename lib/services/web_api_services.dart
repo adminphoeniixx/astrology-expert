@@ -11,6 +11,7 @@ import 'package:astro_partner_app/model/auth/sinup_model.dart';
 import 'package:astro_partner_app/model/callerUserInfo_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
+import 'package:astro_partner_app/model/partner_info_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/review_list_model.dart';
 import 'package:astro_partner_app/model/seassion_chat_model.dart';
@@ -52,8 +53,6 @@ class WebApiServices {
     required String name,
     required String email,
     required String gender,
-
-    required String screen,
   }) async {
     try {
       String url = "${GetBaseUrl + GetDomainUrl}register";
@@ -61,7 +60,6 @@ class WebApiServices {
       dynamic request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields.addAll({
         'mobile_number': mobile,
-        'screen': screen,
         'name': name,
         'email': email,
         'gender': gender,
@@ -70,7 +68,6 @@ class WebApiServices {
       print("!!!!!!!!!!!!!!!!!getRegisterWithOtp!!!!!!!!!!!!!!!!!!");
       print({
         'mobile_number': mobile,
-        'screen': screen,
         'name': name,
         'email': email,
         'gender': gender,
@@ -1672,5 +1669,50 @@ class WebApiServices {
     }
 
     return _chatOnOffModel;
+  }
+
+  ParterInfoModel _parterInfoModel = ParterInfoModel();
+  Future<ParterInfoModel> getParterInfoModel({required dynamic userId2}) async {
+    String url = "${GetBaseUrl + GetDomainUrl2}get-partner-details";
+    final headers = await authHeader();
+
+    try {
+      print("#############_parterInfoModel##################");
+      print("URL: $url");
+
+      final body = jsonEncode({'user_id': userId2});
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {...headers, "Content-Type": "application/json"},
+
+        body: body,
+      );
+
+      print("Body: $body");
+      print("Response (${response.statusCode}): ${response.body}");
+      print("#########_parterInfoModel############");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _parterInfoModel = ParterInfoModel.fromJson(jsonDecode(response.body));
+        _parterInfoModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        _parterInfoModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == 500) {
+        _parterInfoModel.requestStatus = RequestStatus.server;
+      } else {
+        throw HttpException("Unexpected response: ${response.statusCode}");
+      }
+    } catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "_parterInfoModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+      throw Failure(e.toString());
+    }
+
+    return _parterInfoModel;
   }
 }

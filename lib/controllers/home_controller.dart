@@ -3,6 +3,7 @@ import 'package:astro_partner_app/model/auth/getprofile_model.dart';
 import 'package:astro_partner_app/model/callerUserInfo_model.dart';
 import 'package:astro_partner_app/model/earning_details_model.dart';
 import 'package:astro_partner_app/model/earning_list_model.dart';
+import 'package:astro_partner_app/model/partner_info_model.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/review_list_model.dart';
 import 'package:astro_partner_app/model/seassion_chat_model.dart';
@@ -448,5 +449,24 @@ class HomeController extends GetxController {
     }
     ischatOnOffModelLoding(false);
     return _chatOnOffModel!;
+  }
+
+  ParterInfoModel? get parterInfoModel => _parterInfoModel;
+  ParterInfoModel? _parterInfoModel;
+
+  var isParterInfoModelLoding = false.obs;
+
+  Future<ParterInfoModel> parterInfoModelData({required dynamic userId2}) async {
+    try {
+      isParterInfoModelLoding(true);
+      _parterInfoModel = await _webApiServices!.getParterInfoModel(
+        userId2: userId2,
+      );
+    } on Failure catch (e) {
+      isParterInfoModelLoding(false);
+      _setFailure(e);
+    }
+    isParterInfoModelLoding(false);
+    return _parterInfoModel!;
   }
 }
