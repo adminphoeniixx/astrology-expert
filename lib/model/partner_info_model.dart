@@ -44,7 +44,7 @@ class ParterInfoModel {
 }
 
 class PartnerData {
-  int? userId;
+  dynamic userId;
   dynamic partnerName;
   DateTime? partnerDateOfBirth;
   dynamic partnerBirthTime;

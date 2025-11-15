@@ -214,11 +214,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   // ------------------ Send text / media ------------------
   Future<void> _sendMessage() async {
     print("!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!");
-    // if (_isCompleted) return;
+    if (_isCompleted) return;
     final text = _messageController.text.trim();
-    // if (text.isEmpty) return;
+    if (text.isEmpty) return;
 
-    // await _setTyping(false);
+    await _setTyping(false);
     print("!!!!!!!!!!!!!!!!2!!!!!!!!!!!!!!!!!");
 
     final meta = await FirebaseFirestore.instance
@@ -714,7 +714,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     return "--";
   }
 
-  void _showCustomerDetails(User data, PartnerData? data2) {
+  void _showCustomerDetails(User data, ParterInfoModel data2) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -745,7 +745,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             const SizedBox(height: 14),
 
             // ---------- PARTNER SECTION CHECK --------------
-            if (data2 != null) ...[
+            if (data2.data != null) ...[
               const Text(
                 "Partner Details",
                 style: TextStyle(
@@ -757,23 +757,26 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
               ),
               const SizedBox(height: 10),
 
-              _detailRow("Name", data2.partnerName ?? "--"),
+              _detailRow("Name", data2.data!.partnerName ?? "--"),
               const SizedBox(height: 6),
               _detailRow(
                 "Birth Date",
-                (data2.partnerDateOfBirth != null)
-                    ? _formatDate(data2.partnerDateOfBirth!)
+                (data2.data!.partnerDateOfBirth != null)
+                    ? _formatDate(data2.data!.partnerDateOfBirth!)
                     : "--",
               ),
               const SizedBox(height: 6),
-              _detailRow("Birth Time", data2.partnerBirthTime ?? "--"),
+              _detailRow("Birth Time", data2.data!.partnerBirthTime ?? "--"),
               const SizedBox(height: 6),
               _detailRow(
                 "Birth Time Accuracy",
-                data2.birthPartnerAccuracy ?? "--",
+                data2.data!.birthPartnerAccuracy ?? "--",
               ),
               const SizedBox(height: 6),
-              _detailRow("Birth Place", data2.partnerPlaceOfBirth ?? "--"),
+              _detailRow(
+                "Birth Place",
+                data2.data!.partnerPlaceOfBirth ?? "--",
+              ),
             ],
           ],
         ),
@@ -867,7 +870,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                           userResponse.data != null) {
                         _showCustomerDetails(
                           userResponse.data!.user!,
-                          partnerResponse.data!, // <-- pass partner model here
+                          partnerResponse, // <-- pass partner model here
                         );
                       } else {
                         Get.snackbar(
