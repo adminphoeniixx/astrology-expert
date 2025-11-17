@@ -89,7 +89,7 @@ class _ReviewTabState extends State<ReviewTab> {
                             padding: const EdgeInsets.only(top: 400),
                             child: Center(
                               child: text(
-                                "Reviwes not found!",
+                                "Reviews not found!",
                                 fontFamily: productSans,
                                 textColor: white,
                               ),
