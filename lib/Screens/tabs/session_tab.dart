@@ -7,7 +7,7 @@ import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
-import 'package:astro_partner_app/widgets/socket_service.dart';
+import 'package:astro_partner_app/services/socket_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -193,86 +193,140 @@ class _SessionTabState extends State<SessionTab> {
                                           final value = await _homeController
                                               .fetchSessionChatModelData(
                                                 sessionId: sessionId,
-                                              );
+                                              )
+                                              .then((
+                                                fetchSessionChatModelData,
+                                              ) {
+                                                Navigator.pop(
+                                                  context,
+                                                ); // Hide loader
 
-                                          final socketDetails =
-                                              await _homeController
-                                                  .socketDetailsModelData();
-
-                                          final socketVerify =
-                                              await _homeController
-                                                  .socketVerifyModelData(
-                                                    socketId: "1234.5678",
-                                                    channelName:
-                                                        value.session?.roomId
+                                                // Navigate to chat screen
+                                                Get.to(
+                                                  FirebaseChatScreen(
+                                                    sessionId: sessionId,
+                                                    startTime:
+                                                        session.startTime ?? "",
+                                                    sessionStatus:
+                                                        session.status ?? "",
+                                                    customerName:
+                                                        fetchSessionChatModelData
+                                                            .session
+                                                            ?.customerName ??
+                                                        "",
+                                                    remaingTime:
+                                                        fetchSessionChatModelData
+                                                            .pricing
+                                                            ?.remainingSeconds
+                                                            ?.toString() ??
+                                                        "0",
+                                                    reciverId:
+                                                        int.tryParse(
+                                                          fetchSessionChatModelData
+                                                                  .session
+                                                                  ?.customerId
+                                                                  ?.toString() ??
+                                                              "0",
+                                                        ) ??
+                                                        0,
+                                                    senderId:
+                                                        int.tryParse(
+                                                          fetchSessionChatModelData
+                                                                  .session
+                                                                  ?.expertId
+                                                                  ?.toString() ??
+                                                              "0",
+                                                        ) ??
+                                                        0,
+                                                    roomId:
+                                                        fetchSessionChatModelData
+                                                            .session
+                                                            ?.roomId
                                                             ?.toString() ??
                                                         "",
-                                                  );
+                                                    subCollection: 'messages',
+                                                  ),
+                                                );
+                                              });
 
-                                          await SocketService().connect(
-                                            appKey:
-                                                socketDetails.soketi?.key ?? "",
-                                            authEndpoint: Uri.parse(
-                                              "https://vedamroots.com/api/pusher/auth",
-                                            ),
-                                            bearerToken:
-                                                socketVerify.auth ?? "",
-                                            host:
-                                                socketDetails.soketi?.host ??
-                                                "",
-                                            port:
-                                                int.tryParse(
-                                                  socketDetails.soketi?.port ??
-                                                      "0",
-                                                ) ??
-                                                0,
-                                            roomId:
-                                                value.session?.roomId
-                                                    ?.toString() ??
-                                                "",
-                                            useTLS: false,
-                                          );
+                                          // final socketDetails =
+                                          //     await _homeController
+                                          //         .socketDetailsModelData();
 
-                                          Navigator.pop(context); // Hide loader
+                                          // final socketVerify =
+                                          //     await _homeController
+                                          //         .socketVerifyModelData(
+                                          //           socketId: "1234.5678",
+                                          //           channelName:
+                                          //               value.session?.roomId
+                                          //                   ?.toString() ??
+                                          //               "",
+                                          //         );
 
-                                          // Navigate to chat screen
-                                          Get.to(
-                                            FirebaseChatScreen(
-                                              sessionId: sessionId,
-                                              startTime:
-                                                  session.startTime ?? "",
-                                              sessionStatus:
-                                                  session.status ?? "",
-                                              customerName:
-                                                  value.session?.customerName ??
-                                                  "",
-                                              remaingTime:
-                                                  value
-                                                      .pricing
-                                                      ?.remainingSeconds
-                                                      ?.toString() ??
-                                                  "0",
-                                              reciverId:
-                                                  int.tryParse(
-                                                    value.session?.customerId
-                                                            ?.toString() ??
-                                                        "0",
-                                                  ) ??
-                                                  0,
-                                              senderId:
-                                                  int.tryParse(
-                                                    value.session?.expertId
-                                                            ?.toString() ??
-                                                        "0",
-                                                  ) ??
-                                                  0,
-                                              roomId:
-                                                  value.session?.roomId
-                                                      ?.toString() ??
-                                                  "",
-                                              subCollection: 'messages',
-                                            ),
-                                          );
+                                          // await SocketService().connect(
+                                          //   appKey:
+                                          //       socketDetails.soketi?.key ?? "",
+                                          //   authEndpoint: Uri.parse(
+                                          //     "https://vedamroots.com/api/pusher/auth",
+                                          //   ),
+                                          //   bearerToken:
+                                          //       socketVerify.auth ?? "",
+                                          //   host:
+                                          //       socketDetails.soketi?.host ??
+                                          //       "",
+                                          //   port:
+                                          //       int.tryParse(
+                                          //         socketDetails.soketi?.port ??
+                                          //             "0",
+                                          //       ) ??
+                                          //       0,
+                                          //   roomId:
+                                          //       value.session?.roomId
+                                          //           ?.toString() ??
+                                          //       "",
+                                          //   useTLS: false,
+                                          // );
+
+                                          // Navigator.pop(context); // Hide loader
+
+                                          // // Navigate to chat screen
+                                          // Get.to(
+                                          //   FirebaseChatScreen(
+                                          //     sessionId: sessionId,
+                                          //     startTime:
+                                          //         session.startTime ?? "",
+                                          //     sessionStatus:
+                                          //         session.status ?? "",
+                                          //     customerName:
+                                          //         value.session?.customerName ??
+                                          //         "",
+                                          //     remaingTime:
+                                          //         value
+                                          //             .pricing
+                                          //             ?.remainingSeconds
+                                          //             ?.toString() ??
+                                          //         "0",
+                                          //     reciverId:
+                                          //         int.tryParse(
+                                          //           value.session?.customerId
+                                          //                   ?.toString() ??
+                                          //               "0",
+                                          //         ) ??
+                                          //         0,
+                                          //     senderId:
+                                          //         int.tryParse(
+                                          //           value.session?.expertId
+                                          //                   ?.toString() ??
+                                          //               "0",
+                                          //         ) ??
+                                          //         0,
+                                          //     roomId:
+                                          //         value.session?.roomId
+                                          //             ?.toString() ??
+                                          //         "",
+                                          //     subCollection: 'messages',
+                                          //   ),
+                                          // );
                                           break;
                                       }
                                     },
