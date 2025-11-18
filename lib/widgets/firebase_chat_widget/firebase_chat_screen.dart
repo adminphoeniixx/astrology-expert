@@ -80,7 +80,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   bool _isUserEndingChat = false; // prevent popup when user ends chat
   bool _isExitPopupVisible = false; // avoid duplicate popups
   bool _isCompletionPopupVisible = false; // avoid duplicate popups
-  SocketService socket = SocketService();
+  // SocketService socket = SocketService();
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _sessionSub;
   final DateFormat formatter = DateFormat("dd MMM yyyy");
   // StreamController<int>? _timerController = StreamController<int>.broadcast();
@@ -578,7 +578,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   ).pop(); // hide loader
 
                   if (result.status == true) {
-                    socket.dispose();
+                    SocketService().dispose();
                     _isExitPopupVisible = false;
                     Navigator.of(context).pop(true); // leave screen
                   } else {
@@ -655,7 +655,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   ).pop(); // hide loader
 
                   if (result.status == true) {
-                    socket.dispose();
+                    SocketService().dispose();
                     Navigator.of(context).pop(true); // leave screen
                   }
                 } catch (e) {
@@ -678,39 +678,39 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     super.initState();
     _isCompleted = widget.sessionStatus == "Completed";
     if (!_isCompleted) {
-      socketService();
+      // socketService();
 
       _listenToSessionStatus();
     }
   }
 
-  void socketService() async {
-    // Your existing socket connection logic here
-    final socketDetails = await _homeController.socketDetailsModelData();
-    final socketVerify = await _homeController.socketVerifyModelData(
-      socketId: "1234.5678",
-      channelName: widget.roomId.toString(),
-    );
-    await socket.connect(
-      appKey: socketDetails.soketi?.key ?? "",
-      authEndpoint: Uri.parse("https://vedamroots.com/api/pusher/auth"),
-      bearerToken: socketVerify.auth ?? "",
-      host: socketDetails.soketi?.host ?? "",
-      port: int.tryParse(socketDetails.soketi?.port ?? "0") ?? 0,
-      roomId: widget.roomId,
-      useTLS: false,
-      // onTimer: (seconds) => _timerController?.add(seconds),
-    );
-  }
+  // void socketService() async {
+  //   // Your existing socket connection logic here
+  //   final socketDetails = await _homeController.socketDetailsModelData();
+  //   final socketVerify = await _homeController.socketVerifyModelData(
+  //     socketId: "1234.5678",
+  //     channelName: widget.roomId.toString(),
+  //   );
+  //   await socket.connect(
+  //     appKey: socketDetails.soketi?.key ?? "",
+  //     authEndpoint: Uri.parse("https://vedamroots.com/api/pusher/auth"),
+  //     bearerToken: socketVerify.auth ?? "",
+  //     host: socketDetails.soketi?.host ?? "",
+  //     port: int.tryParse(socketDetails.soketi?.port ?? "0") ?? 0,
+  //     roomId: widget.roomId,
+  //     useTLS: false,
+  //     // onTimer: (seconds) => _timerController?.add(seconds),
+  //   );
+  // }
 
   @override
-  void dispose() {
+  void dispose() async {
+    SocketService().dispose();
     _typingTimer?.cancel();
     if (!_isCompleted) {
       _setTyping(false);
     }
     _sessionSub?.cancel();
-
     _messageController.dispose();
     _messageFocusNode.dispose();
     _scrollController.dispose();
@@ -912,7 +912,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
               if (!_isCompleted)
                 StreamBuilder<int>(
                   // stream: _timerController?.stream,
-                  stream: socket.timerStream,
+                  stream: SocketService().timerStream,
                   builder: (context, snapshot) {
                     final seconds = snapshot.data ?? 0;
                     final d = Duration(seconds: seconds);
