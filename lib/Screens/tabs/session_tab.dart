@@ -7,7 +7,6 @@ import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
-import 'package:astro_partner_app/services/socket_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -166,18 +165,6 @@ class _SessionTabState extends State<SessionTab> {
                                 } else {
                                   return GestureDetector(
                                     onTap: () async {
-                                      print(
-                                        "@@@@@@@@@@@@@@@@serviceType@@@@@@@@@@@@@@@@@@@@@@@",
-                                      );
-                                      print(
-                                        _homeController
-                                            .sessionListData[index]
-                                            .serviceType!,
-                                      );
-                                      print(
-                                        "@@@@@@@@@@@@@@@@serviceType@@@@@@@@@@@@@@@@@@@@@@@",
-                                      );
-
                                       switch (_homeController
                                           .sessionListData[index]
                                           .serviceType!) {
@@ -190,7 +177,7 @@ class _SessionTabState extends State<SessionTab> {
                                           final session = _homeController
                                               .sessionListData[index];
 
-                                          final value = await _homeController
+                                          await _homeController
                                               .fetchSessionChatModelData(
                                                 sessionId: sessionId,
                                               )
@@ -248,7 +235,16 @@ class _SessionTabState extends State<SessionTab> {
                                                   ),
                                                 );
                                               });
+                                          // final sessionId = _homeController
+                                          //     .sessionListData[index]
+                                          //     .id!;
+                                          // final session = _homeController
+                                          //     .sessionListData[index];
 
+                                          // final value = await _homeController
+                                          //     .fetchSessionChatModelData(
+                                          //       sessionId: sessionId,
+                                          //     );
                                           // final socketDetails =
                                           //     await _homeController
                                           //         .socketDetailsModelData();
