@@ -7,21 +7,26 @@ class SocketService {
   static final SocketService _instance = SocketService._internal();
   factory SocketService() => _instance;
   SocketService._internal();
+
   PusherChannelsClient? _client;
   PrivateChannel? _channel;
+
   bool _connected = false;
   bool get isConnected => _connected;
+
   StreamSubscription? _connSub;
   StreamSubscription? _allSub;
 
   /// Emits integer timer values (seconds)
   StreamController<int>? _timerController = StreamController<int>.broadcast();
-
   Stream<int> get timerStream => _timerController!.stream;
 
   Timer? _runningTimer;
   int _elapsed = 0; // Local timer counter
 
+  // ---------------------------------------------------------------------------
+  // CONNECT
+  // ---------------------------------------------------------------------------
   Future<void> connect({
     required String host,
     required int port,
@@ -42,6 +47,8 @@ class SocketService {
       print("🔄 Timer stream reinitialized.");
     }
 
+    print("🔌 Initializing socket…");
+
     final options = PusherChannelsOptions.fromHost(
       scheme: useTLS ? 'wss' : 'ws',
       host: host,
@@ -52,7 +59,7 @@ class SocketService {
     _client = PusherChannelsClient.websocket(
       options: options,
       connectionErrorHandler: (error, stack, reconnect) async {
-        print("⚠️ Socket error: $error, trying reconnect...");
+        print("⚠️ Socket error: $error → reconnecting…");
         reconnect();
       },
     );
@@ -69,41 +76,58 @@ class SocketService {
           ),
     );
 
+    // Connection established
     _connSub = _client!.onConnectionEstablished.listen((_) {
       _channel!.subscribeIfNotUnsubscribed();
       _connected = true;
       print("✅ Socket connected.");
     });
 
+    // LISTEN to all events
     _allSub = _channel!.bindToAll().listen((event) {
-      print("[EVENT] ${event.channelName} : ${event.data}");
+      print("🟣 [EVENT]  => ${event.data}");
 
+      final raw = event.data;
+
+      // FIX 1: ignore null events (common for pusher_internal events)
+      if (raw == null) {
+        print("⚠️ Null event received → ignoring.");
+        return;
+      }
+
+      // FIX 2: decode safely
+      dynamic data;
       try {
-        final raw = event.data;
-        final data = raw is String ? jsonDecode(raw) : raw;
-
-        if (data is Map && data.containsKey('status')) {
-          final status = data['status']; // "start" or "end"
-          print("📌 STATUS RECEIVED: $status");
-
-          if (status == "start") {
-            _startTimer();
-          } else if (status == "stop") {
-            _stopTimer();
-          }
-        }
+        data = raw is String ? jsonDecode(raw) : raw;
       } catch (e) {
-        print("❌ Error: $e");
+        print("❌ JSON Decode Failed: $e");
+        return;
+      }
+
+      if (data is! Map) {
+        print("⚠️ Non-map data ignored.");
+        return;
+      }
+
+      // Check for "status" key from timer events
+      if (data.containsKey('status')) {
+        final status = data['status'];
+        print("📌 TIMER STATUS: $status");
+
+        if (status == "start") {
+          _startTimer();
+        } else if (status == "stop") {
+          _stopTimer();
+        }
       }
     });
 
     _client!.connect();
   }
 
-  /// -------------------------
-  /// TIMER START METHOD
-  /// -------------------------
-
+  // ---------------------------------------------------------------------------
+  // TIMER START
+  // ---------------------------------------------------------------------------
   void _startTimer() {
     print("▶️ Timer STARTED");
 
@@ -116,28 +140,28 @@ class SocketService {
     });
   }
 
-  /// -------------------------
-  /// TIMER STOP METHOD
-  /// -------------------------
+  // ---------------------------------------------------------------------------
+  // TIMER STOP
+  // ---------------------------------------------------------------------------
   void _stopTimer() {
     print("⏹️ Timer STOPPED");
-
     _runningTimer?.cancel();
     _runningTimer = null;
-
-    // _elapsed = 0;
-    // _safeAddToTimerStream(0);
   }
 
-  /// Adds safely into stream
+  // Safe stream add
   void _safeAddToTimerStream(int value) {
     if (_timerController != null && !_timerController!.isClosed) {
       _timerController!.add(value);
     }
   }
 
-  /// disconnect socket
+  // ---------------------------------------------------------------------------
+  // DISCONNECT
+  // ---------------------------------------------------------------------------
   void disconnect() {
+    print("🔌 Disconnecting socket…");
+
     _connSub?.cancel();
     _allSub?.cancel();
 
@@ -146,9 +170,13 @@ class SocketService {
 
     _client?.disconnect();
     _connected = false;
+
+    print("🛑 Socket disconnected.");
   }
 
-  /// dispose everything
+  // ---------------------------------------------------------------------------
+  // DISPOSE
+  // ---------------------------------------------------------------------------
   void dispose() {
     disconnect();
     _timerController?.close();

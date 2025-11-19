@@ -560,7 +560,6 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                 _showLoader();
 
                 try {
-                  // prevent completed popup from our own update
                   _isUserEndingChat = true;
                   await _sessionSub?.cancel();
 
@@ -582,7 +581,6 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                     _isExitPopupVisible = false;
                     Navigator.of(context).pop(true); // leave screen
                   } else {
-                    // restore listener if API failed
                     _isUserEndingChat = false;
                     _listenToSessionStatus();
                     Get.snackbar("End Chat", "Failed to end chat. Try again.");
@@ -655,7 +653,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   ).pop(); // hide loader
 
                   if (result.status == true) {
-                    SocketService().dispose();
+                    //  SocketService().dispose();
                     Navigator.of(context).pop(true); // leave screen
                   }
                 } catch (e) {
@@ -705,7 +703,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   @override
   void dispose() async {
-    SocketService().dispose();
+    // SocketService().dispose();
     _typingTimer?.cancel();
     if (!_isCompleted) {
       _setTyping(false);
@@ -911,11 +909,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
               // const SizedBox(height: 4),
               if (!_isCompleted)
                 StreamBuilder<int>(
-                  // stream: _timerController?.stream,
-                  stream: SocketService().timerStream,
+                  stream: SocketService().timerStream, // FIXED
                   builder: (context, snapshot) {
                     final seconds = snapshot.data ?? 0;
                     final d = Duration(seconds: seconds);
+
                     final h = d.inHours.toString().padLeft(2, '0');
                     final m = (d.inMinutes % 60).toString().padLeft(2, '0');
                     final s = (d.inSeconds % 60).toString().padLeft(2, '0');
