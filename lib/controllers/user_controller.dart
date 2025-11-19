@@ -12,10 +12,6 @@ class UserController extends GetxController {
   OtpFor _otpFor = OtpFor.signUp;
   OtpFor get otpFor => _otpFor;
 
-  // late int userId;
-  late bool isHide;
-  late bool cbRememberMe;
-  late bool userAutoValidate;
   late String? autoValidationError;
   late String? deviceToken;
   late String? deviceModel;
@@ -36,9 +32,6 @@ class UserController extends GetxController {
   void onInit() {
     _apiResponse = ApiResponse();
     _webApiServices = WebApiServices();
-    isHide = true;
-    cbRememberMe = false;
-    userAutoValidate = false;
     autoValidationError = "";
     super.onInit();
   }
@@ -89,13 +82,13 @@ class UserController extends GetxController {
     required String mobile,
     required String name,
     required String email,
-    required String gender,
 
+    // required String gender,
   }) async {
     try {
       isRegisterOtpLoding(true); // Obtain shared preferences.
       _signUpModel = await _webApiServices!.getRegisterWithOtp(
-        gender: gender,
+        // gender: gender,
         email: email,
         mobile: mobile,
         name: name,
@@ -162,5 +155,27 @@ class UserController extends GetxController {
     }
     isDeleteAccount(false);
     return deleteAccountResponse;
+  }
+
+  var isRegisterVerifyOtpLoding = false.obs;
+  Future<SignUpModel> registerVerifyOtp({
+    required String otp,
+    required String mobile,
+    required BuildContext context,
+  }) async {
+    try {
+      isRegisterVerifyOtpLoding(true);
+      _signUpModel = await _webApiServices!.getRegisterVerifyOtp(
+        mobile: mobile,
+        otp: otp,
+        context: context,
+      );
+    } on Failure catch (e) {
+      isRegisterVerifyOtpLoding(false);
+      _setFailure(e);
+    }
+    isRegisterVerifyOtpLoding(false);
+
+    return _signUpModel!;
   }
 }

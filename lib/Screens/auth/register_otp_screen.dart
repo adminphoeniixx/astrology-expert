@@ -15,16 +15,16 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:otp_pin_field/otp_pin_field.dart';
 
-class OTPVerifyScreen extends StatefulWidget {
+class RegisterOtpScreen extends StatefulWidget {
   final String phoneNumber;
 
-  const OTPVerifyScreen({super.key, required this.phoneNumber});
+  const RegisterOtpScreen({super.key, required this.phoneNumber});
 
   @override
-  State<OTPVerifyScreen> createState() => _OTPVerifyScreenState();
+  State<RegisterOtpScreen> createState() => _RegisterOtpScreenState();
 }
 
-class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
+class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
   int secondsRemaining = 59;
   bool enableResend = false;
   Timer? timer;
@@ -64,30 +64,6 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.dispose();
   }
 
-  // void onSubmit() async {
-  //   if (pinCode.isEmpty) {
-  //     showToast(context, msg: ENTER_OTP);
-  //     return;
-  //   }
-
-  //   try {
-  //     final value = await _userController.fetchVerifyOtp(
-  //       context: context,
-  //       otp: pinCode,
-  //       mobile: widget.phoneNumber,
-  //     );
-
-  //     if (value.status!) {
-  //       goToHomePage(value, const MyHomePage());
-  //     } else {
-  //       showToast(context, msg: value.message!);
-  //     }
-  //   } catch (e) {
-  //     debugPrint("Error: $e");
-  //     showToast(context, msg: "Something went wrong. Please try again.");
-  //   }
-  // }
-
   void onSubmit() async {
     if (pinCode.isEmpty) {
       showToast(context, msg: ENTER_OTP);
@@ -95,7 +71,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     }
 
     try {
-      final value = await _userController.fetchVerifyOtp(
+      final value = await _userController.registerVerifyOtp(
         context: context,
         otp: pinCode,
         mobile: widget.phoneNumber,
@@ -105,15 +81,8 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
         // ✅ OTP verified successfully
         await _userController.getUserProfile();
 
-        // if (value.newRegistration == true) {
-        //   // 🔹 New user — go to registration screen
-        //   changeScreenReplacement(context, const RegisterScreen());
-        // } else {
-        //   // 🔹 Existing user — go to home page
         goToHomePage(value, const MyHomePage());
-        //  }
       } else {
-        // ❌ Wrong OTP or verification failed
         showToast(context, msg: value.message ?? "Invalid OTP");
       }
     } catch (e) {

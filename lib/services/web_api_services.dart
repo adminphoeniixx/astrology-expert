@@ -52,7 +52,7 @@ class WebApiServices {
     required String mobile,
     required String name,
     required String email,
-    required String gender,
+    // required String gender,
   }) async {
     try {
       String url = "${GetBaseUrl + GetDomainUrl}register";
@@ -62,7 +62,7 @@ class WebApiServices {
         'mobile_number': mobile,
         'name': name,
         'email': email,
-        'gender': gender,
+        // 'gender': gender,
       });
       http.StreamedResponse response = await request.send();
       print("!!!!!!!!!!!!!!!!!getRegisterWithOtp!!!!!!!!!!!!!!!!!!");
@@ -70,7 +70,7 @@ class WebApiServices {
         'mobile_number': mobile,
         'name': name,
         'email': email,
-        'gender': gender,
+        // 'gender': gender,
       });
       dynamic responseData = await response.stream.bytesToString();
       print(responseData);
@@ -118,6 +118,73 @@ class WebApiServices {
     return _signUpModel2;
   }
 
+  SignUpModel _signUpModel3 = SignUpModel();
+
+  Future<SignUpModel> getRegisterVerifyOtp({
+    required String mobile,
+    required String otp,
+    required BuildContext context,
+  }) async {
+    try {
+      String url = "${GetBaseUrl + GetDomainUrl}verify-registration-otp";
+      // Fetch FCM token
+      final fcmToken = await _fetchFcmToken();
+
+      dynamic request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields.addAll({
+        "mobile_number": mobile,
+        "otp": otp,
+        "device_token": fcmToken,
+      });
+      http.StreamedResponse response = await request.send();
+      print("!!!!!!!!!!!!!!!!!getRegisterVerifyOtp!!!!!!!!!!!!!!!!!!");
+      print({"mobile_number": mobile, "otp": otp, "device_token": fcmToken});
+      dynamic responseData = await response.stream.bytesToString();
+      print(responseData);
+      if (response.statusCode == httpsCode_200 ||
+          response.statusCode == httpsCode_201) {
+        _signUpModel3 = SignUpModel.fromJson(jsonDecode(responseData));
+        _signUpModel3.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == httpsCode_404 ||
+          response.statusCode == httpsCode_401) {
+        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
+        _signUpModel3.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == httpsCode_500) {
+        _signUpModel3.requestStatus = RequestStatus.server;
+      }
+    } on Error catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "getRegisterVerifyOtp",
+        code: 401,
+        userId: userId,
+        message: e.toString(),
+      );
+      _signUpModel3.requestStatus = RequestStatus.unauthorized;
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "getRegisterVerifyOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "getRegisterVerifyOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "getRegisterVerifyOtp",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    }
+    return _signUpModel3;
+  }
+
   Future<ApiResponse> getResendOtp({required String mobile}) async {
     // Fetch FCM token
     // final fcmToken = await _fetchFcmToken();
@@ -125,7 +192,6 @@ class WebApiServices {
     try {
       String url = GetBaseUrl + GetDomainUrl + RESEND_OTP;
       dynamic body = json.encode({"mobile_number": mobile});
-      //dio.interceptors.add(performanceInterceptor);
       var response = await http.post(
         Uri.parse(url),
         headers: await authHeader(),
@@ -185,6 +251,7 @@ class WebApiServices {
       request.fields.addAll({'mobile_number': mobile});
       http.StreamedResponse response = await request.send();
       dynamic responseData = await response.stream.bytesToString();
+      print({'mobile_number': mobile});
       print(url);
       print(responseData);
       if (response.statusCode == httpsCode_200 ||

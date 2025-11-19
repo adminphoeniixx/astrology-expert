@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:astro_partner_app/Screens/auth/otp_screen.dart';
+import 'package:astro_partner_app/Screens/auth/register_otp_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/loader_controller.dart';
@@ -154,20 +154,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             });
                           },
                         ),
-                        const SizedBox(height: 15),
-                        CustomTextFormField(
-                          icon: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: SvgPicture.asset(genderIcon),
-                          ),
-                          mController: genderController,
-                          text: "Gender",
-                          readOnly: true,
-                          onTap: () {
-                            showGenderSelectionDialog(context);
-                          },
-                          textColor: textLightColorSecondary,
-                        ),
+                        // const SizedBox(height: 15),
+                        // CustomTextFormField(
+                        //   icon: Padding(
+                        //     padding: const EdgeInsets.symmetric(horizontal: 20),
+                        //     child: SvgPicture.asset(genderIcon),
+                        //   ),
+                        //   mController: genderController,
+                        //   text: "Gender",
+                        //   readOnly: true,
+                        //   onTap: () {
+                        //     showGenderSelectionDialog(context);
+                        //   },
+                        //   textColor: textLightColorSecondary,
+                        // ),
                         const SizedBox(height: 28),
                         // Obx(() {
                         //   if (_userController.isRegisterOtpLoding.value) {
@@ -193,14 +193,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       _userController.setOtpStatus(
                                         OtpFor.signUp,
                                       );
-                                      SignUpModel signUpModel =
-                                          await _userController
-                                              .getRegisterWithOtp(
-                                                email: emailController.text,
-                                                mobile: phoneNumber,
-                                                name: nameController.text,
-                                                gender: genderController.text,
-                                              );
+                                      SignUpModel
+                                      signUpModel = await _userController
+                                          .getRegisterWithOtp(
+                                            email: emailController.text,
+                                            mobile: phoneNumber,
+                                            name: nameController.text,
+                                            //  gender: genderController.text,
+                                          );
 
                                       // Stop loader
                                       _loaderController.setLoadingStatus(false);
@@ -209,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       if (signUpModel.status == true) {
                                         changeScreen(
                                           context,
-                                          OTPVerifyScreen(
+                                          RegisterOtpScreen(
                                             phoneNumber: phoneNumber,
                                           ),
                                         );

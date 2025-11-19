@@ -48,8 +48,8 @@ class _EditProfileState extends State<EditProfile> {
     setState(() {
       nametextEditingController.text =
           _authController.getprofile!.data!.name ?? "NA";
-      genderextEditingController.text =
-          _authController.getprofile!.data!.gender ?? "NA";
+      // genderextEditingController.text =
+      //     _authController.getprofile!.data!.gender ?? "NA";
       mobiletextEditingController.text =
           _authController.getprofile!.data!.mobile ?? "NA";
       emailtextEditingController.text =
@@ -186,42 +186,42 @@ class _EditProfileState extends State<EditProfile> {
                                       labelText: "Full Name",
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  Container(
-                                    height: 60,
-                                    margin: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    child:
-                                        // !isEdited
-                                        //     ?
-                                        TextFormField(
-                                          enabled: isEdited,
-                                          controller:
-                                              genderextEditingController,
-                                          style: const TextStyle(
-                                            fontFamily: productSans,
-                                            color: white,
-                                          ),
-                                          decoration: const InputDecoration(
-                                            contentPadding: EdgeInsets.fromLTRB(
-                                              16,
-                                              15,
-                                              4,
-                                              8,
-                                            ),
-                                            labelStyle: TextStyle(
-                                              color: white,
-                                              fontFamily: productSans,
-                                            ),
-                                            hintStyle: TextStyle(
-                                              color: textColorSecondary,
-                                              fontFamily: productSans,
-                                            ),
-                                            labelText: "Gender",
-                                            border: UnderlineInputBorder(),
-                                          ),
-                                        ),
+                                  // const SizedBox(height: 10),
+                                  // Container(
+                                  //   height: 60,
+                                  //   margin: const EdgeInsets.symmetric(
+                                  //     vertical: 8,
+                                  //   ),
+                                  //   child:
+                                  //       // !isEdited
+                                  //       //     ?
+                                  //       TextFormField(
+                                  //         enabled: isEdited,
+                                  //         controller:
+                                  //             genderextEditingController,
+                                  //         style: const TextStyle(
+                                  //           fontFamily: productSans,
+                                  //           color: white,
+                                  //         ),
+                                  //         decoration: const InputDecoration(
+                                  //           contentPadding: EdgeInsets.fromLTRB(
+                                  //             16,
+                                  //             15,
+                                  //             4,
+                                  //             8,
+                                  //           ),
+                                  //           labelStyle: TextStyle(
+                                  //             color: white,
+                                  //             fontFamily: productSans,
+                                  //           ),
+                                  //           hintStyle: TextStyle(
+                                  //             color: textColorSecondary,
+                                  //             fontFamily: productSans,
+                                  //           ),
+                                  //           labelText: "Gender",
+                                  //           border: UnderlineInputBorder(),
+                                  //         ),
+                                  //       ),
                                     //       : DropdownButtonFormField(
                                     //           decoration: const InputDecoration(
                                     //             contentPadding:
@@ -271,7 +271,7 @@ class _EditProfileState extends State<EditProfile> {
                                     //             });
                                     //           },
                                     //         ),
-                                  ),
+                                //  ),
                                   const SizedBox(height: 10),
 
                                   TextFormField(
