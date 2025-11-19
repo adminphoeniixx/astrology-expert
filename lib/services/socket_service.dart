@@ -10,7 +10,7 @@ class SocketService {
 
   PusherChannelsClient? _client;
   PrivateChannel? _channel;
-
+  DateTime? _startTime;
   bool _connected = false;
   bool get isConnected => _connected;
 
@@ -128,14 +128,33 @@ class SocketService {
   // ---------------------------------------------------------------------------
   // TIMER START
   // ---------------------------------------------------------------------------
+  // void _startTimer() {
+  //   print("▶️ Timer STARTED");
+
+  //   _runningTimer?.cancel(); // Cancel old timer
+  //   _elapsed = 0;
+
+  //   _runningTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+  //     _elapsed++;
+  //     _safeAddToTimerStream(_elapsed);
+  //   });
+  // }
+
   void _startTimer() {
     print("▶️ Timer STARTED");
 
-    _runningTimer?.cancel(); // Cancel old timer
+    _runningTimer?.cancel();
     _elapsed = 0;
 
+    _startTime = DateTime.now(); // save actual start time
+
     _runningTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      _elapsed++;
+      if (_startTime == null) return;
+
+      final now = DateTime.now();
+      final diff = now.difference(_startTime!).inSeconds;
+
+      _elapsed = diff;
       _safeAddToTimerStream(_elapsed);
     });
   }
@@ -147,6 +166,7 @@ class SocketService {
     print("⏹️ Timer STOPPED");
     _runningTimer?.cancel();
     _runningTimer = null;
+    _startTime = null;
   }
 
   // Safe stream add
