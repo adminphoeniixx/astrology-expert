@@ -131,14 +131,16 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 160.0),
+              //  const SizedBox(height: 120.0),
 
-                // Image
-                SizedBox(
-                  height: MediaQuery.sizeOf(context).height * 0.30,
-                  child: Image.asset(startImage),
+                SizedBox(width: MediaQuery.sizeOf(context).width, height: 170),
+                Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    maxWidth: MediaQuery.of(context).size.width * 0.6,
+                  ),
+                  child: Image.asset(startImage, fit: BoxFit.contain),
                 ),
-
                 const SizedBox(height: 20.0),
 
                 text(

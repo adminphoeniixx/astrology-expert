@@ -68,11 +68,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 120),
-
+                  // const SizedBox(height: 120),
                   SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.3,
-                    child: Image.asset(startImage),
+                    width: MediaQuery.sizeOf(context).width,
+                    height: 170,
+                  ),
+                  Container(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      maxWidth: MediaQuery.of(context).size.width * 0.6,
+                    ),
+                    child: Image.asset(startImage, fit: BoxFit.contain),
                   ),
                   const SizedBox(height: 10.0),
 
