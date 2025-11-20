@@ -32,7 +32,6 @@ import 'package:http/http.dart' as http;
 
 class WebApiServices {
   final FirebaseService _firebaseService = FirebaseService();
-  SignUpModel _signUpModel = SignUpModel();
 
   ApiResponse _apiResponse = ApiResponse();
   ApiResponse _authResponse = ApiResponse();
@@ -46,143 +45,176 @@ class WebApiServices {
   SessionDetailsModel _sessionDetailsModel = SessionDetailsModel();
   EarningListModel _earningListModel = EarningListModel();
 
-  SignUpModel _signUpModel2 = SignUpModel();
+  SignUpModel _registerModel = SignUpModel();
 
   Future<SignUpModel> getRegisterWithOtp({
     required String mobile,
     required String name,
     required String email,
-    // required String gender,
   }) async {
     try {
       String url = "${GetBaseUrl + GetDomainUrl}register";
-      // Fetch FCM token
-      dynamic request = http.MultipartRequest('POST', Uri.parse(url));
+
+      var request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields.addAll({
         'mobile_number': mobile,
         'name': name,
         'email': email,
-        // 'gender': gender,
       });
+
       http.StreamedResponse response = await request.send();
+
       print("!!!!!!!!!!!!!!!!!getRegisterWithOtp!!!!!!!!!!!!!!!!!!");
-      print({
-        'mobile_number': mobile,
-        'name': name,
-        'email': email,
-        // 'gender': gender,
-      });
-      dynamic responseData = await response.stream.bytesToString();
-      print(responseData);
+      print({'mobile_number': mobile, 'name': name, 'email': email});
+
+      String responseData = await response.stream.bytesToString();
+      print("RAW RESPONSE → $responseData");
+
+      // Always reset model FIRST
+      _registerModel = SignUpModel();
+
+      dynamic decoded;
+
+      // Try parsing JSON first
+      try {
+        decoded = jsonDecode(responseData);
+      } catch (e) {
+        // If server sends plain text instead of JSON
+        decoded = {
+          "status": false,
+          "new_register": false,
+          "message": responseData.toString(),
+        };
+      }
+
+      // If decoded is not a map, wrap it
+      if (decoded is! Map<String, dynamic>) {
+        decoded = {
+          "status": false,
+          "new_register": false,
+          "message": responseData.toString(),
+        };
+      }
+
+      // Fill model
+      _registerModel = SignUpModel.fromJson(decoded);
+
+      // Set requestStatus based on HTTP code (use your existing enum values)
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
-        _signUpModel2 = SignUpModel.fromJson(jsonDecode(responseData));
-        _signUpModel2.requestStatus = RequestStatus.loaded;
-      } else if (response.statusCode == httpsCode_404 ||
-          response.statusCode == httpsCode_401) {
-        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
-        _signUpModel2.requestStatus = RequestStatus.unauthorized;
+        _registerModel.requestStatus = RequestStatus.loaded;
+      } else if (response.statusCode == httpsCode_401 ||
+          response.statusCode == httpsCode_404) {
+        _registerModel.requestStatus = RequestStatus.unauthorized;
       } else if (response.statusCode == httpsCode_500) {
-        _signUpModel2.requestStatus = RequestStatus.server;
+        _registerModel.requestStatus = RequestStatus.server;
+      } else {
+        // Fallback – keep it initial or whatever you prefer
+        _registerModel.requestStatus = RequestStatus.initial;
       }
-    } on Error catch (e) {
-      _firebaseService.firebaseDioError(
-        apiCall: "getRegisterWithOtp",
-        code: 401,
-        userId: userId,
-        message: e.toString(),
-      );
-      _signUpModel2.requestStatus = RequestStatus.unauthorized;
+
+      print("PARSED Status: ${_registerModel.status}");
+      print("PARSED Message: ${_registerModel.message}");
     } on SocketException catch (e) {
-      _firebaseService.firebaseSocketException(
-        apiCall: "getRegisterWithOtp",
-        userId: userId,
-        message: e.message,
-      );
+      _registerModel.requestStatus = RequestStatus.unauthorized;
       throw Failure(e.message);
     } on FormatException catch (e) {
-      _firebaseService.firebaseFormatException(
-        apiCall: "getRegisterWithOtp",
-        userId: userId,
-        message: e.message,
-      );
+      _registerModel.requestStatus = RequestStatus.unauthorized;
       throw Failure(e.message);
     } on HttpException catch (e) {
-      _firebaseService.firebaseHttpException(
-        apiCall: "getRegisterWithOtp",
-        userId: userId,
-        message: e.message,
-      );
+      _registerModel.requestStatus = RequestStatus.server;
       throw Failure(e.message);
+    } catch (e) {
+      _registerModel.requestStatus = RequestStatus.unauthorized;
+      throw Failure(e.toString());
     }
-    return _signUpModel2;
-  }
 
-  SignUpModel _signUpModel3 = SignUpModel();
+    return _registerModel;
+  }
 
   Future<SignUpModel> getRegisterVerifyOtp({
     required String mobile,
     required String otp,
     required BuildContext context,
   }) async {
+    SignUpModel model = SignUpModel(); // always return fresh instance
+
     try {
       String url = "${GetBaseUrl + GetDomainUrl}verify-registration-otp";
-      // Fetch FCM token
+
       final fcmToken = await _fetchFcmToken();
 
-      dynamic request = http.MultipartRequest('POST', Uri.parse(url));
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+
       request.fields.addAll({
         "mobile_number": mobile,
         "otp": otp,
         "device_token": fcmToken,
       });
-      http.StreamedResponse response = await request.send();
+
       print("!!!!!!!!!!!!!!!!!getRegisterVerifyOtp!!!!!!!!!!!!!!!!!!");
       print({"mobile_number": mobile, "otp": otp, "device_token": fcmToken});
-      dynamic responseData = await response.stream.bytesToString();
-      print(responseData);
+
+      http.StreamedResponse response = await request.send();
+      String responseData = await response.stream.bytesToString();
+
+      print("######## RAW RESPONSE ########");
+      print("Status: ${response.statusCode}");
+      print("Body: $responseData");
+      print("################################");
+
+      dynamic decoded;
+
+      // 🔥 Try parsing JSON
+      try {
+        decoded = jsonDecode(responseData);
+      } catch (_) {
+        // If backend sends plain text instead of JSON
+        decoded = {
+          "status": false,
+          "new_register": false,
+          "message": responseData.toString(),
+        };
+      }
+
+      // 🔥 Ensure decoded is a Map
+      if (decoded is! Map<String, dynamic>) {
+        decoded = {
+          "status": false,
+          "new_register": false,
+          "message": responseData.toString(),
+        };
+      }
+
+      // 🔥 Now parse into model
+      model = SignUpModel.fromJson(decoded);
+
+      // 🔥 HTTP status handling
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
-        _signUpModel3 = SignUpModel.fromJson(jsonDecode(responseData));
-        _signUpModel3.requestStatus = RequestStatus.loaded;
-      } else if (response.statusCode == httpsCode_404 ||
-          response.statusCode == httpsCode_401) {
-        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
-        _signUpModel3.requestStatus = RequestStatus.unauthorized;
+        if (model.status == true) {
+          model.requestStatus = RequestStatus.loaded;
+        } else {
+          showToast(context, msg: model.message ?? "Invalid OTP");
+          model.requestStatus = RequestStatus.initial;
+        }
+      } else if (response.statusCode == httpsCode_401 ||
+          response.statusCode == httpsCode_404) {
+        model.requestStatus = RequestStatus.unauthorized;
       } else if (response.statusCode == httpsCode_500) {
-        _signUpModel3.requestStatus = RequestStatus.server;
+        model.requestStatus = RequestStatus.server;
+      } else {
+        model.requestStatus = RequestStatus.initial;
       }
-    } on Error catch (e) {
-      _firebaseService.firebaseDioError(
-        apiCall: "getRegisterVerifyOtp",
-        code: 401,
-        userId: userId,
-        message: e.toString(),
-      );
-      _signUpModel3.requestStatus = RequestStatus.unauthorized;
-    } on SocketException catch (e) {
-      _firebaseService.firebaseSocketException(
-        apiCall: "getRegisterVerifyOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
-    } on FormatException catch (e) {
-      _firebaseService.firebaseFormatException(
-        apiCall: "getRegisterVerifyOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
-    } on HttpException catch (e) {
-      _firebaseService.firebaseHttpException(
-        apiCall: "getRegisterVerifyOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
+    } on SocketException catch (_) {
+      throw Failure("No internet connection");
+    } on FormatException catch (_) {
+      throw Failure("Invalid format received");
+    } catch (e) {
+      throw Failure(e.toString());
     }
-    return _signUpModel3;
+
+    return model;
   }
 
   Future<ApiResponse> getResendOtp({required String mobile}) async {
@@ -197,6 +229,11 @@ class WebApiServices {
         headers: await authHeader(),
         body: body,
       );
+      print("!!!!!!!!!!!!!!!!!!!!!getResendOtp!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+      print(body);
+      print("!!!!!!!!!!!!!!!!!!!!!getResendOtp!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
         _apiResponse = ApiResponse.fromJson(jsonDecode(response.body));
@@ -313,83 +350,83 @@ class WebApiServices {
     required String otp,
     required BuildContext context,
   }) async {
+    SignUpModel model = SignUpModel(); // always return fresh model
+
     try {
-      // Fetch FCM token
       final fcmToken = await _fetchFcmToken();
 
       String url = GetBaseUrl + GetDomainUrl + VERIFY_LOGIN_WITH_OTP;
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // Prepare request body
       Map<String, String> body = {
         "mobile_number": mobile,
         "otp": otp,
         "device_token": fcmToken,
       };
 
-      // Add to request
       request.fields.addAll(body);
 
-      // ✅ Print request URL and body for debugging
       print("######## REQUEST DEBUG ########");
       print("URL: $url");
-      print("Headers: ${request.headers}");
       print("Body: $body");
       print("################################");
 
       http.StreamedResponse response = await request.send();
-      var responseData = await response.stream.bytesToString();
+      String responseData = await response.stream.bytesToString();
 
       print("######## RESPONSE DEBUG ########");
       print("Status Code: ${response.statusCode}");
       print("Body: $responseData");
       print("################################");
 
+      dynamic decoded;
+
+      // Try decode JSON
+      try {
+        decoded = jsonDecode(responseData);
+      } catch (e) {
+        // fall back to plain text error message
+        decoded = {
+          "status": false,
+          "message": responseData.toString(),
+          "new_register": false,
+        };
+      }
+
+      // Ensure decoded is Map
+      if (decoded is! Map<String, dynamic>) {
+        decoded = {
+          "status": false,
+          "message": responseData.toString(),
+          "new_register": false,
+        };
+      }
+
+      // Now parse model
+      model = SignUpModel.fromJson(decoded);
+
+      // map status codes
       if (response.statusCode == httpsCode_200 ||
           response.statusCode == httpsCode_201) {
-        if (jsonDecode(responseData)['status']) {
-          _signUpModel = SignUpModel.fromJson(jsonDecode(responseData));
-          _signUpModel.requestStatus = RequestStatus.loaded;
+        if (model.status == true) {
+          model.requestStatus = RequestStatus.loaded;
         } else {
-          showToast(context, msg: jsonDecode(responseData)['message']);
+          showToast(context, msg: model.message ?? "Invalid OTP");
+          model.requestStatus = RequestStatus.initial;
         }
-      } else if (response.statusCode == httpsCode_404 ||
-          response.statusCode == httpsCode_401) {
-        _signUpModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == httpsCode_401 ||
+          response.statusCode == httpsCode_404) {
+        model.requestStatus = RequestStatus.unauthorized;
       } else if (response.statusCode == httpsCode_500) {
-        _signUpModel.requestStatus = RequestStatus.server;
+        model.requestStatus = RequestStatus.server;
+      } else {
+        model.requestStatus = RequestStatus.initial;
       }
-    } on Error catch (e) {
-      _firebaseService.firebaseDioError(
-        apiCall: "getVerifyLoginWithOtp",
-        code: "401|404",
-        userId: userId,
-        message: e.toString(),
-      );
-    } on SocketException catch (e) {
-      _firebaseService.firebaseSocketException(
-        apiCall: "getVerifyLoginWithOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
-    } on FormatException catch (e) {
-      _firebaseService.firebaseFormatException(
-        apiCall: "getVerifyLoginWithOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
-    } on HttpException catch (e) {
-      _firebaseService.firebaseHttpException(
-        apiCall: "getVerifyLoginWithOtp",
-        userId: userId,
-        message: e.message,
-      );
-      throw Failure(e.message);
+    } catch (e) {
+      throw Failure(e.toString());
     }
 
-    return _signUpModel;
+    return model;
   }
 
   Future<SessionsModel> getSessionsModel({required String pageUrl}) async {

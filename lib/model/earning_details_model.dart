@@ -59,15 +59,15 @@ class Earning {
   dynamic expertId;
   dynamic financialYear;
   dynamic weekNumber;
-  DateTime? weekStart;
-  DateTime? weekEnd;
-  double? totalCommission;
-  double? payableAmount;
+  dynamic weekStart;
+  dynamic weekEnd;
+  dynamic totalCommission;
+  dynamic payableAmount;
   dynamic payoutStatus;
   dynamic payoutDate;
   dynamic utr;
-  DateTime? createdAt;
-  DateTime? updatedAt;
+  dynamic createdAt;
+  dynamic updatedAt;
   List<Transaction>? transactions;
   dynamic id;
   dynamic expertName;
@@ -142,15 +142,15 @@ class Earning {
 }
 
 class Transaction {
-  DateTime? date;
+  dynamic date;
   dynamic commission;
-  double? tds;
+  dynamic tds;
   dynamic tdsPercentage;
-  double? payableAmount;
+  dynamic payableAmount;
   dynamic serviceSessionId;
   dynamic status;
   dynamic serviceTypeLabel;
-  DateTime? sessionDate;
+  dynamic sessionDate;
   dynamic sessionDurationMin;
   dynamic sessionDurationSec;
   dynamic sessionCharge;
@@ -226,7 +226,7 @@ class SessionDetailData {
   dynamic astrologerName;
   dynamic startTime;
   dynamic endTime;
-  DateTime? date;
+  dynamic date;
   Order? order;
 
   SessionDetailData({
@@ -271,8 +271,8 @@ class SessionDetailData {
 class Order {
   dynamic id;
   dynamic name;
-  double? totalAmount;
-  double? payableAmount;
+  dynamic totalAmount;
+  dynamic payableAmount;
   dynamic paymentStatus;
   dynamic sessionTime;
 

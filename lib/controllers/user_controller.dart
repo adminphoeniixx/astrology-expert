@@ -77,29 +77,8 @@ class UserController extends GetxController {
     _failure = failure;
   }
 
-  var isRegisterOtpLoding = false.obs;
-  Future<SignUpModel> getRegisterWithOtp({
-    required String mobile,
-    required String name,
-    required String email,
-
-    // required String gender,
-  }) async {
-    try {
-      isRegisterOtpLoding(true); // Obtain shared preferences.
-      _signUpModel = await _webApiServices!.getRegisterWithOtp(
-        // gender: gender,
-        email: email,
-        mobile: mobile,
-        name: name,
-      );
-    } on Failure catch (e) {
-      isRegisterOtpLoding(false); // Obtain shared preferences.
-      _setFailure(e);
-    }
-    isRegisterOtpLoding(true); // Obtain shared preferences.
-    return _signUpModel!;
-  }
+  SignUpModel? get verifyOtp => _verifyOtp;
+  SignUpModel? _verifyOtp;
 
   var isVerifyOtpLoding = false.obs;
 
@@ -110,18 +89,21 @@ class UserController extends GetxController {
   }) async {
     try {
       isVerifyOtpLoding(true);
-      _signUpModel = await _webApiServices!.getVerifyLoginWithOtp(
+
+      _verifyOtp = SignUpModel(); // reset model
+
+      _verifyOtp = await _webApiServices!.getVerifyLoginWithOtp(
         mobile: mobile,
         otp: otp,
         context: context,
       );
     } on Failure catch (e) {
-      isVerifyOtpLoding(false);
       _setFailure(e);
+    } finally {
+      isVerifyOtpLoding(false);
     }
-    isVerifyOtpLoding(false);
 
-    return _signUpModel!;
+    return _verifyOtp!;
   }
 
   var isGetProfileModelLoding = false.obs;
@@ -157,6 +139,36 @@ class UserController extends GetxController {
     return deleteAccountResponse;
   }
 
+  SignUpModel? _registerModel;
+  var isRegisterOtpLoding = false.obs;
+
+  Future<SignUpModel> getRegisterWithOtp({
+    required String mobile,
+    required String name,
+    required String email,
+  }) async {
+    try {
+      isRegisterOtpLoding(true);
+
+      _registerModel = SignUpModel();
+
+      _registerModel = await _webApiServices!.getRegisterWithOtp(
+        email: email,
+        mobile: mobile,
+        name: name,
+      );
+
+      print("API Status: ${_registerModel!.status}");
+      print("API Message: ${_registerModel!.message}");
+    } on Failure catch (e) {
+      _setFailure(e);
+    } finally {
+      isRegisterOtpLoding(false);
+    }
+
+    return _registerModel!;
+  }
+
   var isRegisterVerifyOtpLoding = false.obs;
   Future<SignUpModel> registerVerifyOtp({
     required String otp,
@@ -164,18 +176,21 @@ class UserController extends GetxController {
     required BuildContext context,
   }) async {
     try {
-      isRegisterVerifyOtpLoding(true);
-      _signUpModel = await _webApiServices!.getRegisterVerifyOtp(
+      isRegisterOtpLoding(true);
+
+      _registerModel = SignUpModel();
+
+      _registerModel = await _webApiServices!.getRegisterVerifyOtp(
         mobile: mobile,
         otp: otp,
         context: context,
       );
     } on Failure catch (e) {
-      isRegisterVerifyOtpLoding(false);
       _setFailure(e);
+    } finally {
+      isRegisterVerifyOtpLoding(false);
     }
-    isRegisterVerifyOtpLoding(false);
 
-    return _signUpModel!;
+    return _registerModel!;
   }
 }

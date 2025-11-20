@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   } else if (loginModel.status == false) {
                                     changeScreen(
                                       context,
-                                      const RegisterScreen(),
+                                      RegisterScreen(phoneNumber: phoneNumber),
                                     );
                                   } else {
                                     showToast(context, msg: loginModel.message);

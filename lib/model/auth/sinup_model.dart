@@ -13,37 +13,36 @@ String signUpModelToJson(SignUpModel data) => json.encode(data.toJson());
 
 class SignUpModel {
   bool? status;
-  dynamic message;
+  bool? newRegister;
+  String? message;
   Expert? expert;
   dynamic accessToken;
-  dynamic newRegistration;
 
   RequestStatus requestStatus;
 
   SignUpModel({
     this.status,
+    this.newRegister,
     this.message,
     this.expert,
     this.accessToken,
-    this.newRegistration,
-
     this.requestStatus = RequestStatus.initial,
   });
 
   factory SignUpModel.fromJson(Map<String, dynamic> json) => SignUpModel(
     status: json["status"],
+    newRegister: json["new_register"],
     message: json["message"],
     expert: json["expert"] == null ? null : Expert.fromJson(json["expert"]),
     accessToken: json["access_token"],
-    newRegistration: json['new_register'],
   );
 
   Map<String, dynamic> toJson() => {
     "status": status,
+    "new_register": newRegister,
     "message": message,
     "expert": expert?.toJson(),
     "access_token": accessToken,
-    "new_register": newRegistration,
   };
 }
 

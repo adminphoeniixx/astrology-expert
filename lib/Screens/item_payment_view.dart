@@ -239,6 +239,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
 class OrdersTableScreen extends StatefulWidget {
   final String earningId;
   final String orderDate;
+
   const OrdersTableScreen({
     super.key,
     required this.earningId,
@@ -270,6 +271,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
             width: double.infinity,
             child: Image.asset(appBg, fit: BoxFit.fill),
           ),
+
           Obx(() {
             if (_homeController.isEarningDetailsModelLoding.value) {
               return circularProgress();
@@ -297,6 +299,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 30),
+
                   ListView.separated(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
@@ -305,21 +308,46 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                     itemBuilder: (context, index) {
                       final order = transactions[index];
 
-                      final sessionId = order.sessionData?.id?.toString() ?? '';
-                      final commission = (order.commission ?? '').toString();
+                      final sessionId =
+                          order.sessionData?.id?.toString() ?? "---";
+                      final commission = (order.commission ?? "0").toString();
 
-                      final sessionType = order.sessionData?.serviceName ?? '';
+                      final customerName = order.customerName ?? "---";
+
+                      final sessionType =
+                          order.sessionData?.serviceName ?? "---";
+
                       final startTime =
-                          order.sessionData?.startTime?.toString() ?? '';
+                          order.sessionData?.startTime?.toString() ?? "---";
+
                       final endTime =
-                          order.sessionData?.endTime?.toString() ?? '';
+                          order.sessionData?.endTime?.toString() ?? "---";
 
                       final subtotal =
                           order.sessionData?.order?.totalAmount?.toString() ??
-                          '0';
+                          "0";
+
                       final payable =
                           order.sessionData?.order?.payableAmount?.toString() ??
-                          '0';
+                          "0";
+
+                      // ---------------------
+                      // DATE FIX (SAFE)
+                      // ---------------------
+                      String formattedDate = "---";
+                      if (order.sessionDate != null) {
+                        try {
+                          formattedDate = formatter.format(order.sessionDate!);
+                        } catch (_) {
+                          formattedDate = "---";
+                        }
+                      }
+
+                      // ---------------------
+                      // SESSION DURATION (SAFE)
+                      // ---------------------
+                      final durationMin =
+                          order.sessionDurationMin?.toString() ?? "0";
 
                       return Container(
                         padding: const EdgeInsets.all(16),
@@ -330,28 +358,14 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                         ),
                         child: Column(
                           children: [
-                            _buildRow(
-                              "Date",
-                              formatter.format(order.sessionDate!),
-                            ),
-
+                            _buildRow("Date", formattedDate),
                             _buildRow("Session ID", "#$sessionId"),
-                            _buildRow(
-                              "Customer name",
-                              order.customerName ?? "",
-                            ),
-
+                            _buildRow("Customer name", customerName),
                             _buildRow("Total Earning", "₹$commission"),
-
                             _buildRow("Session Type", sessionType),
                             _buildRow("Session Start Time", startTime),
                             _buildRow("Session End Time", endTime),
-
-                            _buildRow(
-                              "Session Duration",
-                              "${order.sessionDurationMin.toString()} min",
-                            ),
-
+                            _buildRow("Session Duration", "$durationMin min"),
                             _buildRow("Subtotal", "₹$subtotal"),
                             const Divider(color: Colors.white24, height: 24),
                             _buildRow("Payable", "₹$payable", isBold: true),
@@ -360,6 +374,7 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
                       );
                     },
                   ),
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -368,28 +383,6 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
         ],
       ),
     );
-  }
-
-  String calculateDuration(String start, String end) {
-    try {
-      final format = DateFormat("HH:mm:ss"); // 24-hour format with seconds
-      final startTime = format.parse(start);
-      final endTime = format.parse(end);
-
-      final diff = endTime.difference(startTime);
-
-      final minutes = diff.inMinutes;
-      final seconds = diff.inSeconds % 60;
-
-      // ✅ Final readable output
-      if (minutes > 0) {
-        return "$minutes min ${seconds}s";
-      } else {
-        return "$seconds sec";
-      }
-    } catch (e) {
-      return "---";
-    }
   }
 
   Widget _buildRow(
@@ -412,19 +405,17 @@ class _OrdersTableScreenState extends State<OrdersTableScreen> {
               ),
             ),
           ),
-          if (trailing != null)
-            trailing
-          else
-            Text(
-              value ?? '',
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isBold ? 15 : 14,
-                fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-                fontFamily: productSans,
+          trailing ??
+              Text(
+                value ?? "---",
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isBold ? 15 : 14,
+                  fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+                  fontFamily: productSans,
+                ),
               ),
-            ),
         ],
       ),
     );
