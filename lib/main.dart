@@ -108,9 +108,19 @@ Future<void> showCallkitIncoming({
     ),
     ios: const IOSParams(
       iconName: 'CallKitLogo',
-      handleType: '',
+      handleType: 'generic',
       configureAudioSession: true,
       supportsVideo: true,
+      maximumCallGroups: 2,
+      maximumCallsPerCallGroup: 1,
+      audioSessionMode: 'default',
+      audioSessionActive: true,
+      audioSessionPreferredSampleRate: 44100.0,
+      audioSessionPreferredIOBufferDuration: 0.005,
+      supportsDTMF: true,
+      supportsHolding: true,
+      supportsGrouping: false,
+      supportsUngrouping: false,
       ringtonePath: 'system_ringtone_default',
     ),
   );
@@ -302,10 +312,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print("!!!!!!!!!!!!!!two!!!!!!!!!!!!!");
       print(message.data);
       if (type == 'CALL') {
+        print("###########type 1#############");
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
       } else {
+        print("###########type 2#############");
         await showLocalNotification(message.notification);
       }
     });
@@ -316,6 +328,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print(message.data);
       if (type == 'CALL') {
         await checkAndNavigationCallingPage();
+      } else {
+        await showLocalNotification(message.notification);
       }
     });
   }
@@ -335,3 +349,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 }
+
+// X3YSQQX547
+// 4N2USG2LAR

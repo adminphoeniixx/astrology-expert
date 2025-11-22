@@ -12,6 +12,7 @@ import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/socket_detail_model.dart';
 import 'package:astro_partner_app/model/socket_verify_model.dart';
 import 'package:astro_partner_app/model/start_timer_chat_model.dart';
+import 'package:astro_partner_app/model/update_mentence_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_api_services.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
@@ -27,7 +28,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     _webApiServices = WebApiServices();
-
+    // getUpdateMentenceModelData();
     super.onInit();
   }
 
@@ -37,6 +38,25 @@ class HomeController extends GetxController {
   RxString nextPageUrlforCommingSession = "".obs;
   RxList<SessionsData> sessionListData = <SessionsData>[].obs;
   var isSessionsModelLoding = false.obs;
+
+  UpdateMentenceModel? _updateMentenceModel;
+
+  UpdateMentenceModel? get mUpdateMentenceModel => _updateMentenceModel;
+
+  var isUpdateMentenceModelLoding = false.obs;
+
+  Future<UpdateMentenceModel?> getUpdateMentenceModelData() async {
+    try {
+      isUpdateMentenceModelLoding(true);
+      _updateMentenceModel = await _webApiServices!.getUpdateMentenceModelApi();
+      isUpdateMentenceModelLoding(false);
+      return _updateMentenceModel;
+    } on Failure catch (e) {
+      isUpdateMentenceModelLoding(false);
+      _setFailure(e);
+      return null;
+    }
+  }
 
   Future<SessionsModel> fetchSessionData({
     String? pageUrl,
@@ -456,7 +476,9 @@ class HomeController extends GetxController {
 
   var isParterInfoModelLoding = false.obs;
 
-  Future<ParterInfoModel> parterInfoModelData({required dynamic userId2}) async {
+  Future<ParterInfoModel> parterInfoModelData({
+    required dynamic userId2,
+  }) async {
     try {
       isParterInfoModelLoding(true);
       _parterInfoModel = await _webApiServices!.getParterInfoModel(

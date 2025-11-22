@@ -20,6 +20,7 @@ import 'package:astro_partner_app/model/session_model.dart';
 import 'package:astro_partner_app/model/socket_detail_model.dart';
 import 'package:astro_partner_app/model/socket_verify_model.dart';
 import 'package:astro_partner_app/model/start_timer_chat_model.dart';
+import 'package:astro_partner_app/model/update_mentence_model.dart';
 import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
@@ -41,6 +42,7 @@ class WebApiServices {
   SessionsModel _sessionsModel = SessionsModel();
   GetProfileModel _userProfile = GetProfileModel();
   EarningDetailsModel _earningDetailsModel = EarningDetailsModel();
+  UpdateMentenceModel _updateMentenceModel = UpdateMentenceModel();
 
   SessionDetailsModel _sessionDetailsModel = SessionDetailsModel();
   EarningListModel _earningListModel = EarningListModel();
@@ -337,7 +339,7 @@ class WebApiServices {
   Future<String> _fetchFcmToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      return token ?? ''; // Return empty string if token is null
+      return token ?? 'NA'; // Return empty string if token is null
     } catch (e) {
       // Log the error or handle it appropriately
       print("Error fetching FCM token: $e");
@@ -1818,5 +1820,66 @@ class WebApiServices {
     }
 
     return _parterInfoModel;
+  }
+
+  Future<UpdateMentenceModel> getUpdateMentenceModelApi() async {
+    try {
+      String url = GetBaseUrl + GetDomainUrl + updateMentence;
+      var request = http.MultipartRequest('GET', Uri.parse(url));
+      request.headers.addAll(await authHeader());
+      print("@@@@@@@@@@@ UpdateMentenceModel @@@@@@@@@@@");
+      print(url);
+      print("@@@@@@@@@@@ UpdateMentenceModel @@@@@@@@@@@");
+
+      http.StreamedResponse response = await request.send();
+
+      dynamic responseData = await response.stream.bytesToString();
+
+      print("@@@@@@@@@@@ UpdateMentenceModel @@@@@@@@@@@");
+      print(responseData);
+      print("@@@@@@@@@@@ UpdateMentenceModel @@@@@@@@@@@");
+
+      if (response.statusCode == httpsCode_200 ||
+          response.statusCode == httpsCode_201) {
+        _updateMentenceModel = UpdateMentenceModel.fromJson(
+          jsonDecode(responseData),
+        );
+      } else if (response.statusCode == httpsCode_404 ||
+          response.statusCode == httpsCode_401) {
+        // BasePrefs.clearPrefs().then((value) => Get.offAll(const LoadingPage()));
+        _updateMentenceModel.requestStatus = RequestStatus.unauthorized;
+      } else if (response.statusCode == httpsCode_500) {
+        _updateMentenceModel.requestStatus = RequestStatus.server;
+      }
+    } on Error catch (e) {
+      _firebaseService.firebaseDioError(
+        apiCall: "UpdateMentenceModel",
+        code: "401|404",
+        userId: userId,
+        message: e.toString(),
+      );
+    } on SocketException catch (e) {
+      _firebaseService.firebaseSocketException(
+        apiCall: "UpdateMentenceModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on FormatException catch (e) {
+      _firebaseService.firebaseFormatException(
+        apiCall: "UpdateMentenceModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    } on HttpException catch (e) {
+      _firebaseService.firebaseHttpException(
+        apiCall: "UpdateMentenceModel",
+        userId: userId,
+        message: e.message,
+      );
+      throw Failure(e.message);
+    }
+    return _updateMentenceModel;
   }
 }

@@ -10,6 +10,7 @@ import 'package:astro_partner_app/model/api_response.dart';
 import 'package:astro_partner_app/utils/enum.dart';
 import 'package:astro_partner_app/utils/loading.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -28,6 +29,57 @@ class _LoginScreenState extends State<LoginScreen> {
   // final LoaderController _loaderController = Get.put(LoaderController());
   TextEditingController mobileController = TextEditingController();
   String phoneNumber = "";
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeFCM(); // safe to call here
+    });
+    super.initState();
+  }
+
+  Future<void> _initializeFCM() async {
+    try {
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+      // Step 1: Request notification permissions
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('User granted permission for notifications');
+
+        // Step 2: Add a small delay to ensure APNS token is ready
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Step 3: Get the token
+        String? token = await messaging.getToken();
+        if (token != null) {
+          print('FCM Token: $token');
+          // TODO: Send this token to your backend
+        } else {
+          print('Failed to get FCM token');
+        }
+
+        // Step 4: Listen for token refresh
+        FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+          print('FCM Token refreshed: $newToken');
+          // TODO: Update token on your backend
+        });
+      } else if (settings.authorizationStatus ==
+          AuthorizationStatus.provisional) {
+        print('User granted provisional permission');
+      } else {
+        print('User declined or has not yet granted permission');
+      }
+    } catch (e) {
+      print('Error initializing FCM: $e');
+    }
+  }
 
   @override
   void dispose() {
