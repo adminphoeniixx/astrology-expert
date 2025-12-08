@@ -14,6 +14,7 @@ import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/tab_item.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -89,20 +90,43 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  bool _isExiting = false;
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        final isFirstRouteInCurrentTab = !await _navigatorKeys[selectedIndex]!
-            .currentState!
-            .maybePop();
-        if (isFirstRouteInCurrentTab) {
-          if (selectedIndex != TabItem.sessionsTab) {
-            _selectTab(TabItem.sessionsTab);
-            return false;
-          }
+        if (_isExiting) return false; // avoid multiple calls
+
+        final navigator = _navigatorKeys[selectedIndex]!.currentState;
+
+        // 1️⃣ Inner page → pop
+        if (navigator != null && navigator.canPop()) {
+          navigator.pop();
+          return false;
         }
-        return isFirstRouteInCurrentTab;
+
+        // 2️⃣ Switch to sessions tab if needed
+        if (selectedIndex != TabItem.sessionsTab) {
+          setState(() => selectedIndex = TabItem.sessionsTab);
+          return false;
+        }
+
+        // 3️⃣ ✅ FINAL EXIT POINT
+        _isExiting = true;
+        debugPrint("🔥 EXIT STARTED - API CALL");
+
+        try {
+          await _homeController.expertOnOffModelData(available: "No");
+          debugPrint("✅ API HIT SUCCESS");
+        } catch (e) {
+          debugPrint("❌ API ERROR: $e");
+        }
+
+        // ✅ Give HTTP some breathing time
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        SystemNavigator.pop();
+        return false;
       },
       child: Scaffold(
         body: FutureBuilder(

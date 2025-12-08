@@ -492,7 +492,7 @@ class _AccountTabState extends State<AccountTab> {
   }
 
   /// ✅ Logout Function
-  logoutNow() {
+  void logoutNow() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

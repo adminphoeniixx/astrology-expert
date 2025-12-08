@@ -121,11 +121,10 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
           ),
 
           SingleChildScrollView(
-             physics: const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
-               // const SizedBox(height: 120.0),
-
+                // const SizedBox(height: 120.0),
                 SizedBox(width: MediaQuery.sizeOf(context).width, height: 170),
                 Container(
                   constraints: BoxConstraints(
