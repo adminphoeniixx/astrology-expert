@@ -24,6 +24,7 @@ class _SpleshScreenState extends State<SpleshScreen> {
 
   @override
   void initState() {
+    _homeController.expertOnOffModelData(available: "Yes");
     super.initState();
     Timer(const Duration(seconds: 3), () async {
       dynamic value = await BasePrefs.readData(accessToken);

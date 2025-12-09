@@ -33,7 +33,7 @@ const AndroidNotificationChannel kAndroidChannel = AndroidNotificationChannel(
   description: 'This channel is used for important notifications.',
   importance: Importance.max,
   playSound: true,
-  sound: RawResourceAndroidNotificationSound('notification_sound'),
+  // sound: RawResourceAndroidNotificationSound('notification_sound'),
 );
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -54,13 +54,27 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("!!!!!!!!!!!!!!one!!!!!!!!!!!!!");
   print(message.data);
 
+  // if (type == 'CALL') {
+  //   await showCallkitIncoming(
+  //     pushNotificationModel: PushNotificationModel.fromJson(message.data),
+  //   );
+  // } else {
+  //   await showLocalNotification(message.notification);
+  // }
   if (type == 'CALL') {
     await showCallkitIncoming(
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );
+    return; // ✅ STOP here
   } else {
-    await showLocalNotification(message.notification);
+    await showCallkitIncoming(
+      pushNotificationModel: PushNotificationModel.fromJson(message.data),
+    );
+    return; // ✅ STOP here
   }
+
+  // // ✅ ONLY chat / other notification
+  // await showLocalNotification(message.notification);
 }
 
 // ====== Show CallKit Incoming ======
@@ -154,7 +168,7 @@ Future<void> showLocalNotification(RemoteNotification? notification) async {
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
-      sound: const RawResourceAndroidNotificationSound('notification_sound'),
+      // sound: const RawResourceAndroidNotificationSound('notification_sound'),
     ),
     iOS: const DarwinNotificationDetails(),
   );
@@ -312,14 +326,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print("!!!!!!!!!!!!!!two!!!!!!!!!!!!!");
       print(message.data);
       if (type == 'CALL') {
-        print("###########type 1#############");
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
+        return; // ✅ STOP here
       } else {
-        print("###########type 2#############");
-        await showLocalNotification(message.notification);
+        await showCallkitIncoming(
+          pushNotificationModel: PushNotificationModel.fromJson(message.data),
+        );
+        return; // ✅ STOP here
       }
+
+      // if (type == 'CALL') {
+      //   print("###########type 1#############");
+      //   await showCallkitIncoming(
+      //     pushNotificationModel: PushNotificationModel.fromJson(message.data),
+      //   );
+      // } else {
+      //   print("###########type 2#############");
+      //   await showLocalNotification(message.notification);
+      // }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
@@ -327,10 +353,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print("!!!!!!!!!!!!!!three!!!!!!!!!!!!!");
       print(message.data);
       if (type == 'CALL') {
-        await checkAndNavigationCallingPage();
+        await showCallkitIncoming(
+          pushNotificationModel: PushNotificationModel.fromJson(message.data),
+        );
+        return; // ✅ STOP here
       } else {
-        await showLocalNotification(message.notification);
+        await showCallkitIncoming(
+          pushNotificationModel: PushNotificationModel.fromJson(message.data),
+        );
+        return; // ✅ STOP here
       }
+
+      // if (type == 'CALL') {
+      //   await checkAndNavigationCallingPage();
+      // } else {
+      //   await showLocalNotification(message.notification);
+      // }
     });
   }
 

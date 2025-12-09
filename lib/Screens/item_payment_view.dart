@@ -26,8 +26,8 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
   Widget build(BuildContext context) {
     final payoutStatus = widget.earningData.payoutStatus ?? '';
 
-    final weekStart = widget.earningData.weekStart;
-    final weekEnd = widget.earningData.weekEnd;
+    // final weekStart = widget.earningData.weekStart;
+    // final weekEnd = widget.earningData.weekEnd;
 
     return GestureDetector(
       onTap: () {
@@ -74,16 +74,18 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
 
             const SizedBox(height: 12),
 
-            _earningList("Week", "${widget.earningData.weekNumber ?? 0}"),
-            const SizedBox(height: 8),
-
             _earningList(
-              "Week Period",
-              "${weekStart != null ? formatter.format(weekStart) : '---'}"
-                  " - ${weekEnd != null ? formatter.format(weekEnd) : '---'}",
+              "Payout Date",
+              formatter.format(widget.earningData.payoutDate ?? 0),
             ),
             const SizedBox(height: 8),
 
+            // _earningList(
+            //   "Week Period",
+            //   "${weekStart != null ? formatter.format(weekStart) : '---'}"
+            //       " - ${weekEnd != null ? formatter.format(weekEnd) : '---'}",
+            // ),
+            // const SizedBox(height: 8),
             _earningList(
               "Total Commission",
               "₹${widget.earningData.totalCommission.toStringAsFixed(2)}",
