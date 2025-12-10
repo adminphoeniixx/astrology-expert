@@ -33,7 +33,7 @@ const AndroidNotificationChannel kAndroidChannel = AndroidNotificationChannel(
   description: 'This channel is used for important notifications.',
   importance: Importance.max,
   playSound: true,
-  // sound: RawResourceAndroidNotificationSound('notification_sound'),
+  sound: RawResourceAndroidNotificationSound('system_ringtone_default'),
 );
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -66,7 +66,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );
     return; // ✅ STOP here
-  } else {
+  } else if (type == 'CHAT_CALL') {
     await showCallkitIncoming(
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );
@@ -86,7 +86,7 @@ Future<void> showCallkitIncoming({
     nameCaller: pushNotificationModel.callerName,
     appName: 'Vedam Roots Experts',
     avatar: launchImage,
-    handle: '0123456789',
+    handle: pushNotificationModel.title,
     type: 0, // 0 = audio
     duration: 30000,
     textAccept: 'Accept',
@@ -98,7 +98,7 @@ Future<void> showCallkitIncoming({
       callbackText: 'Call back',
     ),
     extra: <String, dynamic>{
-      'type': 'CALL',
+      'type': pushNotificationModel.type,
       'caller_id': pushNotificationModel.callerId,
       'caller_name': pushNotificationModel.callerName,
       'caller_image': pushNotificationModel.image ?? "",
@@ -111,7 +111,7 @@ Future<void> showCallkitIncoming({
     android: const AndroidParams(
       incomingCallNotificationChannelName: 'high_importance_channel',
       missedCallNotificationChannelName: 'high_importance_channel',
-      isCustomNotification: true,
+      isCustomNotification: false,
       isShowLogo: true,
       isShowFullLockedScreen: true,
       isImportant: true,
@@ -168,7 +168,9 @@ Future<void> showLocalNotification(RemoteNotification? notification) async {
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
-      // sound: const RawResourceAndroidNotificationSound('notification_sound'),
+      sound: const RawResourceAndroidNotificationSound(
+        'system_ringtone_default',
+      ),
     ),
     iOS: const DarwinNotificationDetails(),
   );
@@ -197,7 +199,9 @@ Future<void> checkAndNavigationCallingPage() async {
   final extra = (currentCall['extra'] as Map?)?.cast<String, dynamic>() ?? {};
   final type = extra['type']?.toString();
 
-  if (type == 'CALL') {
+  if (type == 'CHAT_CALL') {
+    Get.offAllNamed('/'); // Splash / Home
+  } else if (type == 'CALL') {
     final remaingTime =
         int.tryParse(extra['remaining_seconds']?.toString() ?? '0') ?? 0;
     final agoraAppId = extra['agora_app_id']?.toString() ?? '';
@@ -291,9 +295,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  // bool _expertMarkedOffline = false;
+  // final HomeController _homeController = Get.put(HomeController());
+  // static const _lifecycleChannel = MethodChannel('app_lifecycle_channel');
   @override
   void initState() {
     super.initState();
+    // _lifecycleChannel.setMethodCallHandler((call) async {
+    //   if (call.method == 'onAppRemovedFromRecents') {
+    //     _setExpertOffline();
+    //   }
+    // });
     if (Platform.isIOS || Platform.isAndroid) {
       FirebaseMessaging.instance.requestPermission();
       ensureFullIntentPermission();
@@ -318,7 +330,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       await checkAndNavigationCallingPage();
     }
+    // if (state == AppLifecycleState.detached) {
+    //   // ✅ App process kill hone wala hai
+    //   _setExpertOffline();
+    // }
   }
+
+  // Future<bool> _isUserLoggedIn() async {
+  //   final token = await BasePrefs.readData(accessToken);
+  //   return token != null && token.toString().isNotEmpty;
+  // }
+
+  // void _setExpertOffline() async {
+  //   if (_expertMarkedOffline) return;
+  //   if (!await _isUserLoggedIn()) return;
+
+  //   _expertMarkedOffline = true;
+
+  //   // ✅ UNAVAILABLE
+  //   _homeController.expertOnOffModelData(available: "No");
+  // }
 
   void _bindFirebaseMessagingHandlers() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
@@ -330,7 +361,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
         return; // ✅ STOP here
-      } else {
+      } else if (type == 'CHAT_CALL') {
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
@@ -357,7 +388,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
         return; // ✅ STOP here
-      } else {
+      } else if (type == 'CHAT_CALL') {
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );

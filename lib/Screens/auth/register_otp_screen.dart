@@ -61,6 +61,14 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
     super.dispose();
   }
 
+  static const MethodChannel _platform = MethodChannel('native_prefs');
+
+  Future<void> saveTokenToNative(String token) async {
+    debugPrint('Saving token to native: $token');
+
+    await _platform.invokeMethod('saveToken', {'token': token});
+  }
+
   Future<void> onSubmit() async {
     if (pinCode.length != 4) {
       showToast(context, msg: ENTER_OTP);
@@ -103,6 +111,7 @@ class _RegisterOtpScreenState extends State<RegisterOtpScreen> {
     showToast(context, msg: value.message ?? "");
 
     if (value.expert?.id != null) {
+      saveTokenToNative(value.accessToken);
       BasePrefs.saveData(userId, value.expert!.id!);
       BasePrefs.saveData(accessToken, value.accessToken);
       changeToNewScreen(context, widget, "/main");

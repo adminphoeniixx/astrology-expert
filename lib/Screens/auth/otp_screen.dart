@@ -62,6 +62,14 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     super.dispose();
   }
 
+  static const MethodChannel _platform = MethodChannel('native_prefs');
+
+  Future<void> saveTokenToNative(String token) async {
+    debugPrint('Saving token to native: $token');
+
+    await _platform.invokeMethod('saveToken', {'token': token});
+  }
+
   Future<void> onSubmit() async {
     if (pinCode.length != 4) {
       showToast(context, msg: ENTER_OTP);
@@ -107,6 +115,8 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
     }
 
     if (value.expert?.id != null || value.status == true) {
+      // ✅ THIS LINE WAS MISSING (MOST IMPORTANT)
+      saveTokenToNative(value.accessToken);
       BasePrefs.saveData(userId, value.expert!.id!);
       BasePrefs.saveData(accessToken, value.accessToken);
       changeToNewScreen(context, widget, "/main");
@@ -131,8 +141,7 @@ class _OTPVerifyScreenState extends State<OTPVerifyScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              //  const SizedBox(height: 120.0),
-
+                //  const SizedBox(height: 120.0),
                 SizedBox(width: MediaQuery.sizeOf(context).width, height: 170),
                 Container(
                   constraints: BoxConstraints(

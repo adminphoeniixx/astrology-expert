@@ -22,6 +22,39 @@ class ItemPaymentView extends StatefulWidget {
 class _ItemPaymentViewState extends State<ItemPaymentView> {
   final DateFormat formatter = DateFormat("dd MMM yyyy");
 
+  String formatPayoutDate(dynamic rawDate) {
+    if (rawDate == null) return "-";
+
+    try {
+      // Agar already DateTime hai
+      if (rawDate is DateTime) {
+        return formatter.format(rawDate);
+      }
+
+      // Agar INT timestamp hai (milliseconds since epoch)
+      if (rawDate is int) {
+        final dateTime = DateTime.fromMillisecondsSinceEpoch(rawDate);
+        return formatter.format(dateTime);
+      }
+
+      // Agar String hai
+      if (rawDate is String && rawDate.isNotEmpty) {
+        // 1) Try ISO string: "2025-01-10" ya "2025-01-10T12:30:00Z"
+        DateTime? dateTime = DateTime.tryParse(rawDate);
+
+        // 2) Agar API "yyyy-MM-dd" type bhejti hai
+        dateTime ??= DateFormat("yyyy-MM-dd").parse(rawDate);
+
+        return formatter.format(dateTime);
+      }
+    } catch (e) {
+      // Agar koi parsing error aaye to safe fallback
+      debugPrint("Error parsing payoutDate: $e");
+    }
+
+    return "-";
+  }
+
   @override
   Widget build(BuildContext context) {
     final payoutStatus = widget.earningData.payoutStatus ?? '';
@@ -76,7 +109,7 @@ class _ItemPaymentViewState extends State<ItemPaymentView> {
 
             _earningList(
               "Payout Date",
-              formatter.format(widget.earningData.payoutDate ?? 0),
+              formatPayoutDate(widget.earningData.payoutDate),
             ),
             const SizedBox(height: 8),
 
