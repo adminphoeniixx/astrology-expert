@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:astro_partner_app/Screens/ring_toneservice.dart';
 import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
@@ -61,16 +62,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // } else {
   //   await showLocalNotification(message.notification);
   // }
-  if (type == 'CALL') {
+
+  if (type == 'CALL' || type == 'CHAT_CALL') {
+    await RingtoneService.play(); // ✅ foreground only
     await showCallkitIncoming(
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );
-    return; // ✅ STOP here
-  } else if (type == 'CHAT_CALL') {
-    await showCallkitIncoming(
-      pushNotificationModel: PushNotificationModel.fromJson(message.data),
-    );
-    return; // ✅ STOP here
   }
 
   // // ✅ ONLY chat / other notification
@@ -115,7 +112,7 @@ Future<void> showCallkitIncoming({
       isShowLogo: true,
       isShowFullLockedScreen: true,
       isImportant: true,
-      ringtonePath: 'system_ringtone_default',
+      //  ringtonePath: 'system_ringtone_default',
       backgroundColor: '#1A1A1A',
       actionColor: '#4CAF50',
       textColor: '#ffffff',
@@ -135,7 +132,7 @@ Future<void> showCallkitIncoming({
       supportsHolding: true,
       supportsGrouping: false,
       supportsUngrouping: false,
-      ringtonePath: 'system_ringtone_default',
+      // ringtonePath: 'system_ringtone_default',
     ),
   );
 
@@ -167,10 +164,10 @@ Future<void> showLocalNotification(RemoteNotification? notification) async {
       channelDescription: kAndroidChannel.description,
       importance: Importance.max,
       priority: Priority.max,
-      playSound: true,
-      sound: const RawResourceAndroidNotificationSound(
-        'system_ringtone_default',
-      ),
+      // playSound: true,
+      // sound: const RawResourceAndroidNotificationSound(
+      //   'system_ringtone_default',
+      // ),
     ),
     iOS: const DarwinNotificationDetails(),
   );
@@ -200,7 +197,7 @@ Future<void> checkAndNavigationCallingPage() async {
   final type = extra['type']?.toString();
 
   if (type == 'CHAT_CALL') {
-    Get.offAllNamed('/'); // Splash / Home
+    Get.offAllNamed('/');
   } else if (type == 'CALL') {
     final remaingTime =
         int.tryParse(extra['remaining_seconds']?.toString() ?? '0') ?? 0;
@@ -233,13 +230,23 @@ Future<void> checkAndNavigationCallingPage() async {
 
 Future<void> _ensureCallListener() async {
   if (_callkitSub != null) return;
-  _callkitSub = FlutterCallkitIncoming.onEvent.listen((CallEvent? event) {
+
+  _callkitSub = FlutterCallkitIncoming.onEvent.listen((CallEvent? event) async {
     if (event == null) return;
+
     switch (event.event) {
       case Event.actionCallAccept:
       case Event.actionCallCustom:
-        checkAndNavigationCallingPage();
+        await RingtoneService.stop(); // ⏹ FIRST STOP
+        await checkAndNavigationCallingPage();
         break;
+
+      case Event.actionCallDecline:
+      case Event.actionCallEnded:
+      case Event.actionCallTimeout:
+        await RingtoneService.stop(); // ⏹ STOP
+        break;
+
       default:
         break;
     }
@@ -329,6 +336,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
       await checkAndNavigationCallingPage();
+      RingtoneService.stop();
     }
     // if (state == AppLifecycleState.detached) {
     //   // ✅ App process kill hone wala hai
@@ -353,46 +361,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   void _bindFirebaseMessagingHandlers() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      final type = message.data['type']?.toString();
-      print("!!!!!!!!!!!!!!two!!!!!!!!!!!!!");
-      print(message.data);
-      if (type == 'CALL') {
-        await showCallkitIncoming(
-          pushNotificationModel: PushNotificationModel.fromJson(message.data),
-        );
-        return; // ✅ STOP here
-      } else if (type == 'CHAT_CALL') {
-        await showCallkitIncoming(
-          pushNotificationModel: PushNotificationModel.fromJson(message.data),
-        );
-        return; // ✅ STOP here
-      }
+      final type = message.data['type'];
 
-      // if (type == 'CALL') {
-      //   print("###########type 1#############");
-      //   await showCallkitIncoming(
-      //     pushNotificationModel: PushNotificationModel.fromJson(message.data),
-      //   );
-      // } else {
-      //   print("###########type 2#############");
-      //   await showLocalNotification(message.notification);
-      // }
+      if (type == 'CALL' || type == 'CHAT_CALL') {
+        await RingtoneService.play(); // ✅ foreground only
+        await showCallkitIncoming(
+          pushNotificationModel: PushNotificationModel.fromJson(message.data),
+        );
+      }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
-      final type = message.data['type']?.toString();
-      print("!!!!!!!!!!!!!!three!!!!!!!!!!!!!");
-      print(message.data);
-      if (type == 'CALL') {
+      final type = message.data['type'];
+
+      if (type == 'CALL' || type == 'CHAT_CALL') {
+        await RingtoneService.play(); // ✅ foreground only
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
-        return; // ✅ STOP here
-      } else if (type == 'CHAT_CALL') {
-        await showCallkitIncoming(
-          pushNotificationModel: PushNotificationModel.fromJson(message.data),
-        );
-        return; // ✅ STOP here
       }
 
       // if (type == 'CALL') {

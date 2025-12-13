@@ -195,9 +195,9 @@ class FreeFirebaseServiceRequest {
       final response = await dio.post(
         apiUrl,
         data: formData,
-        onSendProgress: (int sent, int total) {
-          double progress = sent / total;
-          onProgress(progress); // Callback for progress tracking
+        onSendProgress: (sent, total) {
+          if (total <= 0) return;
+          onProgress((sent / total).clamp(0.0, 1.0));
         },
       );
 

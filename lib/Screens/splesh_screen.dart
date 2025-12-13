@@ -24,58 +24,72 @@ class _SpleshScreenState extends State<SpleshScreen> {
 
   @override
   void initState() {
-    _homeController.expertOnOffModelData(available: "Yes");
     super.initState();
+
+    // Set expert availability
+    _homeController.expertOnOffModelData(available: "Yes");
+
+    // Start timer
     Timer(const Duration(seconds: 3), () async {
-      dynamic value = await BasePrefs.readData(accessToken);
-      print("!!!!!!!!!!!!!!!!!");
-      print(value);
+      if (!mounted) return;
+
+      // Hide keyboard
       Future.delayed(Duration.zero, () {
         SystemChannels.textInput.invokeMethod('TextInput.hide');
       });
+
+      // Read token
+      dynamic token = await BasePrefs.readData(accessToken);
+      print("TOKEN FOUND: $token");
+
+      // Get app version
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      if (value == null && mounted) {
-        changeScreenReplacement(context, const LoginScreen());
-      } else {
-        _homeController.getUpdateMentenceModelData().then((value2) {
-          if (value2!.data!.maintenanceMode == true ||
-              (value2.data!.appUpdateEnabled == true &&
-                  value2.data!.updateVersion.toString() !=
-                      packageInfo.version)) {
-            // ignore: use_build_context_synchronously
-            changeScreenReplacement(context, const UpdateMentence());
-          } else {
-            // ignore: use_build_context_synchronously
-            changeScreenReplacement(context, const MyHomePage());
-          }
-        });
+      String currentVersion = packageInfo.version;
+
+      // If no token → go to login
+      if (token == null) {
+        if (mounted) {
+          changeScreenReplacement(context, const LoginScreen());
+        }
+        return;
       }
-      // bool data = await isUserInIndia();
-      // BasePrefs.saveData(isIndia, data);
+
+      // GET UPDATE/MAINTENANCE STATUS SAFELY
+      var updateModel;
+      try {
+        updateModel = await _homeController.getUpdateMentenceModelData();
+      } catch (e) {
+        print("🔥 ERROR FETCHING UPDATE MODEL: $e");
+        updateModel = null;
+      }
+
+      if (!mounted) return;
+
+      // Null-safe values
+      final maintenanceMode = updateModel?.data?.maintenanceMode ?? false;
+      final updateEnabled = updateModel?.data?.appUpdateEnabled ?? false;
+      final updateVersion = updateModel?.data?.updateVersion ?? "";
+
+      print("maintenanceMode → $maintenanceMode");
+      print("updateEnabled   → $updateEnabled");
+      print("updateVersion   → $updateVersion");
+      print("currentVersion  → $currentVersion");
+
+      // If maintenance enabled → redirect
+      if (maintenanceMode == true) {
+        changeScreenReplacement(context, const UpdateMentence());
+        return;
+      }
+
+      // If update required → redirect
+      if (updateEnabled == true && updateVersion != currentVersion) {
+        changeScreenReplacement(context, const UpdateMentence());
+        return;
+      }
+
+      // Else → go to home
+      changeScreenReplacement(context, const MyHomePage());
     });
-
-    // Timer(const Duration(seconds: 2), () async {
-    //   // Hide keyboard (if visible)
-    //   SystemChannels.textInput.invokeMethod('TextInput.hide');
-    //   // Check login token
-    //   final dynamic value = await BasePrefs.readData(accessToken);
-    //   print("Access Token: $value");
-    //   // (Optional) App version info
-    //   PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    //   print("App version: ${packageInfo.version}");
-    //   // String? token = await FirebaseMessaging.instance.getToken();
-    //   // print("FCM Token: $token");
-    //   print("!!!!!!!!!0!!!!!!!!!!");
-    //   // if (!mounted) return;
-    //   print("!!!!!!!!!1!!!!!!!!!!");
-    //   if (value == null) {
-    //     print("!!!!!!!!!2!!!!!!!!!!");
-
-    //     changeScreenReplacement(context, const LoginScreen());
-    //   } else {
-    //     changeScreenReplacement(context, const MyHomePage());
-    //   }
-    // });
   }
 
   @override
@@ -83,16 +97,9 @@ class _SpleshScreenState extends State<SpleshScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset(loadingImage, scale: 0.5, fit: BoxFit.cover),
-          ),
+          Positioned.fill(child: Image.asset(loadingImage, fit: BoxFit.cover)),
         ],
       ),
-      // body: Container(
-      //   color: Colors.red,
-      //   height: double.infinity,
-      //   width: double.infinity,
-      // ),
     );
   }
 }

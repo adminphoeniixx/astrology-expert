@@ -71,6 +71,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/audio/incoming_call.mp3
 
 
   fonts:
