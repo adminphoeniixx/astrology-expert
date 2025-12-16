@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:astro_partner_app/Screens/ring_toneservice.dart';
 import 'package:astro_partner_app/Screens/splesh_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
@@ -19,6 +18,8 @@ import 'package:flutter_callkit_incoming/entities/call_event.dart';
 import 'package:flutter_callkit_incoming/entities/notification_params.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/ios_params.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -64,7 +65,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // }
 
   if (type == 'CALL' || type == 'CHAT_CALL') {
-    await RingtoneService.play(); // ✅ foreground only
+    // await RingtoneService.play(); // ✅ foreground only
     await showCallkitIncoming(
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );
@@ -88,12 +89,12 @@ Future<void> showCallkitIncoming({
     duration: 30000,
     textAccept: 'Accept',
     textDecline: 'Decline',
-    missedCallNotification: const NotificationParams(
-      showNotification: true,
-      isShowCallback: true,
-      subtitle: 'Missed call',
-      callbackText: 'Call back',
-    ),
+    // missedCallNotification: const NotificationParams(
+    //   showNotification: true,
+    //   isShowCallback: true,
+    //   subtitle: 'Missed call',
+    //   callbackText: 'Call back',
+    // ),
     extra: <String, dynamic>{
       'type': pushNotificationModel.type,
       'caller_id': pushNotificationModel.callerId,
@@ -108,11 +109,11 @@ Future<void> showCallkitIncoming({
     android: const AndroidParams(
       incomingCallNotificationChannelName: 'high_importance_channel',
       missedCallNotificationChannelName: 'high_importance_channel',
-      isCustomNotification: false,
+      isCustomNotification: true,
       isShowLogo: true,
       isShowFullLockedScreen: true,
       isImportant: true,
-      //  ringtonePath: 'system_ringtone_default',
+      ringtonePath: 'system_ringtone_default',
       backgroundColor: '#1A1A1A',
       actionColor: '#4CAF50',
       textColor: '#ffffff',
@@ -132,10 +133,9 @@ Future<void> showCallkitIncoming({
       supportsHolding: true,
       supportsGrouping: false,
       supportsUngrouping: false,
-      // ringtonePath: 'system_ringtone_default',
+      ringtonePath: 'system_ringtone_default',
     ),
   );
-
   await FlutterCallkitIncoming.showCallkitIncoming(params);
 }
 
@@ -155,29 +155,127 @@ Future<void> initLocalNotifications() async {
   await androidPlugin?.createNotificationChannel(kAndroidChannel);
 }
 
-Future<void> showLocalNotification(RemoteNotification? notification) async {
-  if (notification == null) return;
-  final details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      kAndroidChannel.id,
-      kAndroidChannel.name,
-      channelDescription: kAndroidChannel.description,
-      importance: Importance.max,
-      priority: Priority.max,
-      // playSound: true,
-      // sound: const RawResourceAndroidNotificationSound(
-      //   'system_ringtone_default',
-      // ),
-    ),
-    iOS: const DarwinNotificationDetails(),
-  );
-  await flutterLocalNotificationsPlugin.show(
-    notification.hashCode,
-    notification.title,
-    notification.body,
-    details,
-  );
-}
+// Future<void> showLocalNotification(RemoteNotification? notification) async {
+//   if (notification == null) return;
+//   final details = NotificationDetails(
+//     android: AndroidNotificationDetails(
+//       kAndroidChannel.id,
+//       kAndroidChannel.name,
+//       channelDescription: kAndroidChannel.description,
+//       importance: Importance.max,
+//       priority: Priority.max,
+//       // playSound: true,
+//       // sound: const RawResourceAndroidNotificationSound(
+//       //   'system_ringtone_default',
+//       // ),
+//     ),
+//     iOS: const DarwinNotificationDetails(),
+//   );
+//   await flutterLocalNotificationsPlugin.show(
+//     notification.hashCode,
+//     notification.title,
+//     notification.body,
+//     details,
+//   );
+//   final params = CallKitParams(
+//     id: callId,
+//     nameCaller: callerName,
+//     appName: 'Snap Messenger',
+//     avatar: 'https://i.pravatar.cc/100', // optional
+//     handle: 'SnapCall',
+//     type: callType == 'video'
+//         ? 1 // video
+//         : 0, // audio
+//     duration: 30000,
+//     textAccept: 'Accept',
+//     textDecline: 'Decline',
+//     extra: {'channelId': channelId, 'callType': callType},
+//     ios: const IOSParams(
+//       iconName: 'CallKitLogo',
+//       handleType: 'generic',
+//       configureAudioSession: true,
+//       supportsVideo: true,
+//       maximumCallGroups: 2,
+//       maximumCallsPerCallGroup: 1,
+//       audioSessionMode: 'default',
+//       audioSessionActive: true,
+//       audioSessionPreferredSampleRate: 44100.0,
+//       audioSessionPreferredIOBufferDuration: 0.005,
+//       supportsDTMF: true,
+//       supportsHolding: true,
+//       supportsGrouping: false,
+//       supportsUngrouping: false,
+//       ringtonePath: 'system_ringtone_default',
+//     ),
+//     android: const AndroidParams(
+//       incomingCallNotificationChannelName: 'high_importance_channel',
+//       missedCallNotificationChannelName: 'high_importance_channel',
+//       isCustomNotification: true,
+//       isShowLogo: true,
+//       isShowFullLockedScreen: true,
+//       isImportant: true,
+//       ringtonePath: 'system_ringtone_default',
+//       backgroundColor: '#1A1A1A',
+//       actionColor: '#4CAF50',
+//       textColor: '#ffffff',
+//     ),
+//   );
+
+//   await FlutterCallkitIncoming.showCallkitIncoming(params);
+// }
+
+// Future<void> showLocalNotificationn({
+//   required PushNotificationModel pushNotificationModel,
+// }) async {
+//   final params = CallKitParams(
+//     id: const Uuid().v4(),
+//     nameCaller: pushNotificationModel.callerName,
+//     appName: 'Vedam Roots Experts',
+//     avatar: launchImage,
+//     handle: pushNotificationModel.title,
+//     type: 0, // 0 = audio
+//     duration: 30000,
+//     textAccept: 'Accept',
+//     textDecline: 'Decline',
+//     missedCallNotification: const NotificationParams(
+//       showNotification: true,
+//       isShowCallback: true,
+//       subtitle: 'Missed call',
+//       callbackText: 'Call back',
+//     ),
+//     extra: {'channelId': '0', 'callType': '0'},
+//     android: const AndroidParams(
+//       incomingCallNotificationChannelName: 'high_importance_channel',
+//       missedCallNotificationChannelName: 'high_importance_channel',
+//       isCustomNotification: false,
+//       isShowLogo: true,
+//       isShowFullLockedScreen: true,
+//       isImportant: true,
+//       //  ringtonePath: 'system_ringtone_default',
+//       backgroundColor: '#1A1A1A',
+//       actionColor: '#4CAF50',
+//       textColor: '#ffffff',
+//     ),
+//     ios: const IOSParams(
+//       iconName: 'CallKitLogo',
+//       handleType: 'generic',
+//       configureAudioSession: true,
+//       supportsVideo: true,
+//       maximumCallGroups: 2,
+//       maximumCallsPerCallGroup: 1,
+//       audioSessionMode: 'default',
+//       audioSessionActive: true,
+//       audioSessionPreferredSampleRate: 44100.0,
+//       audioSessionPreferredIOBufferDuration: 0.005,
+//       supportsDTMF: true,
+//       supportsHolding: true,
+//       supportsGrouping: false,
+//       supportsUngrouping: false,
+//       // ringtonePath: 'system_ringtone_default',
+//     ),
+//   );
+//   await FlutterCallkitIncoming.showCallkitIncoming(params);
+// }
 
 // ====== CallKit helpers ======
 Future<Map<String, dynamic>?> getCurrentCall() async {
@@ -237,14 +335,14 @@ Future<void> _ensureCallListener() async {
     switch (event.event) {
       case Event.actionCallAccept:
       case Event.actionCallCustom:
-        await RingtoneService.stop(); // ⏹ FIRST STOP
+        // await RingtoneService.stop(); // ⏹ FIRST STOP
         await checkAndNavigationCallingPage();
         break;
 
       case Event.actionCallDecline:
       case Event.actionCallEnded:
       case Event.actionCallTimeout:
-        await RingtoneService.stop(); // ⏹ STOP
+        // await RingtoneService.stop(); // ⏹ STOP
         break;
 
       default:
@@ -336,7 +434,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
       await checkAndNavigationCallingPage();
-      RingtoneService.stop();
+      // RingtoneService.stop();
     }
     // if (state == AppLifecycleState.detached) {
     //   // ✅ App process kill hone wala hai
@@ -364,7 +462,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       final type = message.data['type'];
 
       if (type == 'CALL' || type == 'CHAT_CALL') {
-        await RingtoneService.play(); // ✅ foreground only
+        // await RingtoneService.play(); // ✅ foreground only
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
@@ -375,7 +473,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       final type = message.data['type'];
 
       if (type == 'CALL' || type == 'CHAT_CALL') {
-        await RingtoneService.play(); // ✅ foreground only
+        // await RingtoneService.play(); // ✅ foreground only
         await showCallkitIncoming(
           pushNotificationModel: PushNotificationModel.fromJson(message.data),
         );
@@ -397,7 +495,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       theme: ThemeData(useMaterial3: true),
-      routes: {'/': (_) => const SpleshScreen()},
+      routes: {'/': (_) => SpleshScreen()},
       builder: (context, child) {
         return UpgradeAlert(child: child ?? const SizedBox.shrink());
       },
@@ -407,3 +505,102 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
 // X3YSQQX547
 // 4N2USG2LAR
+
+// class MyWidget extends StatefulWidget {
+//   const MyWidget({super.key});
+
+//   @override
+//   State<MyWidget> createState() => _MyWidgetState();
+// }
+
+// class _MyWidgetState extends State<MyWidget> {
+//   XFile? _pickedImage;
+//   final ImagePicker _picker = ImagePicker();
+//   bool _isLoading = false;
+
+//   // ================= GALLERY PICK =================
+//   Future<void> pickImage() async {
+//     if (_isLoading) return;
+//     setState(() => _isLoading = true);
+
+//     try {
+//       /// ✅ iOS permission only
+//       if (Platform.isIOS) {
+//         final status = await Permission.photos.request();
+//         if (!status.isGranted) {
+//           _showSnackBar('Gallery permission denied');
+//           openAppSettings();
+//           return;
+//         }
+//       }
+
+//       /// ✅ Android: NO permission needed
+//       final picked = await _picker.pickImage(
+//         source: ImageSource.gallery,
+//         imageQuality: 85,
+//         maxWidth: 1080,
+//         maxHeight: 1080,
+//       );
+
+//       if (picked != null) {
+//         setState(() => _pickedImage = picked);
+//         _showSnackBar('Image selected');
+//       }
+//     } catch (e) {
+//       _showSnackBar('Error: $e');
+//     } finally {
+//       if (mounted) setState(() => _isLoading = false);
+//     }
+//   }
+
+//   // ================= UI =================
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: const Text('Gallery Picker')),
+//       body: Padding(
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           children: [
+//             Container(
+//               height: 280,
+//               width: double.infinity,
+//               decoration: BoxDecoration(
+//                 border: Border.all(color: Colors.grey),
+//                 borderRadius: BorderRadius.circular(12),
+//               ),
+//               child: _pickedImage == null
+//                   ? const Center(child: Text('No image selected'))
+//                   : ClipRRect(
+//                       borderRadius: BorderRadius.circular(12),
+//                       child: Image.file(
+//                         File(_pickedImage!.path),
+//                         fit: BoxFit.cover,
+//                       ),
+//                     ),
+//             ),
+//             const SizedBox(height: 24),
+
+//             if (_isLoading) const CircularProgressIndicator(),
+
+//             ElevatedButton.icon(
+//               onPressed: pickImage,
+//               icon: const Icon(Icons.photo_library),
+//               label: const Text('Pick from Gallery'),
+//             ),
+
+//             if (_pickedImage != null)
+//               TextButton(
+//                 onPressed: () => setState(() => _pickedImage = null),
+//                 child: const Text('Clear'),
+//               ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   void _showSnackBar(String msg) {
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+//   }
+// }

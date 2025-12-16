@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'dart:math';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
@@ -16,6 +16,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -256,23 +257,18 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   // Future<void> _sendMedia() async {
   //   if (_isCompleted) return;
-
   //   final picked = await FilePicker.platform.pickFiles(type: FileType.image);
   //   if (picked == null || picked.files.isEmpty) return;
-
   //   final file = picked.files.single;
   //   if (file.path == null) {
   //     Get.snackbar("Upload Media", "Invalid image path");
   //     return;
   //   }
-
   //   _uploadProgress.value = 0.0;
   //   _localUploadPath.value = file.path!;
   //   _isUploading.value = true;
   //   _scrollToBottom();
-
   //   final imageFile = File(file.path!);
-
   //   await FreeFirebaseServiceRequest.uploadMedia(
   //         file: imageFile,
   //         onProgress: (p) => _uploadProgress.value = p.clamp(0.0, 1.0),
@@ -335,7 +331,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   //         Get.snackbar("Upload Media", "Error: $e");
   //       });
   // }
-  Future<void> _sendMedia() async {
+  Future<void> _sendMediaa() async {
     if (_isCompleted) {
       print("⚠️ Chat completed. Aborting.");
       return;
@@ -838,256 +834,318 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   // ------------------ UI ------------------
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF221d25),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(65), // 👈 custom height
-        child: AppBar(
-          backgroundColor: const Color(0xFF221d25),
-          elevation: 1,
-          centerTitle: true,
-          leadingWidth: 60,
-          leading: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.customerName,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 18.0,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: productSans,
+    return WillPopScope(
+      onWillPop: () {
+        if (!_isCompleted) {
+          _showExitPopup();
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF221d25),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(65), // 👈 custom height
+          child: AppBar(
+            backgroundColor: const Color(0xFF221d25),
+            elevation: 1,
+            centerTitle: true,
+            leadingWidth: 60,
+            leading: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.customerName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: productSans,
+                        ),
                       ),
                     ),
-                  ),
-                  //  const SizedBox(width: 4),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.info_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    onPressed: () async {
-                      final userResponse = await _homeController
-                          .fetchSessionDetailsData(sessionId: widget.sessionId);
-                      final partnerResponse = await _homeController
-                          .parterInfoModelData(userId2: widget.reciverId);
+                    //  const SizedBox(width: 4),
+                    TextButton(
+                      // visualDensity: VisualDensity.compact,
+                      // padding: EdgeInsets.zero,
+                      // constraints: const BoxConstraints(),
+                      // icon: const Icon(
+                      //   Icons.info_outline,
+                      //   color: Colors.white,
+                      //   size: 20,
+                      // ),
+                      child: Text(
+                        "View Details",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontFamily: productSans,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      onPressed: () async {
+                        final userResponse = await _homeController
+                            .fetchSessionDetailsData(
+                              sessionId: widget.sessionId,
+                            );
+                        final partnerResponse = await _homeController
+                            .parterInfoModelData(userId2: widget.reciverId);
 
-                      if (userResponse.success == true &&
-                          userResponse.data != null) {
-                        _showCustomerDetails(
-                          userResponse.data!.user!,
-                          partnerResponse, // <-- pass partner model here
-                        );
-                      } else {
-                        Get.snackbar(
-                          'Data Not Found',
-                          'Details could not be loaded.',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.redAccent,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 2),
-                        );
-                      }
+                        if (userResponse.success == true &&
+                            userResponse.data != null) {
+                          _showCustomerDetails(
+                            userResponse.data!.user!,
+                            partnerResponse, // <-- pass partner model here
+                          );
+                        } else {
+                          Get.snackbar(
+                            'Data Not Found',
+                            'Details could not be loaded.',
+                            snackPosition: SnackPosition.TOP,
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 2),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                // const SizedBox(height: 4),
+                if (!_isCompleted)
+                  StreamBuilder<int>(
+                    stream: SocketService().timerStream, // FIXED
+                    builder: (context, snapshot) {
+                      final seconds = snapshot.data ?? 0;
+                      final d = Duration(seconds: seconds);
+
+                      final h = d.inHours.toString().padLeft(2, '0');
+                      final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+                      final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+
+                      return Text(
+                        "$h:$m:$s",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                          fontFamily: productSans,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
                     },
                   ),
-                ],
-              ),
-              // const SizedBox(height: 4),
+              ],
+            ),
+            actions: [
               if (!_isCompleted)
-                StreamBuilder<int>(
-                  stream: SocketService().timerStream, // FIXED
-                  builder: (context, snapshot) {
-                    final seconds = snapshot.data ?? 0;
-                    final d = Duration(seconds: seconds);
-
-                    final h = d.inHours.toString().padLeft(2, '0');
-                    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
-                    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
-
-                    return Text(
-                      "$h:$m:$s",
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                        fontFamily: productSans,
-                        fontWeight: FontWeight.w500,
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ElevatedButton(
+                    onPressed: _showExitPopup,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
                       ),
-                    );
-                  },
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      "End Chat",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: productSans,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
-          actions: [
-            if (!_isCompleted)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: ElevatedButton(
-                  onPressed: _showExitPopup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: const Text(
-                    "End Chat",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: productSans,
-                      color: Colors.white,
-                    ),
+        ),
+        body: Stack(
+          children: [
+            // background
+            SizedBox(
+              height: double.infinity,
+              width: double.infinity,
+              child: Image.asset(appBg, fit: BoxFit.fill),
+            ),
+
+            Column(
+              children: [
+                // Chat messages
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('free_chat')
+                        .doc(widget.roomId)
+                        .collection(widget.subCollection)
+                        .orderBy('dateTime', descending: true)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return circularProgress();
+                      }
+                      final docs = snap.data?.docs ?? [];
+
+                      return ValueListenableBuilder<bool>(
+                        valueListenable: _isUploading,
+                        builder: (context, uploading, _) {
+                          if (uploading) {
+                            WidgetsBinding.instance.addPostFrameCallback(
+                              (_) => _scrollToBottom(),
+                            );
+                          }
+
+                          final List<ChatMessageModel> all =
+                              docs
+                                  .map((d) => ChatMessageModel.fromDocument(d))
+                                  .toList()
+                                ..sort(
+                                  (a, b) => b.dateTime.compareTo(a.dateTime),
+                                );
+
+                          final entries = _buildEntriesWithHeaders(all);
+
+                          final itemCount =
+                              entries.length +
+                              ((uploading && !_isCompleted) ? 1 : 0);
+
+                          return ListView.builder(
+                            reverse: true,
+                            controller: _scrollController,
+                            itemCount: itemCount,
+                            itemBuilder: (ctx, index) {
+                              // uploading bubble placeholder at top (since reverse = true)
+                              if (uploading && !_isCompleted && index == 0) {
+                                return ValueListenableBuilder<String>(
+                                  valueListenable: _localUploadPath,
+                                  builder: (context, path, _) =>
+                                      _uploadingBubble(path),
+                                );
+                              }
+
+                              final adj = (uploading && !_isCompleted)
+                                  ? index - 1
+                                  : index;
+                              final entry = entries[adj];
+
+                              if (entry.isHeader) {
+                                return _dateChip(entry.headerLabel!);
+                              }
+
+                              final msg = entry.message!;
+                              _markSeen(msg);
+
+                              return MessageBubble(
+                                messageTime: msg.dateTime,
+                                message: msg.msg,
+                                isRead: msg.isSeen,
+                                isMe: msg.senderId == widget.senderId,
+                                isMedia: msg.msgType == 'Media',
+                                msgType: msg.msgType,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
-              ),
+
+                // Typing indicator (other user)
+                if (!_isCompleted)
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('free_chat')
+                        .doc(widget.roomId)
+                        .collection('status')
+                        .doc('typingStatus')
+                        .snapshots(),
+                    builder: (context, s) {
+                      if (!s.hasData || s.data == null) {
+                        return const SizedBox.shrink();
+                      }
+                      final data = s.data!.data() as Map<String, dynamic>?;
+                      final key = 'user_${widget.reciverId}';
+                      final isTyping = data?[key] == true;
+                      return isTyping
+                          ? MessageBubble(
+                              messageTime: Timestamp.now(),
+                              message: "typing...",
+                              isMe: false,
+                              isMedia: false,
+                              isRead: false,
+                              showTime: false,
+                              msgType: "text",
+                            )
+                          : const SizedBox.shrink();
+                    },
+                  ),
+
+                // Input
+                _isCompleted ? const SizedBox.shrink() : _inputBar(),
+              ],
+            ),
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          // background
-          SizedBox(
-            height: double.infinity,
-            width: double.infinity,
-            child: Image.asset(appBg, fit: BoxFit.fill),
-          ),
-
-          Column(
-            children: [
-              // Chat messages
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('free_chat')
-                      .doc(widget.roomId)
-                      .collection(widget.subCollection)
-                      .orderBy('dateTime', descending: true)
-                      .snapshots(),
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return circularProgress();
-                    }
-                    final docs = snap.data?.docs ?? [];
-
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: _isUploading,
-                      builder: (context, uploading, _) {
-                        if (uploading) {
-                          WidgetsBinding.instance.addPostFrameCallback(
-                            (_) => _scrollToBottom(),
-                          );
-                        }
-
-                        final List<ChatMessageModel> all =
-                            docs
-                                .map((d) => ChatMessageModel.fromDocument(d))
-                                .toList()
-                              ..sort(
-                                (a, b) => b.dateTime.compareTo(a.dateTime),
-                              );
-
-                        final entries = _buildEntriesWithHeaders(all);
-
-                        final itemCount =
-                            entries.length +
-                            ((uploading && !_isCompleted) ? 1 : 0);
-
-                        return ListView.builder(
-                          reverse: true,
-                          controller: _scrollController,
-                          itemCount: itemCount,
-                          itemBuilder: (ctx, index) {
-                            // uploading bubble placeholder at top (since reverse = true)
-                            if (uploading && !_isCompleted && index == 0) {
-                              return ValueListenableBuilder<String>(
-                                valueListenable: _localUploadPath,
-                                builder: (context, path, _) =>
-                                    _uploadingBubble(path),
-                              );
-                            }
-
-                            final adj = (uploading && !_isCompleted)
-                                ? index - 1
-                                : index;
-                            final entry = entries[adj];
-
-                            if (entry.isHeader) {
-                              return _dateChip(entry.headerLabel!);
-                            }
-
-                            final msg = entry.message!;
-                            _markSeen(msg);
-
-                            return MessageBubble(
-                              messageTime: msg.dateTime,
-                              message: msg.msg,
-                              isRead: msg.isSeen,
-                              isMe: msg.senderId == widget.senderId,
-                              isMedia: msg.msgType == 'Media',
-                              msgType: msg.msgType,
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-
-              // Typing indicator (other user)
-              if (!_isCompleted)
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('free_chat')
-                      .doc(widget.roomId)
-                      .collection('status')
-                      .doc('typingStatus')
-                      .snapshots(),
-                  builder: (context, s) {
-                    if (!s.hasData || s.data == null) {
-                      return const SizedBox.shrink();
-                    }
-                    final data = s.data!.data() as Map<String, dynamic>?;
-                    final key = 'user_${widget.reciverId}';
-                    final isTyping = data?[key] == true;
-                    return isTyping
-                        ? MessageBubble(
-                            messageTime: Timestamp.now(),
-                            message: "typing...",
-                            isMe: false,
-                            isMedia: false,
-                            isRead: false,
-                            showTime: false,
-                            msgType: "text",
-                          )
-                        : const SizedBox.shrink();
-                  },
-                ),
-
-              // Input
-              _isCompleted ? const SizedBox.shrink() : _inputBar(),
-            ],
-          ),
-        ],
-      ),
     );
+  }
+
+  XFile? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
+  void _showSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  // ================= GALLERY PICK =================
+  Future<void> pickImage() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      /// ✅ iOS permission only
+      if (Platform.isIOS) {
+        final status = await Permission.photos.request();
+        if (!status.isGranted) {
+          _showSnackBar('Gallery permission denied');
+          openAppSettings();
+          return;
+        }
+      }
+
+      /// ✅ Android: NO permission needed
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1080,
+        maxHeight: 1080,
+      );
+
+      if (picked != null) {
+        setState(() => _pickedImage = picked);
+        _showSnackBar('Image selected');
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Widget _inputBar() {
@@ -1099,7 +1157,9 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.image, color: white),
-              onPressed: _sendMedia,
+              onPressed: () async {
+               pickImage();
+              },
             ),
             Expanded(
               child: TextFormField(

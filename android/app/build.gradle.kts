@@ -57,7 +57,9 @@ android {
             signingConfig = signingConfigs.getByName("release")  // ✅ FIXED: No debug signing now
         }
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
