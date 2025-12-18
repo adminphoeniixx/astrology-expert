@@ -15,11 +15,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
 import 'package:flutter_callkit_incoming/entities/call_event.dart';
-import 'package:flutter_callkit_incoming/entities/notification_params.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/ios_params.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 // ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -27,7 +24,7 @@ import 'package:upgrader/upgrader.dart';
 
 // ====== Global singletons / constants ======
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+// final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const AndroidNotificationChannel kAndroidChannel = AndroidNotificationChannel(
   'high_importance_channel',
@@ -508,21 +505,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
 // class MyWidget extends StatefulWidget {
 //   const MyWidget({super.key});
-
 //   @override
 //   State<MyWidget> createState() => _MyWidgetState();
 // }
-
 // class _MyWidgetState extends State<MyWidget> {
 //   XFile? _pickedImage;
 //   final ImagePicker _picker = ImagePicker();
 //   bool _isLoading = false;
-
 //   // ================= GALLERY PICK =================
 //   Future<void> pickImage() async {
 //     if (_isLoading) return;
 //     setState(() => _isLoading = true);
-
 //     try {
 //       /// ✅ iOS permission only
 //       if (Platform.isIOS) {
@@ -533,7 +526,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 //           return;
 //         }
 //       }
-
 //       /// ✅ Android: NO permission needed
 //       final picked = await _picker.pickImage(
 //         source: ImageSource.gallery,
@@ -541,7 +533,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 //         maxWidth: 1080,
 //         maxHeight: 1080,
 //       );
-
 //       if (picked != null) {
 //         setState(() => _pickedImage = picked);
 //         _showSnackBar('Image selected');
@@ -552,7 +543,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 //       if (mounted) setState(() => _isLoading = false);
 //     }
 //   }
-
 //   // ================= UI =================
 //   @override
 //   Widget build(BuildContext context) {
@@ -599,7 +589,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 //       ),
 //     );
 //   }
-
 //   void _showSnackBar(String msg) {
 //     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 //   }
