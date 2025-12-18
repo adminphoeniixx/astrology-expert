@@ -84,7 +84,6 @@ class FreeFirebaseServiceRequest {
 
   static Future<void> sendTextMessage({
     required dynamic sessionId,
-
     required dynamic message,
     required dynamic roomId,
     required dynamic subCollection,

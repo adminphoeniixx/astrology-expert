@@ -1,10 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
-import 'package:astro_partner_app/Screens/tabs/account_tab.dart';
-import 'package:astro_partner_app/Screens/tabs/earning_tab.dart';
-import 'package:astro_partner_app/Screens/tabs/review_tab.dart';
-import 'package:astro_partner_app/Screens/tabs/session_tab.dart';
+import 'package:astro_partner_app/screens/tabs/account_tab.dart';
+import 'package:astro_partner_app/screens/tabs/earning_tab.dart';
+import 'package:astro_partner_app/screens/tabs/review_tab.dart';
+import 'package:astro_partner_app/screens/tabs/session_tab.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
@@ -12,6 +12,7 @@ import 'package:astro_partner_app/controllers/user_controller.dart';
 
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/tab_item.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +49,9 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       selectedIndex = widget.tabItem;
     });
-
+    FirebaseMessaging.instance.getToken().then((token) {
+      print("FCM Token: $token");
+    });
     super.initState();
   }
 

@@ -1,17 +1,17 @@
-import java.util.Properties
-import java.io.FileInputStream
-
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    // END: FlutterFire Configuration
     id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "vedam.roots.expert.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -25,50 +25,29 @@ android {
     }
 
     defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "vedam.roots.expert.app"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
-    }
 
-    // ✅ Release Signing Config Added
-    signingConfigs {
-        create("release") {
-            val keystoreProperties = Properties()
-            val keystoreFile = rootProject.file("key.properties")
-            if (keystoreFile.exists()) {
-                keystoreProperties.load(FileInputStream(keystoreFile))
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-            } else {
-                println("⚠️ WARNING: key.properties file not found, Release build may fail.")
-            }
-        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true          // ✅ Enable code shrinking
-            isShrinkResources = true        // ✅ Allow resource shrinking
-            signingConfig = signingConfigs.getByName("release")  // ✅ FIXED: No debug signing now
-        }
-        debug {
-            
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
-
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
 flutter {
     source = "../.."
-}
-
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

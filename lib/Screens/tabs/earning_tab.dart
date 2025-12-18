@@ -1,4 +1,4 @@
-import 'package:astro_partner_app/Screens/item_payment_view.dart';
+import 'package:astro_partner_app/screens/item_payment_view.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';

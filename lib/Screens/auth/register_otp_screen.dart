@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:astro_partner_app/Screens/home_screen.dart';
+import 'package:astro_partner_app/screens/home_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';

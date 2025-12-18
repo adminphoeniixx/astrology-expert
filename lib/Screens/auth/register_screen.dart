@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:astro_partner_app/Screens/auth/register_otp_screen.dart';
+import 'package:astro_partner_app/screens/auth/register_otp_screen.dart';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/controllers/loader_controller.dart';

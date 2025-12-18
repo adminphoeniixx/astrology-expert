@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:astro_partner_app/Screens/home_screen.dart';
+import 'package:astro_partner_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class MessageBean {

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:astro_partner_app/Screens/auth/login_screen.dart';
-import 'package:astro_partner_app/Screens/home_screen.dart';
+import 'package:astro_partner_app/screens/auth/login_screen.dart';
+import 'package:astro_partner_app/screens/home_screen.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
