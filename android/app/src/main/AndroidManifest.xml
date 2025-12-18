@@ -44,7 +44,7 @@
     <!-- ✅ Android 10 – 12 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <!-- <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/> -->
 
     <application
         android:label="Vedam Roots Experts"
