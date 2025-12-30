@@ -85,10 +85,12 @@ class PushNotificationService {
   }) async {
     final params = CallKitParams(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      nameCaller: pushNotificationModel.callerName ?? 'Vedam Roots Customer',
+      nameCaller: pushNotificationModel.type == "CHAT_CALL"
+          ? "New Chat Session"
+          : pushNotificationModel.callerName ?? 'Vedam Roots Customer',
       appName: 'Vedam Roots Experts',
       avatar: launchImage,
-      handle: 'Vedam Roots Customer',
+      handle: pushNotificationModel.callerId.toString(),
       type: 0, // 0 = audio
       missedCallNotification: const NotificationParams(
         showNotification: true,

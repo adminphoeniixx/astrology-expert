@@ -213,46 +213,63 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
     }
   }
 
+  bool _isSending = false;
+
   // ------------------ Send text / media ------------------
   Future<void> _sendMessage() async {
     print("!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!");
     if (_isCompleted) return;
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    _isSending = true; // 🔐 LOCK
 
-    await _setTyping(false);
-    print("!!!!!!!!!!!!!!!!2!!!!!!!!!!!!!!!!!");
+    try {
+      await _setTyping(false);
+      print("!!!!!!!!!!!!!!!!2!!!!!!!!!!!!!!!!!");
 
-    final meta = await FirebaseFirestore.instance
-        .collection('free_chat_session')
-        .doc(widget.roomId)
-        .get();
+      final meta = await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc(widget.roomId)
+          .get();
 
-    if (!meta.exists || meta.data() == null) return;
-    final data = meta.data()!;
-    final String chatStatus = (data['status'] ?? "") as String;
-    final bool isNewSession = data['is_new_session'] is bool
-        ? data['is_new_session'] as bool
-        : false;
+      if (!meta.exists || meta.data() == null) return;
+      final data = meta.data()!;
+      final String chatStatus = (data['status'] ?? "") as String;
+      final bool isNewSession = data['is_new_session'] is bool
+          ? data['is_new_session'] as bool
+          : false;
 
-    if (chatStatus == "Completed") {
-      if (!_isCompletionPopupVisible) _showCompletedPopup();
-      return;
+      if (chatStatus == "Completed") {
+        if (!_isCompletionPopupVisible) _showCompletedPopup();
+        return;
+      }
+
+      await FreeFirebaseServiceRequest.sendTextMessage(
+        sessionId: widget.sessionId,
+        customerName: widget.customerName,
+        message: text,
+        roomId: widget.roomId,
+        subCollection: widget.subCollection,
+        receiverId: widget.reciverId,
+        senderId: widget.senderId,
+        isFirstMessage: isNewSession,
+      );
+
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (e, st) {
+      debugPrint("❌ Send message failed: $e");
+      debugPrint("$st");
+
+      Get.snackbar(
+        "Message Failed",
+        "Unable to send message. Please try again.",
+        backgroundColor: primaryColor,
+        colorText: Colors.black,
+      );
+    } finally {
+      _isSending = false; // 🔓 UNLOCK
     }
-
-    await FreeFirebaseServiceRequest.sendTextMessage(
-      sessionId: widget.sessionId,
-      customerName: widget.customerName,
-      message: text,
-      roomId: widget.roomId,
-      subCollection: widget.subCollection,
-      receiverId: widget.reciverId,
-      senderId: widget.senderId,
-      isFirstMessage: isNewSession,
-    );
-
-    _messageController.clear();
-    _scrollToBottom();
   }
 
   // Future<void> _sendMedia() async {
@@ -1158,7 +1175,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             IconButton(
               icon: const Icon(Icons.image, color: white),
               onPressed: () async {
-               pickImage();
+                pickImage();
               },
             ),
             Expanded(
@@ -1196,7 +1213,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.send, color: white),
-              onPressed: _sendMessage,
+              onPressed: !_isSending
+                  ? () {
+                      _sendMessage();
+                    }
+                  : null,
             ),
           ],
         ),

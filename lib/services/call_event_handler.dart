@@ -17,8 +17,17 @@ class CallEventHandler {
           await _onCallAccept(event.body);
           break;
         case Event.actionCallDecline:
+          log("❌ Call Declined");
+          await _onCallDecline(event.body); // 👈 separate handler
+          break;
+
         case Event.actionCallEnded:
+          log("📴 Call Ended");
+          await _onCallEnd(event.body);
+          break;
+
         case Event.actionCallTimeout:
+          log("⏰ Call Timeout");
           await _onCallEnd(event.body);
           break;
         case Event.actionDidUpdateDevicePushTokenVoip:
@@ -112,11 +121,38 @@ class CallEventHandler {
   static Future<void> _onCallEnd(Map<String, dynamic> body) async {
     try {
       final callId = body["id"]?.toString();
-      if (callId != null) {
+
+      log("📴 Ending call. callId = $callId");
+
+      if (callId != null && callId.isNotEmpty) {
         await FlutterCallkitIncoming.endCall(callId);
       }
+
+      // 🧹 SAFETY CLEANUP (VERY IMPORTANT)
+      await FlutterCallkitIncoming.endAllCalls();
     } catch (e, s) {
       log("❌ Error in _onCallEnd: $e\n$s");
+    }
+  }
+
+  static Future<void> _onCallDecline(Map<String, dynamic> body) async {
+    try {
+      final callId = body["id"]?.toString();
+      log("❌ Declining call: $callId");
+
+      if (callId != null && callId.isNotEmpty) {
+        await FlutterCallkitIncoming.endCall(callId);
+      }
+
+      // 🔥 FORCE cleanup (this is the key)
+      await FlutterCallkitIncoming.endAllCalls();
+
+      // 🧹 Android OEM safety
+      Future.delayed(const Duration(milliseconds: 300), () async {
+        await FlutterCallkitIncoming.endAllCalls();
+      });
+    } catch (e, s) {
+      log("❌ Error in _onCallDecline: $e\n$s");
     }
   }
 }
