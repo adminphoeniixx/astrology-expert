@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';

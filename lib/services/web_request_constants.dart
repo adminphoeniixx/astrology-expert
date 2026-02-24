@@ -4,8 +4,6 @@ const String https = "https";
 const String GetDomainUrl = "/api/expert/";
 const String GetDomainUrl2 = "/api/";
 const String GetDomainUrl3 = "/api/user/";
-
-
 const String UPIGateway = "/upi/";
 const String GetBaseUrl = "https://vedamroots.com";
 const String CART_KEY = "4e10a25f22210f4d4001bce18306f59e/";

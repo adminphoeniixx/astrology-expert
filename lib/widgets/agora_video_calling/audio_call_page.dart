@@ -669,11 +669,13 @@ class _CallingFreePageState extends State<CallingFreePage> {
             'Call Complete',
             fontSize: 18.0,
             fontFamily: productSans,
+            textColor: white,
             fontWeight: FontWeight.w600,
           ),
           content: text(
             'The call has been completed.',
             fontFamily: productSans,
+            textColor: white,
           ),
           actions: [
             TextButton(
@@ -681,7 +683,7 @@ class _CallingFreePageState extends State<CallingFreePage> {
                 Navigator.of(context).pop();
                 _endCall();
               },
-              child: text('Ok', fontFamily: productSans),
+              child: text('Ok', fontFamily: productSans, textColor: white),
             ),
           ],
         );

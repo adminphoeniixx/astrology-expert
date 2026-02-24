@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:astro_partner_app/screens/tabs/account_tab.dart';
 import 'package:astro_partner_app/screens/tabs/earning_tab.dart';
 import 'package:astro_partner_app/screens/tabs/review_tab.dart';
@@ -9,9 +10,12 @@ import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/controllers/user_controller.dart';
+import 'package:astro_partner_app/services/radis_services.dart';
+import 'package:astro_partner_app/utils/data_provider.dart';
 
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/tab_item.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
@@ -43,6 +47,21 @@ class _MyHomePageState extends State<MyHomePage> {
   };
   TabItem selectedIndex = TabItem.sessionsTab;
   dynamic userIdValue;
+  String? lastSessionId;
+
+  // ---------------- REDIS + RING LOGIC ----------------
+
+  final RedisService redis = RedisService(
+    host: "159.65.153.201",
+    port: 6380,
+    username: "default",
+    password: "e7fb27cb0e3c2f48cea9",
+  );
+
+  final player = AudioPlayer();
+  Timer? notificationTimer;
+  bool popupShown = false;
+
   @override
   void initState() {
     _loadProfileData();
@@ -52,7 +71,100 @@ class _MyHomePageState extends State<MyHomePage> {
     FirebaseMessaging.instance.getToken().then((token) {
       print("FCM Token: $token");
     });
+    redis.connect();
+    _initRedisAndStartWatch();
     super.initState();
+  }
+
+  Future<void> _initRedisAndStartWatch() async {
+    final ok = await redis.connect();
+    if (!ok) return;
+
+    notificationTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _checkNotificationKey(),
+    );
+  }
+
+  Future<void> _checkNotificationKey() async {
+    if (popupShown) return;
+    int uid = await getUserId() ?? 0;
+    print("############vedam_roots_database_notifications:$uid###############");
+
+    final raw = await redis.getValue("notifications:$uid");
+    print(
+      "############vedam_roots_database_notifications value:$raw###############",
+    );
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final data = jsonDecode(raw);
+      final String sessionId = data["session_id"] ?? "";
+      final bool status = data["status"] == true;
+      // Ignore duplicates
+      if (!status) {
+        lastSessionId = null;
+        return;
+      }
+      // Prevent repeat popup for same session
+      if (lastSessionId == sessionId) return;
+      lastSessionId = sessionId;
+      popupShown = true;
+      _showNotificationPopup();
+    } catch (e) {
+      debugPrint("Invalid Redis JSON: $e");
+    }
+  }
+
+  // ---------------- POPUP + SOUND ----------------
+
+  Future<void> _showNotificationPopup() async {
+    await player.play(AssetSource("audio/incoming_call.mp3"));
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF221d25),
+          title: const Text(
+            "New Chat Session",
+            style: TextStyle(
+              fontFamily: productSans,
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "You have a new chat session.",
+            style: TextStyle(
+              fontFamily: productSans,
+              fontSize: 14,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await player.stop();
+                int uid = await getUserId() ?? 0;
+                popupShown = false;
+                await _homeController.fetchSessionData(serviceType: "all");
+                await redis.setValue("notifications:$uid", "");
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "OK",
+                style: TextStyle(color: Colors.white, fontFamily: productSans),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   bool isOnline = false; // initial switch state
@@ -80,6 +192,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
+    notificationTimer?.cancel();
+    player.dispose();
+    redis.disconnect();
     _sub?.cancel();
     super.dispose();
   }

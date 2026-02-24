@@ -122,7 +122,7 @@ class HomeController extends GetxController {
   Future<EarningListModel> fetchEarningListData({
     String? pageUrl,
     bool isPaginatHit = false,
-  }) async {
+  }) async { 
     try {
       isEarningListModelLoding(true);
 

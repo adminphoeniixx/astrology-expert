@@ -79,6 +79,12 @@ class CallEventHandler {
             userName: callerName,
           ),
         );
+        final callId = body["id"]?.toString();
+        if (callId != null && callId.isNotEmpty) {
+          await FlutterCallkitIncoming.endCall(callId);
+        } else {
+          FlutterCallkitIncoming.endAllCalls();
+        }
       }
     } catch (e, s) {
       log("❌ Error in _onCallAccept: $e\n$s");
