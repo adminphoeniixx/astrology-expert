@@ -81,6 +81,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   bool _isUserEndingChat = false; // prevent popup when user ends chat
   bool _isExitPopupVisible = false; // avoid duplicate popups
   bool _isCompletionPopupVisible = false; // avoid duplicate popups
+  bool _isSendingMessage = false; // avoid duplicate text sends while request is in-flight
   // SocketService socket = SocketService();
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _sessionSub;
   final DateFormat formatter = DateFormat("dd MMM yyyy");
@@ -215,44 +216,63 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   // ------------------ Send text / media ------------------
   Future<void> _sendMessage() async {
-    print("!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!");
-    if (_isCompleted) return;
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    await _setTyping(false);
-    print("!!!!!!!!!!!!!!!!2!!!!!!!!!!!!!!!!!");
-
-    final meta = await FirebaseFirestore.instance
-        .collection('free_chat_session')
-        .doc(widget.roomId)
-        .get();
-
-    if (!meta.exists || meta.data() == null) return;
-    final data = meta.data()!;
-    final String chatStatus = (data['status'] ?? "") as String;
-    final bool isNewSession = data['is_new_session'] is bool
-        ? data['is_new_session'] as bool
-        : false;
-
-    if (chatStatus == "Completed") {
-      if (!_isCompletionPopupVisible) _showCompletedPopup();
+    if (_isCompleted || _isSendingMessage || _isLoading || _isUploading.value) {
       return;
     }
 
-    await FreeFirebaseServiceRequest.sendTextMessage(
-      sessionId: widget.sessionId,
-      customerName: widget.customerName,
-      message: text,
-      roomId: widget.roomId,
-      subCollection: widget.subCollection,
-      receiverId: widget.reciverId,
-      senderId: widget.senderId,
-      isFirstMessage: isNewSession,
-    );
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
 
-    _messageController.clear();
-    _scrollToBottom();
+    setState(() => _isSendingMessage = true);
+
+    try {
+      await _setTyping(false);
+
+      final meta = await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc(widget.roomId)
+          .get();
+
+      if (!meta.exists || meta.data() == null) return;
+      final data = meta.data()!;
+      final String chatStatus = (data['status'] ?? "") as String;
+      final bool isNewSession = data['is_new_session'] is bool
+          ? data['is_new_session'] as bool
+          : false;
+
+      if (chatStatus == "Completed") {
+        if (!_isCompletionPopupVisible) _showCompletedPopup();
+        return;
+      }
+
+      await FreeFirebaseServiceRequest.sendTextMessage(
+        sessionId: widget.sessionId,
+        customerName: widget.customerName,
+        message: text,
+        roomId: widget.roomId,
+        subCollection: widget.subCollection,
+        receiverId: widget.reciverId,
+        senderId: widget.senderId,
+        isFirstMessage: isNewSession,
+      );
+
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('sendMessage failed: $e');
+      if (mounted) {
+        Get.snackbar(
+          "Send Message",
+          "Message send nahi hua. Please dubara try karein.",
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingMessage = false);
+      } else {
+        _isSendingMessage = false;
+      }
+    }
   }
 
   // Future<void> _sendMedia() async {
@@ -1115,7 +1135,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   // ================= GALLERY PICK =================
   Future<void> pickImage() async {
-    if (_isLoading) return;
+    if (_isLoading || _isSendingMessage || _isUploading.value) return;
     setState(() => _isLoading = true);
 
     try {
@@ -1153,52 +1173,69 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       color: Colors.transparent,
       child: SafeArea(
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.image, color: white),
-              onPressed: () async {
-               pickImage();
-              },
-            ),
-            Expanded(
-              child: TextFormField(
-                controller: _messageController,
-                focusNode: _messageFocusNode,
-                onChanged: _onTypingChanged,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Type a message...",
-                  hintStyle: const TextStyle(color: white),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      color: primaryColor,
-                      width: 1.0,
-                    ),
-                    borderRadius: BorderRadius.circular(30.0),
+        child: ValueListenableBuilder<bool>(
+          valueListenable: _isUploading,
+          builder: (context, uploading, _) {
+            final isComposerBusy = _isSendingMessage || _isLoading || uploading;
+
+            return Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.image,
+                    color: isComposerBusy ? Colors.white38 : white,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      color: primaryColor,
-                      width: 1.0,
+                  onPressed: isComposerBusy ? null : pickImage,
+                ),
+                Expanded(
+                  child: TextFormField(
+                    controller: _messageController,
+                    focusNode: _messageFocusNode,
+                    onChanged: _onTypingChanged,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Type a message...",
+                      hintStyle: const TextStyle(color: white),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: primaryColor,
+                          width: 1.0,
+                        ),
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: primaryColor,
+                          width: 1.0,
+                        ),
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF221d25),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 10.0,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF221d25),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 10.0,
+                    readOnly: _isCompleted || isComposerBusy,
                   ),
                 ),
-                readOnly: _isCompleted,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.send, color: white),
-              onPressed: _sendMessage,
-            ),
-          ],
+                IconButton(
+                  onPressed: isComposerBusy ? null : _sendMessage,
+                  icon: _isSendingMessage
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(white),
+                          ),
+                        )
+                      : const Icon(Icons.send, color: white),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

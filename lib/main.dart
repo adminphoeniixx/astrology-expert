@@ -494,7 +494,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       theme: ThemeData(useMaterial3: true),
       routes: {'/': (_) => SpleshScreen()},
       builder: (context, child) {
-        return UpgradeAlert(child: child ?? const SizedBox.shrink());
+        return UpgradeAlert(
+          navigatorKey: MyApp.appNavigatorKey,
+          child: child ?? const SizedBox.shrink(),
+        );
       },
     );
   }
