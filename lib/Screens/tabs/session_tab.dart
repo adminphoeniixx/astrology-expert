@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:astro_partner_app/constants/colors_const.dart';
 import 'package:astro_partner_app/constants/fonts_const.dart';
 import 'package:astro_partner_app/constants/images_const.dart';
@@ -5,6 +7,7 @@ import 'package:astro_partner_app/controllers/home_controller.dart';
 import 'package:astro_partner_app/model/product_list_model.dart';
 import 'package:astro_partner_app/model/session_details_model.dart';
 import 'package:astro_partner_app/services/socket_service.dart';
+import 'package:astro_partner_app/services/session_refresh_service.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/widgets/app_widget.dart';
 import 'package:astro_partner_app/widgets/firebase_chat_widget/firebase_chat_screen.dart';
@@ -26,6 +29,7 @@ class _SessionTabState extends State<SessionTab> {
   // int? _selectedIndex;
   final HomeController _homeController = Get.put(HomeController());
   final ScrollController _scrollmainController = ScrollController();
+  StreamSubscription<void>? _sessionRefreshSub;
   final ValueNotifier<String> _selectedFilter = ValueNotifier<String>(
     "All Sessions",
   );
@@ -36,7 +40,9 @@ class _SessionTabState extends State<SessionTab> {
     _scrollmainController.addListener(() {
       if (_scrollmainController.position.pixels ==
           _scrollmainController.position.maxScrollExtent) {
-        if (_homeController.nextPageUrlforCommingSession.value != '') {
+        if (_homeController.nextPageUrl.value != '' &&
+            !_homeController.isSessionPaginationLoading.value &&
+            !_homeController.isSessionsModelLoding.value) {
           _homeController.fetchSessionData(
             pageUrl: _homeController.nextPageUrl.value.replaceAll(http, https),
             isPaginatHit: true,
@@ -44,7 +50,17 @@ class _SessionTabState extends State<SessionTab> {
         }
       }
     });
+    _sessionRefreshSub = SessionRefreshService.stream.listen((_) {
+      _refreshSessionData();
+    });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _sessionRefreshSub?.cancel();
+    _scrollmainController.dispose();
+    super.dispose();
   }
 
   final Map<String, String> serviceTypes = {
@@ -150,14 +166,14 @@ class _SessionTabState extends State<SessionTab> {
                           : ListView.builder(
                               physics: const ClampingScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: _homeController.sessionListData.length,
+                              itemCount:
+                                  _homeController.sessionListData.length + 1,
                               itemBuilder: (BuildContext context, int index) {
                                 if (index ==
                                     _homeController.sessionListData.length) {
                                   return _homeController
-                                              .nextPageUrlforCommingSession
-                                              .value !=
-                                          ""
+                                          .isSessionPaginationLoading
+                                          .value
                                       ? const Padding(
                                           padding: EdgeInsets.all(8.0),
                                           child: CupertinoActivityIndicator(),
@@ -168,8 +184,9 @@ class _SessionTabState extends State<SessionTab> {
                                     onTap: () async {
                                       switch (_homeController
                                           .sessionListData[index]
-                                          .serviceType!) {
-                                        case 1:
+                                          .serviceType
+                                          ?.toString()) {
+                                        case "1":
                                           _showLoader(); // Show loader before starting calls
 
                                           // final sessionId = _homeController
@@ -246,6 +263,32 @@ class _SessionTabState extends State<SessionTab> {
                                               .fetchSessionChatModelData(
                                                 sessionId: sessionId,
                                               );
+                                          final roomId =
+                                              value.session?.roomId
+                                                  ?.toString() ??
+                                              session.roomId?.toString() ??
+                                              "";
+                                          final canOpenChat =
+                                              await _homeController
+                                                  .canExpertOpenFreeChat(
+                                                    roomId,
+                                                    sessionId: sessionId
+                                                        .toString(),
+                                                  );
+
+                                          if (!canOpenChat) {
+                                            if (context.mounted) {
+                                              Navigator.pop(context);
+                                            }
+                                            Get.snackbar(
+                                              "Chat handled by AI",
+                                              "This chat will appear when AI handover is complete.",
+                                              backgroundColor: primaryColor,
+                                              colorText: Colors.black,
+                                            );
+                                            break;
+                                          }
+
                                           final socketDetails =
                                               await _homeController
                                                   .socketDetailsModelData();
@@ -254,11 +297,28 @@ class _SessionTabState extends State<SessionTab> {
                                               await _homeController
                                                   .socketVerifyModelData(
                                                     socketId: "1234.5678",
-                                                    channelName:
-                                                        value.session?.roomId
-                                                            ?.toString() ??
-                                                        "",
+                                                    channelName: roomId,
                                                   );
+
+                                          final canStillOpenChat =
+                                              await _homeController
+                                                  .canExpertOpenFreeChat(
+                                                    roomId,
+                                                    sessionId: sessionId
+                                                        .toString(),
+                                                  );
+                                          if (!canStillOpenChat) {
+                                            if (context.mounted) {
+                                              Navigator.pop(context);
+                                            }
+                                            Get.snackbar(
+                                              "Chat handled by AI",
+                                              "This chat will appear when AI handover is complete.",
+                                              backgroundColor: primaryColor,
+                                              colorText: Colors.black,
+                                            );
+                                            break;
+                                          }
 
                                           await SocketService().connect(
                                             appKey:
@@ -277,13 +337,11 @@ class _SessionTabState extends State<SessionTab> {
                                                       "0",
                                                 ) ??
                                                 0,
-                                            roomId:
-                                                value.session?.roomId
-                                                    ?.toString() ??
-                                                "",
+                                            roomId: roomId,
                                             useTLS: false,
                                           );
 
+                                          if (!context.mounted) return;
                                           Navigator.pop(context); // Hide loader
 
                                           // Navigate to chat screen
@@ -317,10 +375,7 @@ class _SessionTabState extends State<SessionTab> {
                                                         "0",
                                                   ) ??
                                                   0,
-                                              roomId:
-                                                  value.session?.roomId
-                                                      ?.toString() ??
-                                                  "",
+                                              roomId: roomId,
                                               subCollection: 'messages',
                                             ),
                                           );

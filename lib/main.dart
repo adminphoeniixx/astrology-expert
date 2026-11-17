@@ -6,6 +6,7 @@ import 'package:astro_partner_app/firebase_options.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
 import 'package:astro_partner_app/services/call_event_handler.dart';
 import 'package:astro_partner_app/services/push_notification_service.dart';
+import 'package:astro_partner_app/services/session_refresh_service.dart';
 import 'package:astro_partner_app/widgets/agora_video_calling/audio_call_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -91,11 +92,18 @@ class _SnapMessengerState extends State<SnapMessenger>
 
   Future<void> checkAndNavigationCallingPage() async {
     final currentCall = await getCurrentCall();
-    if (currentCall == null) return;
+    if (currentCall == null) {
+      SessionRefreshService.refreshSessions();
+      return;
+    }
     final extra = (currentCall['extra'] as Map?)?.cast<String, dynamic>() ?? {};
     final type = extra['type']?.toString();
     if (type == 'CHAT_CALL') {
+      SessionRefreshService.refreshSessions();
       Get.offAllNamed('/');
+      Future.delayed(const Duration(milliseconds: 600), () {
+        SessionRefreshService.refreshSessions();
+      });
     } else if (type == 'CALL') {
       final remaingTime =
           int.tryParse(extra['remaining_seconds']?.toString() ?? '0') ?? 0;

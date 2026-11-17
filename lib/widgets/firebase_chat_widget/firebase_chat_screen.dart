@@ -77,6 +77,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   /// Live session flags (runtime)
   bool _isCompleted = false; // current session completed
+  bool _isAiHandoverActive = false; // room is still handled by AI
   bool _isUserEndingChat = false; // prevent popup when user ends chat
   bool _isExitPopupVisible = false; // avoid duplicate popups
   bool _isCompletionPopupVisible = false; // avoid duplicate popups
@@ -154,6 +155,15 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         .listen((snapshot) {
           if (!mounted) return;
           if (!snapshot.exists || snapshot.data() == null) return;
+          final data = snapshot.data()!;
+
+          final isAiActive = data['ai_active'] == true;
+          if (_isAiHandoverActive != isAiActive) {
+            if (isAiActive) {
+              _setTyping(false);
+            }
+            setState(() => _isAiHandoverActive = isAiActive);
+          }
 
           // final data = snapshot.data()!;
           // final String chatStatus = (data['status'] ?? "") as String;
@@ -191,7 +201,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
   // ------------------ Typing ------------------
   Future<void> _setTyping(bool typing) async {
-    if (_isCompleted || !mounted) return;
+    if (_isCompleted || _isAiHandoverActive || !mounted) return;
 
     await FirebaseFirestore.instance
         .collection('free_chat')
@@ -202,7 +212,7 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   }
 
   void _onTypingChanged(String value) {
-    if (_isCompleted) return;
+    if (_isCompleted || _isAiHandoverActive) return;
     _setTyping(true);
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(seconds: 2), () => _setTyping(false));
@@ -218,6 +228,10 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
   Future<void> _sendMessage() async {
     print("!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!");
     if (_isCompleted) return;
+    if (_isAiHandoverActive) {
+      _showAiHandoverNotice();
+      return;
+    }
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     _isSending = true; // 🔐 LOCK
@@ -233,6 +247,10 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
 
       if (!meta.exists || meta.data() == null) return;
       final data = meta.data()!;
+      if (data['ai_active'] == true) {
+        _showAiHandoverNotice();
+        return;
+      }
       final String chatStatus = (data['status'] ?? "") as String;
       final bool isNewSession = data['is_new_session'] is bool
           ? data['is_new_session'] as bool
@@ -352,6 +370,10 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
       print("⚠️ Chat completed. Aborting.");
       return;
     }
+    if (_isAiHandoverActive) {
+      _showAiHandoverNotice();
+      return;
+    }
 
     // ✅ Step 1: Permission check
     PermissionStatus status;
@@ -465,6 +487,11 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         }
 
         final data = meta.data()!;
+        if (data['ai_active'] == true) {
+          reset();
+          _showAiHandoverNotice();
+          return;
+        }
         final chatStatus = (data['status'] ?? "") as String;
         final isNewSession =
             data['is_new_session'] is bool && (data['is_new_session'] as bool);
@@ -680,6 +707,16 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
         ),
       ),
     ).then((_) => _isCompletionPopupVisible = false);
+  }
+
+  void _showAiHandoverNotice() {
+    if (!mounted) return;
+    Get.snackbar(
+      "Chat handled by AI",
+      "Please wait until AI handover is complete.",
+      backgroundColor: primaryColor,
+      colorText: Colors.black,
+    );
   }
 
   // ------------------ Lifecycle ------------------
@@ -1113,7 +1150,9 @@ class _FirebaseChatScreenState extends State<FirebaseChatScreen> {
                   ),
 
                 // Input
-                _isCompleted ? const SizedBox.shrink() : _inputBar(),
+                (_isCompleted || _isAiHandoverActive)
+                    ? const SizedBox.shrink()
+                    : _inputBar(),
               ],
             ),
           ],

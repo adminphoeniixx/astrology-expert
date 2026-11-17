@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:astro_partner_app/constants/images_const.dart';
 import 'package:astro_partner_app/model/push_notification_model.dart';
+import 'package:astro_partner_app/services/session_refresh_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_callkit_incoming/entities/android_params.dart';
 import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
@@ -67,7 +68,10 @@ class PushNotificationService {
     log(
       '📩 FCM data: $data, background: $isBackground, openedFromTray: $openedFromTray',
     );
-    // final type = data['type'];
+    final type = data['type']?.toString();
+    if (type == 'CHAT_CALL') {
+      SessionRefreshService.refreshSessions();
+    }
     await _handleIncomingCall(
       pushNotificationModel: PushNotificationModel.fromJson(message.data),
     );

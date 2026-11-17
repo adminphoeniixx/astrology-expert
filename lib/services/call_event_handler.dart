@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:astro_partner_app/constants/string_const.dart';
 import 'package:astro_partner_app/helper/local_storage.dart';
+import 'package:astro_partner_app/services/session_refresh_service.dart';
 import 'package:astro_partner_app/utils/data_provider.dart';
 import 'package:astro_partner_app/widgets/agora_video_calling/audio_call_page.dart';
 import 'package:flutter_callkit_incoming/entities/call_event.dart';
@@ -63,7 +64,11 @@ class CallEventHandler {
       // }
       final type = extra['type']?.toString();
       if (type == 'CHAT_CALL') {
+        SessionRefreshService.refreshSessions();
         Get.offAllNamed('/');
+        Future.delayed(const Duration(milliseconds: 600), () {
+          SessionRefreshService.refreshSessions();
+        });
       } else if (type == 'CALL') {
         final dynamic userIdExpert = await BasePrefs.readData(userId);
         Get.to(

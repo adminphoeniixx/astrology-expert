@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:astro_partner_app/model/api_response.dart';
 import 'package:astro_partner_app/model/auth/getprofile_model.dart';
 import 'package:astro_partner_app/model/callerUserInfo_model.dart';
@@ -17,9 +19,12 @@ import 'package:astro_partner_app/model/update_note_model.dart';
 import 'package:astro_partner_app/services/web_api_services.dart';
 import 'package:astro_partner_app/services/web_request_constants.dart';
 import 'package:astro_partner_app/utils/request_failure.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
+  static const int _firestoreWhereInLimit = 10;
+
   WebApiServices? _webApiServices;
   late int stateCode;
   late Failure _failure;
@@ -36,8 +41,18 @@ class HomeController extends GetxController {
   SessionsModel? _sessionsModel;
   RxString nextPageUrl = "".obs;
   RxString nextPageUrlforCommingSession = "".obs;
+  final List<SessionsData> _allSessionListData = <SessionsData>[];
   RxList<SessionsData> sessionListData = <SessionsData>[].obs;
+  final Map<String, _FreeChatAiState> _freeChatAiStateByRoomId =
+      <String, _FreeChatAiState>{};
+  final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
+  _freeChatSessionSubscriptions =
+      <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+  bool _pendingSessionRefresh = false;
+  int _sessionFetchVersion = 0;
+  String _lastSessionServiceType = "all";
   var isSessionsModelLoding = false.obs;
+  var isSessionPaginationLoading = false.obs;
 
   UpdateMentenceModel? _updateMentenceModel;
 
@@ -63,8 +78,24 @@ class HomeController extends GetxController {
     bool isPaginatHit = false,
     String? serviceType, // 🔹 String instead of int
   }) async {
+    if (isPaginatHit && isSessionPaginationLoading.value) {
+      return _sessionsModel ?? SessionsModel();
+    }
+    if (!isPaginatHit && isSessionsModelLoding.value) {
+      _pendingSessionRefresh = true;
+      return _sessionsModel ?? SessionsModel();
+    }
+    if (!isPaginatHit) {
+      _lastSessionServiceType = serviceType ?? _lastSessionServiceType;
+    }
+    final fetchVersion = ++_sessionFetchVersion;
     try {
-      isSessionsModelLoding(true);
+      if (isPaginatHit) {
+        isSessionPaginationLoading(true);
+      } else {
+        isSessionsModelLoding(true);
+        _freeChatAiStateByRoomId.clear();
+      }
       final String finalUrl =
           pageUrl ??
           "${GetBaseUrl + GetDomainUrl}sessions${serviceType != null ? "?service_type=$serviceType" : ""}";
@@ -75,20 +106,216 @@ class HomeController extends GetxController {
       _sessionsModel = await _webApiServices!.getSessionsModel(
         pageUrl: finalUrl,
       );
-      nextPageUrl(_sessionsModel!.data!.sessions!.nextPageUrl ?? "");
+      final sessions = _sessionsModel?.data?.sessions;
+      nextPageUrl(sessions?.nextPageUrl?.toString() ?? "");
       if (!isPaginatHit) {
+        _allSessionListData.clear();
         sessionListData.clear();
       }
-      for (var element in _sessionsModel!.data!.sessions!.data!) {
-        sessionListData.add(element);
-      }
+      _allSessionListData.addAll(sessions?.data ?? <SessionsData>[]);
+      _applyFreeChatAiFilter();
+      _syncFreeChatAiStatusForSessions(fetchVersion);
       print("@@@@@@@CC@@@@@@@@");
     } on Failure catch (e) {
-      isSessionsModelLoding(false);
       _setFailure(e);
+    } catch (e) {
+      print("fetchSessionData error: $e");
+    } finally {
+      if (isPaginatHit) {
+        isSessionPaginationLoading(false);
+      } else {
+        isSessionsModelLoding(false);
+        if (_pendingSessionRefresh) {
+          _pendingSessionRefresh = false;
+          Future.microtask(() {
+            fetchSessionData(serviceType: _lastSessionServiceType);
+          });
+        }
+      }
     }
-    isSessionsModelLoding(false);
-    return _sessionsModel!;
+    return _sessionsModel ?? SessionsModel();
+  }
+
+  bool isFreeChatAiActive(String roomId) {
+    return _freeChatAiStateByRoomId[roomId]?.isAiActive == true;
+  }
+
+  Future<bool> canExpertOpenFreeChat(String roomId, {String? sessionId}) async {
+    if (roomId.isEmpty) return true;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .doc(roomId)
+          .get();
+
+      final data = snapshot.data();
+      final aiState = _freeChatAiStateFromData(data);
+      _freeChatAiStateByRoomId[roomId] = aiState;
+      _applyFreeChatAiFilter();
+      if (!aiState.isAiActive) return true;
+      return !_matchesSessionId(aiState.sessionId, sessionId);
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<void> _loadFreeChatAiStatusForSessions() async {
+    final roomIds = _freeChatRoomIdsFromSessions();
+    if (roomIds.isEmpty) return;
+
+    for (var i = 0; i < roomIds.length; i += _firestoreWhereInLimit) {
+      final chunk = roomIds.sublist(
+        i,
+        (i + _firestoreWhereInLimit) > roomIds.length
+            ? roomIds.length
+            : i + _firestoreWhereInLimit,
+      );
+
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('free_chat_session')
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+        final seenRoomIds = <String>{};
+
+        for (final doc in snapshot.docs) {
+          seenRoomIds.add(doc.id);
+          _freeChatAiStateByRoomId[doc.id] = _freeChatAiStateFromData(
+            doc.data(),
+          );
+        }
+
+        for (final roomId in chunk) {
+          if (!seenRoomIds.contains(roomId)) {
+            _freeChatAiStateByRoomId[roomId] = _FreeChatAiState.inactive();
+          }
+        }
+      } catch (_) {
+        for (final roomId in chunk) {
+          _freeChatAiStateByRoomId[roomId] = _FreeChatAiState.inactive();
+        }
+      }
+    }
+  }
+
+  Future<void> _syncFreeChatAiStatusForSessions(int fetchVersion) async {
+    await _loadFreeChatAiStatusForSessions();
+    if (fetchVersion != _sessionFetchVersion) return;
+    _listenToFreeChatAiStatusForSessions(fetchVersion);
+    _applyFreeChatAiFilter();
+  }
+
+  void _listenToFreeChatAiStatusForSessions(int fetchVersion) {
+    for (final subscription in _freeChatSessionSubscriptions) {
+      subscription.cancel();
+    }
+    _freeChatSessionSubscriptions.clear();
+
+    final roomIds = _freeChatRoomIdsFromSessions();
+
+    if (roomIds.isEmpty) return;
+
+    for (var i = 0; i < roomIds.length; i += _firestoreWhereInLimit) {
+      final chunk = roomIds.sublist(
+        i,
+        (i + _firestoreWhereInLimit) > roomIds.length
+            ? roomIds.length
+            : i + _firestoreWhereInLimit,
+      );
+
+      final subscription = FirebaseFirestore.instance
+          .collection('free_chat_session')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .snapshots()
+          .listen(
+            (snapshot) {
+              if (fetchVersion != _sessionFetchVersion) return;
+              final seenRoomIds = <String>{};
+
+              for (final doc in snapshot.docs) {
+                seenRoomIds.add(doc.id);
+                _freeChatAiStateByRoomId[doc.id] = _freeChatAiStateFromData(
+                  doc.data(),
+                );
+              }
+
+              for (final roomId in chunk) {
+                if (!seenRoomIds.contains(roomId)) {
+                  _freeChatAiStateByRoomId[roomId] =
+                      _FreeChatAiState.inactive();
+                }
+              }
+
+              _applyFreeChatAiFilter();
+            },
+            onError: (_) {
+              if (fetchVersion != _sessionFetchVersion) return;
+              for (final roomId in chunk) {
+                _freeChatAiStateByRoomId[roomId] = _FreeChatAiState.inactive();
+              }
+              _applyFreeChatAiFilter();
+            },
+          );
+
+      _freeChatSessionSubscriptions.add(subscription);
+    }
+  }
+
+  List<String> _freeChatRoomIdsFromSessions() {
+    return _allSessionListData
+        .where(_isFreeChatSession)
+        .map((session) => session.roomId?.toString() ?? "")
+        .where((roomId) => roomId.isNotEmpty)
+        .toSet()
+        .toList();
+  }
+
+  bool _isFreeChatSession(SessionsData session) {
+    return session.serviceType?.toString() == "1";
+  }
+
+  _FreeChatAiState _freeChatAiStateFromData(Map<String, dynamic>? data) {
+    if (data == null) return _FreeChatAiState.inactive();
+    return _FreeChatAiState(
+      isAiActive: data['ai_active'] == true,
+      sessionId: data['session_id']?.toString(),
+    );
+  }
+
+  bool _matchesSessionId(String? firestoreSessionId, String? apiSessionId) {
+    if (firestoreSessionId == null || firestoreSessionId.isEmpty) return false;
+    if (apiSessionId == null || apiSessionId.isEmpty) return false;
+    return firestoreSessionId == apiSessionId;
+  }
+
+  void _applyFreeChatAiFilter() {
+    final visibleSessions = <SessionsData>[];
+
+    for (final session in _allSessionListData) {
+      if (!_isFreeChatSession(session)) {
+        visibleSessions.add(session);
+        continue;
+      }
+
+      final roomId = session.roomId?.toString() ?? "";
+      if (roomId.isEmpty) {
+        visibleSessions.add(session);
+        continue;
+      }
+
+      visibleSessions.add(session);
+    }
+
+    sessionListData.assignAll(visibleSessions);
+  }
+
+  @override
+  void onClose() {
+    for (final subscription in _freeChatSessionSubscriptions) {
+      subscription.cancel();
+    }
+    super.onClose();
   }
 
   SessionDetailsModel? get sessionDetailsModel => _sessionDetailsModel;
@@ -122,7 +349,7 @@ class HomeController extends GetxController {
   Future<EarningListModel> fetchEarningListData({
     String? pageUrl,
     bool isPaginatHit = false,
-  }) async { 
+  }) async {
     try {
       isEarningListModelLoding(true);
 
@@ -490,5 +717,16 @@ class HomeController extends GetxController {
     }
     isParterInfoModelLoding(false);
     return _parterInfoModel!;
+  }
+}
+
+class _FreeChatAiState {
+  final bool isAiActive;
+  final String? sessionId;
+
+  const _FreeChatAiState({required this.isAiActive, this.sessionId});
+
+  factory _FreeChatAiState.inactive() {
+    return const _FreeChatAiState(isAiActive: false);
   }
 }

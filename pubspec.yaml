@@ -101,15 +101,11 @@ flutter:
   fonts:
     - family: Product Sans
       fonts:
-        - asset: fonts/ProductSans-Black.ttf
-        - asset: fonts/ProductSans-BlackItalic.ttf
-        - asset: fonts/ProductSans-Bold.ttf
-        - asset: fonts/ProductSans-BoldItalic.ttf
-        - asset: fonts/ProductSans-Italic.ttf
         - asset: fonts/ProductSans-Light.ttf
-        - asset: fonts/ProductSans-LightItalic.ttf
+          weight: 300
         - asset: fonts/ProductSans-Medium.ttf
-        - asset: fonts/ProductSans-MediumItalic.ttf
+          weight: 500
         - asset: fonts/ProductSans-Regular.ttf
-        - asset: fonts/ProductSans-Thin.ttf
-        - asset: fonts/ProductSans-ThinItalic.ttf
+          weight: 400
+        - asset: fonts/ProductSans-Bold.ttf
+          weight: 700
